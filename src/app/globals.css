@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-var.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme {
+  --color-bg: #f5f7fc;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-accent: #0891b2;
+  --color-accent-2: #4338ca;
+  --color-line: #e5e7eb;
+  --color-live: #10b981;
+
+  --font-mono: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', ui-monospace, monospace;
+
+  --animate-blur-in: blur-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-rise: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes blur-in {
+  0% {
+    opacity: 0;
+    filter: blur(14px);
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-bg);
+}
+
+body {
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+/* Text sitting on top of the iridescent bands stays legible. */
+.on-bands {
+  text-shadow: 0 4px 28px rgba(255, 255, 255, 0.9), 0 1px 2px rgba(15, 23, 42, 0.18);
+}
+
+.accent-gradient {
+  background-image: linear-gradient(90deg, var(--color-accent), var(--color-accent-2));
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
