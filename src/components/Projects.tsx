@@ -84,7 +84,7 @@ function Card({ p, preview, index }: { p: Project; preview?: string; index: numb
 
           <div className="mt-5 flex items-center justify-between border-t border-ink/8 pt-4 text-[11px] tracking-wider text-muted">
             <span>
-              {p.stars > 0 ? `★ ${p.stars}` : '★ 0'} · {p.language} · {p.updated}
+              {`★ ${p.stars}`} · {p.language} · {p.updated}
             </span>
             <span className="inline-flex items-center gap-1 text-ink/60 transition-colors group-hover:text-accent">
               查看详情 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>

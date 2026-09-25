@@ -22,7 +22,7 @@ function BracketedWord({ word }: { word: string }) {
       aria-label={word}
     >
       <span
-        className={`on-bands relative inline-block font-bold transition-[filter] duration-[600ms] ${active ? 'blur-0' : 'blur-[3px]'}`}
+        className="on-bands relative inline-block font-bold transition-[filter] duration-[600ms]"
         style={{ filter: active ? 'blur(0px)' : 'blur(3px)' }}
       >
         {word}

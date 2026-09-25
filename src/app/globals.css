@@ -17,33 +17,6 @@
   --color-live: #10b981;
 
   --font-mono: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', ui-monospace, monospace;
-
-  --animate-blur-in: blur-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-rise: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes blur-in {
-  0% {
-    opacity: 0;
-    filter: blur(14px);
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-
-@keyframes rise {
-  0% {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 html {
