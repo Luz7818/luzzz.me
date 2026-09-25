@@ -27,7 +27,7 @@ export const profile = {
   eyebrow: 'HELLO, WORLD',
   /** TODO: 换成你自己的定位语，这一行会出现在 hero 大标题下方 */
   lead: '开发者 & 造东西的人。做的东西大多卡在交通工程与大模型中间那段缝里 —— 一边要能算准，一边要好看好用。',
-  email: 'your_email@example.com',
+  email: 'muze.luz@gmail.com',
   github: 'https://github.com/Luz7818',
   /** TODO: 补上你的所在地 / 身份，参考站这里是 "DEVELOPER · MELBOURNE" */
   role: 'DEVELOPER · NANJING',
@@ -126,7 +126,7 @@ export const projects: Project[] = [
 ];
 
 export const palette = {
-  colors: ['#7DD3FC', '#FDE047', '#FB923C', '#F472B6', '#818CF8', '#22D3EE', '#F97316', '#A78BFA'],
+  colors: ['#FF2D2D', '#FFB300', '#34D399', '#22D3EE', '#4F7CFF', '#C026D3'],
   speed: 0.2,
   rotation: 90,
   autoRotate: 0,
@@ -135,8 +135,10 @@ export const palette = {
   warpStrength: 1,
   mouseInfluence: 1,
   parallax: 0.5,
-  noise: 0.15,
+  noise: 0.12,
   iterations: 2,
-  intensity: 1.5,
-  bandWidth: 6,
+  intensity: 1.05,
+  bandScale: 2.6,
+  soft: 1.7,
+  coreWhite: 0.9,
 };

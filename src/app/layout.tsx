@@ -22,4 +22,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen font-mono">{c
+      <body className="min-h-screen font-mono">{children}</body>
+    </html>
+  );
+}

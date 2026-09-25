@@ -43,7 +43,9 @@ uniform float uParallax;
 uniform float uNoise;
 uniform int uIterations;
 uniform float uIntensity;
-uniform float uBandWidth;
+uniform float uBandScale;
+uniform float uSoft;
+uniform float uCoreWhite;
 
 varying vec2 vUv;
 
@@ -65,35 +67,33 @@ void main() {
     q += (rr - q) * 0.15;
   }
 
-  vec2 s = q;
-  vec3 sumCol = vec3(0.0);
-  float cover = 0.0;
+  vec2 r = sin(1.5 * (q.yx * uFrequency) + 2.0 * cos(q * uFrequency));
+  float kBelow = clamp(uWarpStrength, 0.0, 1.0);
+  float gain = 1.0 + max(uWarpStrength - 1.0, 0.0);
+  vec2 warped = q + (r - q) * kBelow * gain;
+  float m = length(warped + sin(5.0 * warped.y * uFrequency - 3.0 * t) / 4.0);
 
+  // Each iso-ring of the warped field becomes one band; the ring centre blows
+  // out to white so only the shoulders carry hue.
+  float x = m * uBandScale;
+  float e = abs(2.0 * fract(x) - 1.0);
+  float w = pow(max(1.0 - e, 0.0), uSoft);
+
+  int k = int(mod(floor(x), float(uColorCount)));
+  vec3 hue = uColors[0];
   for (int i = 0; i < MAX_COLORS; ++i) {
-    if (i >= uColorCount) break;
-    s -= 0.01;
-    vec2 r = sin(1.5 * (s.yx * uFrequency) + 2.0 * cos(s * uFrequency));
-    float m0 = length(r + sin(5.0 * r.y * uFrequency - 3.0 * t + float(i)) / 4.0);
-    float kBelow = clamp(uWarpStrength, 0.0, 1.0);
-    float kMix = pow(kBelow, 0.3);
-    float gain = 1.0 + max(uWarpStrength - 1.0, 0.0);
-    vec2 warped = s + (r - s) * kBelow * gain;
-    float m1 = length(warped + sin(5.0 * warped.y * uFrequency - 3.0 * t + float(i)) / 4.0);
-    float m = mix(m0, m1, kMix);
-    float w = 1.0 - exp(-uBandWidth / exp(uBandWidth * m));
-    sumCol += uColors[i] * w;
-    cover = max(cover, w);
+    if (i == k) hue = uColors[i];
   }
 
-  vec3 col = clamp(sumCol, 0.0, 1.0) * uIntensity;
+  vec3 col = clamp(mix(hue, vec3(1.0), pow(w, 2.0) * uCoreWhite) * uIntensity, 0.0, 1.0);
 
   if (uNoise > 0.0001) {
     float n = fract(sin(dot(gl_FragCoord.xy + vec2(uTime), vec2(12.9898, 78.233))) * 43758.5453123);
     col = clamp(col + (n - 0.5) * uNoise, 0.0, 1.0);
   }
 
-  float a = cover;
-  gl_FragColor = vec4(clamp(col, 0.0, 1.0) * a, a);
+  float a = w;
+  gl_FragColor = vec4(col * a, a);
 }
 `;
 
@@ -110,7 +110,9 @@ export type BendConfig = {
   noise?: number;
   iterations?: number;
   intensity?: number;
-  bandWidth?: number;
+  bandScale?: number;
+  soft?: number;
+  coreWhite?: number;
 };
 
 function toRgb(hex: string): [number, number, number] {
@@ -134,7 +136,10 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
 export default function IridescentBackground({ config }: { config: BendConfig }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const cfgRef = useRef(config);
-  cfgRef.current = config;
+
+  useEffect(() => {
+    cfgRef.current = config;
+  }, [config]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -171,7 +176,8 @@ export default function IridescentBackground({ config }: { config: BendConfig })
       count: U('uColorCount'), colors: U('uColors[0]'), scale: U('uScale'),
       frequency: U('uFrequency'), warp: U('uWarpStrength'), pointer: U('uPointer'),
       mouse: U('uMouseInfluence'), parallax: U('uParallax'), noise: U('uNoise'),
-      iterations: U('uIterations'), intensity: U('uIntensity'), bandWidth: U('uBandWidth'),
+      iterations: U('uIterations'), intensity: U('uIntensity'),
+      bandScale: U('uBandScale'), soft: U('uSoft'), coreWhite: U('uCoreWhite'),
     };
 
     const palette = new Float32Array(MAX_COLORS * 3);
@@ -228,7 +234,9 @@ export default function IridescentBackground({ config }: { config: BendConfig })
       gl.uniform1f(u.noise, c.noise ?? 0.15);
       gl.uniform1i(u.iterations, c.iterations ?? 1);
       gl.uniform1f(u.intensity, c.intensity ?? 1.5);
-      gl.uniform1f(u.bandWidth, c.bandWidth ?? 6);
+      gl.uniform1f(u.bandScale, c.bandScale ?? 2.2);
+      gl.uniform1f(u.soft, c.soft ?? 1.1);
+      gl.uniform1f(u.coreWhite, c.coreWhite ?? 0.85);
 
       const deg = ((c.rotation ?? 90) % 360) + (c.autoRotate ?? 0) * t;
       const rad = (deg * Math.PI) / 180;
@@ -252,9 +260,20 @@ export default function IridescentBackground({ config }: { config: BendConfig })
       raf = 0;
     };
 
-    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? play() : pause(); }, { threshold: 0 });
+    const io = new IntersectionObserver(
+      ([e]) => {
+        visible = e.isIntersecting;
+        if (visible) play();
+        else pause();
+      },
+      { threshold: 0 },
+    );
     io.observe(host);
-    const onVis = () => { visible = !document.hidden; visible ? play() : pause(); };
+    const onVis = () => {
+      visible = !document.hidden;
+      if (visible) play();
+      else pause();
+    };
     document.addEventListener('visibilitychange', onVis);
 
     frame(0);
