@@ -1,39 +1,133 @@
-# luzzz.me — 个人主页
+# luzzz.me · 个人作品集单页
 
-参考 [cohenjikan.com](https://cohenjikan.com/) 的观感做的单页作品集：WebGL 虹彩流体背景 + JetBrains Mono 排版，内容取自 [Luz7818](https://github.com/Luz7818) 的真实仓库。
+> 用途：给第一次打开这个仓库的人。看完知道它是什么、怎么在本地跑起来、想改内容该动哪个文件。
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4，全站静态输出。
+一屏到底的单页作品集：WebGL 虹彩色带背景，加 Hero / About / Services / Projects / Contact 五个板块。
+Next.js 16（App Router）+ React 19 + Tailwind v4，`output: "export"` 全静态导出，产物不需要 Node 运行时。
+站点数据手工维护在 `src/data/site.ts`，页面不请求任何接口，也没有运行时服务。
 
-## 本地跑
+**规模**：14 个源文件 · 12 个 TS/TSX · 9 个组件 · 5 张项目卡 · 4 条 Services
+（复核：`git ls-files src | grep -v README | wc -l`，`git ls-files src | grep -c '\.tsx\?$'`，`grep -c "url: 'https" src/data/site.ts`）
+
+## 30 秒跑通
 
 ```bash
 pnpm install
-pnpm dev      # http://localhost:3000
-pnpm build    # 静态导出到 out/（纯 HTML/CSS/JS，任意静态托管即可，无 Node 运行时）
+pnpm dev      # 打开 http://localhost:3000
 ```
 
-`output: "export"` 下没有服务端，`next start` 不可用；本地想看构建产物用 `npx serve out`。
+`pnpm install` 在依赖已装齐时的真实输出（复核：`pnpm install --frozen-lockfile`）：
 
-## 改内容
+```
+Lockfile is up to date, resolution step is skipped
+Already up to date
 
-全部文案与配色集中在 `src/data/site.ts`，不用碰组件：
+Done in 482ms using pnpm v10.33.0
+```
 
-| 字段 | 作用 |
+`pnpm dev` 的真实输出（复核：`pnpm dev`）：
+
+```
+▲ Next.js 16.3.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://<本机局域网IP>:3000
+- Environments: .env.local
+✓ Ready in 490ms
+```
+
+`Ready` 之后的毫秒数随机器变化，`▲` 那一行的版本号应与 `package.json` 一致。
+页面应能看到色带背景随鼠标轻微流动，浏览器控制台无红色报错。
+
+构建静态产物（复核：`pnpm build`）：
+
+```bash
+pnpm build
+```
+
+末段真实输出：
+
+```
+Route (app)
+┌ ○ /
+└ ○ /_not-found
+
+○  (Static)  prerendered as static content
+```
+
+产物落在 `out/`，共 26 个文件（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
+`public/README.md` 被原样拷过去的，`public/` 下任何文件都会进产物。想在本地看它：
+
+```bash
+python -m http.server 8099 --directory out
+```
+
+`curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8099/` 返回 `200` 即为正常。
+字体与样式表也各自可达（CSS 的真实文件名带哈希，要从 `index.html` 里取）：
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8099/fonts/jetbrains-mono-var.woff2
+curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next/static/chunks/[A-Za-z0-9_.-]*\.css' out/index.html | head -1)"
+```
+
+两条都返回 `200`。
+
+完整步骤、故障表与术语解释见 [上手手册](docs/getting-started.md)。
+
+## 改内容去哪
+
+| 想改 | 动哪里 | 细节 |
+|---|---|---|
+| 名字、邮箱、GitHub 链接、hero 引导语 | `src/data/site.ts` 的 `profile` | [src/README.md](src/README.md) |
+| Services 手风琴的每条 | 同文件 `services` | 同上 |
+| 项目卡（标题 / 摘要 / 标签 / star / 语言 / 更新日期 / 链接） | 同文件 `projects` | 同上 |
+| 背景色带的 6 个色值与流动参数 | 同文件 `palette` | 同上 |
+| 文字配色、字体、玻璃拟态样式 | `src/app/globals.css` 的 `@theme` | 同上 |
+| 某个板块的结构或交互 | `src/components/` 下对应组件 | 同上 |
+| 项目预览图 | 新建 `public/projects/<slug>.png` | [public/README.md](public/README.md) |
+
+一个提醒：**不是所有文案都在 `site.ts` 里**。`About` 的四个数字、`Hero` 的 `EST 2022`、各板块
+标题下的说明句都写死在组件里，完整清单见 [AGENTS.md](AGENTS.md) 的「已知坑」。
+
+## 目录怎么分
+
+| 目录 | 负责 |
 |---|---|
-| `profile` | 名字、眉标、hero 引导语、邮箱、所在地 |
-| `services` | Services 手风琴的每一条 |
-| `projects` | Projects 卡片的标题 / 一句话 / 标签 / star / 语言 |
-| `palette` | 背景色带的 6 个色值与着色器参数 |
+| `src/app/` | App Router 入口：`layout.tsx` 出 metadata，`page.tsx` 装配板块并扫预览图，`globals.css` 放主题色 |
+| `src/components/` | 9 个客户端组件，一个文件一个板块或一段动效 |
+| `src/data/` | `site.ts`，全站唯一的手工数据源 |
+| `public/` | 原样拷进产物的静态资源；目前只有一个字体文件，`projects/` 截图目录尚不存在 |
+| `out/` | `pnpm build` 产物，已被 `.gitignore` 忽略 |
+| `docs/` | 上手手册 |
 
-## 换项目预览图
+逐个目录的说明见各目录下的 `README.md`。
 
-把截图放到 `public/projects/<slug>.png`（`slug` 取自 `site.ts` 里项目的 `slug` 字段），构建时会自动识别并替换掉生成的星点占位图。也支持 `webp` / `jpg`。
+## 已知做不到什么
 
-## 背景着色器
+1. 项目数据不会自动跟随 GitHub。`stars` 与 `updated` 是手填的，当前 5 张卡合计 4 star
+   （复核：`grep -o "stars: [0-9]*" src/data/site.ts | awk '{s+=$2} END {print s}'`）。
+   源仓库真有变化时页面不更新，也不报错，只能手工同步。
+2. 5 张项目卡现在全是程序生成的星点占位图，没有一张真截图
+   （复核：`pnpm build` 后 `grep -o "<circle" out/index.html | wc -l` 得 450 = 5 卡 × 90 点）。
+3. 移动端只做了断点适配，没有在真机上验证过 Contact 拖拽吊牌的手感和 WebGL 帧率。
+4. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
+   （复核：`git ls-files | grep -iE "test|spec"`）。门禁只有类型检查、ESLint 和一次成功构建。
+5. `public/CNAME` 不存在（复核：`ls public/CNAME`），导出产物里不含域名绑定信息；
+   `luzzz.me` 的解析与部署状态需要在能访问对应网络的环境里另行确认。
 
-`src/components/IridescentBackground.tsx` 是原生 WebGL1，没有引入 `ogl`。保留了 ColorBends 的域扭曲数学，但把原来的多色加性累置换成了「按等值环索引取色 + 环心过曝」——加性累加会把 8 条带冲成白，量出来饱和度只有 9/255；改后留白约 27%、高饱和像素约 49%，才是参考站那种白芯彩虹边。
+## 环境要求
 
-## 已知待办
+| 项 | 要求 | 怎么确认 |
+|---|---|---|
+| Node.js | ≥ 20.9.0（`next@16.3.6` 的 `engines` 下限） | `node -v`，本机 `v24.19.0` |
+| pnpm | 10.33.0（`package.json` 的 `packageManager` 字段） | `pnpm -v` |
+| 网络 | 装依赖时需要；`dev` 与 `build` 期间应用代码不发请求 | `grep -rn "fetch(" src/` 无输出 |
+| 密钥 | 无。`src/` 下没有任何 `process.env` | `grep -rn "process\\.env" src/` 无输出 |
 
-- `profile.lead` / `role` / `aboutLine` 三句文案是代笔的，按自己口吻改掉
-- 移动端只做了断点适配，没有在真机上验证过拖拽吊牌的手感
+## 许可与引用
+
+仓库根没有 `LICENSE` 文件，按默认规则保留所有权利。卡片链出去的 5 个项目各有自己的仓库和许可，
+不受本仓库约束。若要以某个许可证开源，需要先新增 `LICENSE` 文件再在此处说明。
+
+---
+
+准备改这个仓库的 AI 助手请先读 [AGENTS.md](AGENTS.md)。
