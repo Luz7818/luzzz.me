@@ -80,7 +80,7 @@ export const projects: Project[] = [
     url: 'https://github.com/Luz7818/zhishuxing',
     stars: 1,
     language: 'Python',
-    updated: '2026-03-23',
+    updated: '2026-09-26',
   },
   {
     slug: 'marx-cloud',
@@ -91,7 +91,7 @@ export const projects: Project[] = [
     demo: 'https://luz7818.github.io/marx-cloud/',
     stars: 1,
     language: 'JavaScript',
-    updated: '2026-09-20',
+    updated: '2026-09-25',
   },
   {
     slug: 'testforge',
@@ -101,7 +101,7 @@ export const projects: Project[] = [
     url: 'https://github.com/Luz7818/testforge',
     stars: 1,
     language: 'Python',
-    updated: '2026-09-19',
+    updated: '2026-09-26',
   },
   {
     slug: 'transportation-harness',
@@ -110,18 +110,18 @@ export const projects: Project[] = [
     tags: ['Python', 'HTML', 'LLM-as-Judge', 'PWA'],
     url: 'https://github.com/Luz7818/Transportation_Harnesss',
     stars: 1,
-    language: 'HTML',
-    updated: '2026-09-18',
+    language: 'Python',
+    updated: '2026-09-26',
   },
   {
     slug: 'traffic-terminology',
     name: '交通用语语料库',
-    summary: '口语化交通表述 → 标准交通工程术语的中英对照语料库，807 术语 / 2038 口语说法 / 8 领域，附 AI Skill 与静态转换器。',
+    summary: '口语化交通表述 → 标准交通工程术语的中英对照语料库，807 术语 / 2038 口语说法 / 9 类领域，附 AI Skill 与静态转换器。',
     tags: ['Python', 'JavaScript', 'Corpus', 'AI Skill'],
     url: 'https://github.com/Luz7818/traffic-terminology',
     stars: 0,
     language: 'Python',
-    updated: '2026-09-24',
+    updated: '2026-09-26',
   },
 ];
 

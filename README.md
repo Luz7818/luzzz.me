@@ -9,8 +9,10 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4，全站静态�
 ```bash
 pnpm install
 pnpm dev      # http://localhost:3000
-pnpm build    # 静态产出
+pnpm build    # 静态导出到 out/（纯 HTML/CSS/JS，任意静态托管即可，无 Node 运行时）
 ```
+
+`output: "export"` 下没有服务端，`next start` 不可用；本地想看构建产物用 `npx serve out`。
 
 ## 改内容
 

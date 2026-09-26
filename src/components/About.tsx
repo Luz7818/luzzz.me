@@ -52,7 +52,7 @@ export default function About() {
       <Reveal delay={200}>
         <dl className="mt-14 grid max-w-2xl grid-cols-2 gap-x-8 gap-y-8 border-t border-ink/10 pt-10 md:grid-cols-4">
           {[
-            ['6', '公开仓库'],
+            ['7', '公开仓库'],
             ['2022', 'GitHub 元年'],
             ['5', '主力项目'],
             ['∞', '未完成的点子'],

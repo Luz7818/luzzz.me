@@ -103,7 +103,7 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
         <div className="flex items-end justify-between gap-6">
           <div>
             <h2 className="on-bands text-3xl font-bold md:text-4xl">Projects</h2>
-            <p className="on-bands mt-3 text-sm text-muted">从 GitHub 实时挑出来的几个 · 点卡片直达仓库或在线演示</p>
+            <p className="on-bands mt-3 text-sm text-muted">手挑的几个开源项目 · 点卡片直达仓库或在线演示（star 与更新日期手工同步）</p>
           </div>
           <span className="hidden shrink-0 text-xs tracking-widest text-muted md:block">{projects.length} SELECTED</span>
         </div>
