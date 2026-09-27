@@ -230,6 +230,7 @@ grep -o 'href="/marx-cloud/"' out/index.html
 | 移动端拖不动 Contact 的吊牌 | 吊牌靠 pointer 事件驱动，元素上写了 `touch-none` 阻止浏览器接管触摸，但这条路径从没在真机上测过 | 当作已知未验证项，见下面一段；先别去改文件里的物理常量 |
 | 访问 `/marx-cloud/` 或 `/corpus/` 是 404 | 产物没同步或没重新构建（`public/` 下没有这两个目录） | `node tools/sync-showcases.mjs` 后 `pnpm build` |
 | 子页面打开是空白、控制台报资源 404 | 子页面按相对路径引用资源，被从别的绝对路径访问时基准不对；本站部署是 `/<名字>/index.html`，正常不会遇到 | 用 `out/marx-cloud/index.html` 起服务复现，别改子页面里的路径 |
+| 打开 `https://<部署名>-luz7818.vercel.app` 被跳到 `/login`，页面标题是 `Login – Vercel` | 项目开了 Deployment Protection，它只对 Vercel 自带的 `*.vercel.app` 域名生效（`ssoProtection.deploymentType` 为 `all_except_custom_domains`） | 用有权限的 Vercel 账号登录一次，或改用 `npx vercel curl <部署地址>` 取内容；绑定了自定义域名之后访客走 `luzzz.me` 不受这条影响 |
 | 源仓库已经改了，子页面还是旧的 | 子页面是构建产物副本，不会自动跟随 | 重跑同步与构建，把 `public/marx-cloud/`、`public/corpus/` 的变动一起提交 |
 
 移动端只做了 CSS 断点适配，**没有在真机上验证过**拖拽手感和 WebGL 帧率。这一条是现状，
@@ -269,6 +270,18 @@ npm run lint
 pnpm build
 ```
 
-通过标准：三条命令退出码都是 0，`npx tsc --noEmit` 与 `npm run lint` 均无任何输出，
+三条退出码都应为 0。通过标准：`npx tsc --noEmit` 与 `npm run lint` 均无任何输出，
 `pnpm build` 末段两条路由都标 `○ (Static)`。这三条就是本仓库的全部门禁，
 它们各自管什么、改动后该跑哪几条，写在 [AGENTS.md](../AGENTS.md)。
+
+上线是另外一步，需要 token（`VERCEL_TOKEN` 环境变量或 `--token`，值放在仓库之外）：
+
+```bash
+git push
+npx vercel --prod          # 上传当前提交的内容，在 Vercel 上构建并切到 production
+```
+
+站点目前**还没连上 Git 自动构建**：Vercel 要先授权它的 GitHub App，没授权时
+`vercel git connect` 直接失败，所以每次改完仍要手工跑上面这一条。接上之后推送即部署，
+这一步就可以省掉（复核：`curl -s -H "Authorization: Bearer $VERCEL_TOKEN"
+https://api.vercel.com/v9/projects/luzzz-me`，看 `gitRepository` 字段是否非空）。
