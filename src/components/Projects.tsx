@@ -45,11 +45,12 @@ function GeneratedPreview({ seed }: { seed: string }) {
 }
 
 function Card({ p, preview, index }: { p: Project; preview?: string; index: number }) {
+  const href = p.demo ?? p.url;
   return (
     <Reveal delay={index * 70} className="h-full">
       <a
-        href={p.demo ?? p.url}
-        target="_blank"
+        href={href}
+        target={href.startsWith('/') ? '_self' : '_blank'}
         rel="noreferrer"
         className="glass group flex h-full flex-col overflow-hidden rounded-2xl border border-white/60 shadow-[0_10px_40px_rgba(15,23,42,0.06)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_rgba(8,145,178,0.18)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
@@ -66,7 +67,7 @@ function Card({ p, preview, index }: { p: Project; preview?: string; index: numb
             <GeneratedPreview seed={p.slug} />
           )}
           <span className="absolute top-3 right-3 grid h-8 w-8 place-items-center rounded-full bg-white/85 text-xs text-ink opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 translate-y-1">
-            ↗
+            {href.startsWith('/') ? '→' : '↗'}
           </span>
         </div>
 

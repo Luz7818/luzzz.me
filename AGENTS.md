@@ -23,10 +23,12 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 项 | 值 | 复核命令 |
 |---|---|---|
 | 类型检查 | 退出码 0，无任何输出 | `npx tsc --noEmit` |
-| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 15 个文件（`src/` 下 12 个 + 3 个根配置），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
+| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 16 个文件（`src/` 下 12 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
 | 构建 | 退出码 0，两条路由 `/` 与 `/_not-found`，均标为 Static | `pnpm build` |
-| 导出产物 | `out/` 共 26 个文件，含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
+| 导出产物 | `out/` 共 38 个文件，含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里只有一行 `output: "export"` | `grep -n output next.config.ts` |
+| 站内子页面 | `public/marx-cloud/` 1,647,095 字节、`public/corpus/` 342,874 字节，各 8 与 4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
+| 部署 | 项目 `luzzz-me`，已有 production 部署且 `● Ready`；自定义域名待 DNS（缺 `A luzzz.me 76.76.21.21`） | `npx vercel ls`、`npx vercel domains inspect luzzz.me`（要 `--token`） |
 | 源文件 | `src/` 下 14 个文件，其中 12 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l` |
 | 组件 | 9 个，全部以 `'use client'` 开头 | `grep -rl "^'use client'" src/components \| wc -l` |
 | 运行时依赖 | 3 个：`next` `react` `react-dom` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
@@ -43,7 +45,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | `src/app/globals.css` | Tailwind 入口 + `@theme` 主题色 + `@font-face` | UI 配色在这里，不在 `site.ts` |
 | `src/components/` | 9 个客户端组件 | 逐文件说明与字段消费表见 `src/README.md` |
 | `src/data/site.ts` | 全站手工数据 | 导出 `profile` / `services` / `projects` / `palette` 与类型 `Project` / `Service` |
-| `public/` | 原样进产物的静态资源 | `fonts/jetbrains-mono-var.woff2` 是唯一资源；`projects/` **当前不存在**需手工建；本目录的 `README.md` 也会被拷进 `out/` |
+| `public/` | 原样进产物的静态资源 | `fonts/jetbrains-mono-var.woff2` 是唯一手写资源；`marx-cloud/` 与 `corpus/` 是外仓构建产物副本；`projects/` **当前不存在**需手工建；本目录的 `README.md` 也会被拷进 `out/` |
 | `out/` `.next/` `tsconfig.tsbuildinfo` | 构建产物 | 均被 `.gitignore` 忽略，不要手改 |
 | `CLAUDE.md` | 一行 `@AGENTS.md` | 由同一个 Next.js 机制写入，内容不要展开 |
 
@@ -81,6 +83,19 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    `IridescentBackground.tsx` 把 `uTime` 钉在 12 且不起 rAF 循环；`Contact.tsx` 的 `Lanyard`
    只调一次 `draw()`。只改一处会出现「页面不动但背景还在流」。
 
+8. **`public/marx-cloud/` 与 `public/corpus/` 是别的仓库的构建产物，不要手改**。
+   它们是 Marx_Cloud 与 Traffic_terminology 的 `dist/`、`web/` 拷贝，提交进本仓库是因为
+   Vercel 只构建这一个项目、构建机上没有兄弟目录。要改子页面就回源仓库改 + 跑
+   `pnpm sync:showcases` + `pnpm build`。直接编辑这里的文件会在下次同步时被整体覆盖，
+   而且造成"线上与两个源仓库都不一致"的三方漂移。
+   子页面里的「返回主页」是相对路径 `../`，在 `/marx-cloud/` 下解析成本站根目录，
+   在 GitHub Pages 的 `/marx-cloud/` 下解析成用户主页 —— 两种托管都成立，不要改成绝对路径。
+   这行回链由子页面自己的代码判断是否保留：`../` 解析出来就是当前页时（源仓库单独部署在站点根）
+   会把自己摘掉，点了等于刷新；`corpus` 还额外在 `file://` 下摘掉，因为那一页本来就能双击打开。
+   副本里有十几万字符的压缩 JS，所以 `eslint.config.mjs` 的 `globalIgnores` 必须列上这两个目录：
+   没列时 `npm run lint` 退出码 1，末行打印 `✖ 878 problems (7 errors, 871 warnings)`
+   （复核：临时注掉那两行后 `npm run lint; echo $?`，再改回来）。
+
 ## 改动后的验证
 
 | 你动了 | 必须跑 | 通过标准 |
@@ -91,6 +106,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | `src/app/globals.css` 的 `@theme` | `pnpm dev` 刷新 | 文字与强调色变化；背景色带**不会**变，那归 `palette.colors` |
 | `IridescentBackground.tsx` 的着色器源码 | `pnpm dev` 后开控制台 | 没有 `compile` 打出的 `console.error`（着色器编译失败只会静默降级成 CSS 渐变） |
 | `public/` 下任何文件 | `pnpm build` 后 `ls out` | 对应文件原样出现在 `out/` 下 |
+| 子页面（改的是 Marx_Cloud / Traffic_terminology） | `pnpm sync:showcases && pnpm build` 后 `grep -c 'class="back"' out/marx-cloud/index.html out/corpus/index.html` | 同步脚本会重跑 Marx 的 `vite build`；两条各输出 1，浏览器里点它应回到本站首页 |
 | 文档 | `python check_docs.py luzzz.me`（在 `Project/文档标准/` 里执行） | 无阻断项 |
 
 本仓库没有测试，`npx tsc --noEmit`、`npm run lint`、`pnpm build` 这三条就是全部门禁。
@@ -122,6 +138,10 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 - **`next-env.d.ts`、`.next/types/`、`out/` 都被 `.gitignore` 忽略**，前两项由 `next dev` / `next build`
   生成，而 `tsconfig.json` 的 `include` 引用了它们。新克隆下来直接跑 `npx tsc --noEmit` 之前，
   先跑一次 `pnpm build` 把生成物补齐。
+- **Windows 上 `out/` 被静态服务器占着时 `pnpm build` 会失败**：Next 先清空产物目录，
+  删不掉就抛 `Error: EBUSY: resource busy or locked, rmdir '<仓库路径>\out'`，退出码 1，
+  构建日志前面一切正常。复核：`python -m http.server 8099 --directory out &` 后跑 `pnpm build`，
+  看到该报错后 `taskkill //PID <pid> //F` 结束服务再重跑。
 - **同机第二个 dev server 会拒绝启动**：`next dev` 检测到本仓库已有实例时打印
   `⨯ Another next dev server is already running.` 并给出既有实例的 PID 与日志路径，随后退出码 1；
   端口只是被别的程序占用时不报错，改用 `⚠ Port 3000 is in use ... using available port 3001`。

@@ -54,7 +54,7 @@ Route (app)
 ○  (Static)  prerendered as static content
 ```
 
-产物落在 `out/`，共 26 个文件（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
+产物落在 `out/`，共 38 个文件（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
 `public/README.md` 被原样拷过去的，`public/` 下任何文件都会进产物。想在本地看它：
 
 ```bash
@@ -95,9 +95,14 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 | `src/app/` | App Router 入口：`layout.tsx` 出 metadata，`page.tsx` 装配板块并扫预览图，`globals.css` 放主题色 |
 | `src/components/` | 9 个客户端组件，一个文件一个板块或一段动效 |
 | `src/data/` | `site.ts`，全站唯一的手工数据源 |
-| `public/` | 原样拷进产物的静态资源；目前只有一个字体文件，`projects/` 截图目录尚不存在 |
+| `public/` | 原样拷进产物的静态资源：`fonts/` 字体、`projects/` 截图目录（需自行创建）、`marx-cloud/` 与 `corpus/` 两个子页面 |
+| `tools/` | 本地辅助脚本，不参与 Vercel 构建：`sync-showcases.mjs` 同步两个子页面产物 |
 | `out/` | `pnpm build` 产物，已被 `.gitignore` 忽略 |
 | `docs/` | 上手手册 |
+
+两个子页面：`/marx-cloud/` 是 [Marx Cloud](https://github.com/Luz7818/marx-cloud) 星图，
+`/corpus/` 是[交通用语转换器](https://github.com/Luz7818/traffic-terminology)。它们的源代码在
+别的仓库，本站只收构建产物 —— 改页面要回源仓库改，再跑 `pnpm sync:showcases`。
 
 逐个目录的说明见各目录下的 `README.md`。
 
@@ -109,10 +114,14 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 2. 5 张项目卡现在全是程序生成的星点占位图，没有一张真截图
    （复核：`pnpm build` 后 `grep -o "<circle" out/index.html | wc -l` 得 450 = 5 卡 × 90 点）。
 3. 移动端只做了断点适配，没有在真机上验证过 Contact 拖拽吊牌的手感和 WebGL 帧率。
-4. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
+5. 域名还没生效。项目 `luzzz-me` 已绑定 `luzzz.me` 与 `www.luzzz.me`，但 DNS 仍在万网
+   （`dns14.hichina.com`）且缺 Vercel 要求的 `A luzzz.me 76.76.21.21`，所以现在只能访问
+   `https://<部署名>-luz7818.vercel.app`（复核：`npx vercel domains inspect luzzz.me`，
+   它会打印 `This Domain is not configured properly`）。补这条记录后才能用自定义域名。
+6. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
+   （构建机上没有兄弟仓库）。副本会随源仓库更新而滞后，直到有人重跑 `pnpm sync:showcases`。
+7. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
    （复核：`git ls-files | grep -iE "test|spec"`）。门禁只有类型检查、ESLint 和一次成功构建。
-5. `public/CNAME` 不存在（复核：`ls public/CNAME`），导出产物里不含域名绑定信息；
-   `luzzz.me` 的解析与部署状态需要在能访问对应网络的环境里另行确认。
 
 ## 环境要求
 

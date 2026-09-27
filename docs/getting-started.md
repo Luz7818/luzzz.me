@@ -109,7 +109,8 @@ Route (app)
 ```
 
 判据：退出码 0（复核：`pnpm build; echo $?`），末段两条路由都带 `○ (Static)`。
-产物在 `out/`，共 26 个文件（复核：`find out -type f | wc -l`），其中 `out/README.md` 是
+产物在 `out/`，共 38 个文件（复核：`find out -type f | wc -l`），其中 12 个是 `out/marx-cloud/`
+与 `out/corpus/` 两个子页面（见第 6 节），`out/README.md` 则是
 `public/README.md` 被原样拷过去的——`public/` 下的任何文件都会进产物。想本地看一眼：
 
 ```bash
@@ -187,23 +188,54 @@ pnpm build
 第一条就报类型错误。卡片数会自动跟着变（`Projects.tsx` 遍历 `projects`），但 `About.tsx` 里
 「5 主力项目」那个数字不会，要手工同步。
 
-## 6. 常见故障
+## 6. 更新两个子页面
+
+`/marx-cloud/`（思想云星图）与 `/corpus/`（交通用语转换器）的源码在另外两个仓库里，
+本站只收它们的构建产物。在源仓库改完页面之后，回到本仓库：
+
+```bash
+node tools/sync-showcases.mjs     # 或 pnpm sync:showcases
+pnpm build
+```
+
+脚本做的事：在 `../Marx_Cloud` 跑 `npm run build` 取 `dist/`；从 `../Traffic_terminology/web`
+只取 `index.html`、`style.css`、`app.js`、`data.js`；**先整体删除** `public/<名字>/` 再拷贝，
+避免旧 hash 文件残留。源目录不存在时（例如就在 Vercel 构建机上）只打印跳过，不清空已有产物。
+
+确认到位：
+
+```bash
+ls out/marx-cloud/index.html out/corpus/index.html
+grep -o 'href="/marx-cloud/"' out/index.html
+```
+
+两条都应有输出。浏览器打开本地 `out/` 时，子页面的「返回主页」会回到本站首页。
+这枚回链只在「确实有上一级」时出现：两个子页面各自的代码会比较 `../` 解析出的路径与当前路径，
+相等时（源仓库单独部署在站点根）就把它摘掉，否则点了等于刷新本页；`corpus` 另外在 `file://`
+下也摘掉，因为那一页本来就能双击打开，而那时上一级只是一个本地目录列表。实测判据见
+[AGENTS.md](../AGENTS.md) 关键约定 8。
+
+## 7. 常见故障
 
 | 现象 / 报错原文 | 原因 | 怎么办 |
 |---|---|---|
 | `Error: "next start" does not work with "output: export" configuration. Use "npx serve@latest out" instead.` | 导出模式下没有 Node 服务器可起 | 别用 `next start`。本地看产物用 `python -m http.server 8099 --directory out` |
 | `⨯ Another next dev server is already running.` 并列出 `PID` 与 `Log: .next\dev\logs\next-development.log`，随后 `ELIFECYCLE Command failed with exit code 1` | 上一次 `next dev` 的进程还在，本仓库同时只允许一个 dev server | 用列出的 PID 结束它：Git Bash 里 `taskkill //PID <pid> //F` |
 | `⚠ Port 3000 is in use by process 29004, using available port 3001 instead.` | 3000 被**别的**程序占了（不是同一个项目的第二个 dev server） | 按提示的地址访问，或先释放 3000 |
+| `Error: EBUSY: resource busy or locked, rmdir '...\out'`，而前面的静态页面生成都正常 | Windows 下 `out/` 正被上一步的 `http.server` 或文件管理器占着，Next 清空产物时删不掉 | 关掉那个服务（`taskkill //PID <pid> //F`，PID 用 `netstat -ano \| grep 8099` 查），再 `pnpm build` |
 | 背景是一整片三色渐变，没有色带在动 | `canvas.getContext('webgl')` 返回 null，`IridescentBackground.tsx` 静默降级成一段 CSS 渐变，不打印任何日志 | 换支持 WebGL 的浏览器，或在浏览器设置里恢复图形加速；这不是构建错误，`pnpm build` 不会因此失败 |
 | 把截图放进了 `public/projects/`，刷新页面卡片还是星点 | 文件名不等于 `slug`，或后缀不在 `png/webp/jpg/jpeg` 里，或没重跑 `pnpm build` | `ls public/projects` 核对文件名，再 `pnpm build` |
 | 改了 `src/app/globals.css` 的 `--color-accent`，背景色带没变 | 背景色带读的是 `site.ts` 的 `palette.colors`，与 `@theme` 是两套 | 换背景配色改 `palette.colors` |
 | 从 `palette` 里删掉某个字段后，背景的观感跳了一下 | 组件里写了一套 `?? 默认值` 兜底，且默认值与 `site.ts` 的值不同（见 AGENTS.md 已知坑） | 把字段补回来，不要留空 |
 | 移动端拖不动 Contact 的吊牌 | 吊牌靠 pointer 事件驱动，元素上写了 `touch-none` 阻止浏览器接管触摸，但这条路径从没在真机上测过 | 当作已知未验证项，见下面一段；先别去改文件里的物理常量 |
+| 访问 `/marx-cloud/` 或 `/corpus/` 是 404 | 产物没同步或没重新构建（`public/` 下没有这两个目录） | `node tools/sync-showcases.mjs` 后 `pnpm build` |
+| 子页面打开是空白、控制台报资源 404 | 子页面按相对路径引用资源，被从别的绝对路径访问时基准不对；本站部署是 `/<名字>/index.html`，正常不会遇到 | 用 `out/marx-cloud/index.html` 起服务复现，别改子页面里的路径 |
+| 源仓库已经改了，子页面还是旧的 | 子页面是构建产物副本，不会自动跟随 | 重跑同步与构建，把 `public/marx-cloud/`、`public/corpus/` 的变动一起提交 |
 
 移动端只做了 CSS 断点适配，**没有在真机上验证过**拖拽手感和 WebGL 帧率。这一条是现状，
 不是故障；真机测过之后请把结果补进 [AGENTS.md](../AGENTS.md)。
 
-## 7. 术语小词典
+## 8. 术语小词典
 
 | 词 | 它在这个仓库里干什么 |
 |---|---|
@@ -229,7 +261,7 @@ pnpm build
 | ESLint flat config | 新版单文件配置格式，本仓库是 `eslint.config.mjs`，其中 `globalIgnores` 覆盖了默认忽略项 |
 | RSC flight 数据 | `out/index.txt` 那种机器格式文件，内容与 `index.html` 同一棵组件树，供客户端切换路由用 |
 
-## 8. 改完之后跑什么
+## 9. 改完之后跑什么
 
 ```bash
 npx tsc --noEmit

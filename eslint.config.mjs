@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // tools/sync-showcases.mjs 拷进来的别仓构建产物，不是本仓源码
+    "public/marx-cloud/**",
+    "public/corpus/**",
   ]),
 ]);
 

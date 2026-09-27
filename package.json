@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "sync:showcases": "node tools/sync-showcases.mjs",
     "build": "next build",
     "lint": "eslint"
   },
