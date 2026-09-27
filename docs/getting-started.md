@@ -274,14 +274,20 @@ pnpm build
 `pnpm build` 末段两条路由都标 `○ (Static)`。这三条就是本仓库的全部门禁，
 它们各自管什么、改动后该跑哪几条，写在 [AGENTS.md](../AGENTS.md)。
 
-上线是另外一步，需要 token（`VERCEL_TOKEN` 环境变量或 `--token`，值放在仓库之外）：
+上线只需要推送。项目已连上 `Luz7818/luzzz.me`，`main` 分支每次推送都会触发 Vercel 构建并切到
+production：
 
 ```bash
 git push
-npx vercel --prod          # 上传当前提交的内容，在 Vercel 上构建并切到 production
 ```
 
-站点目前**还没连上 Git 自动构建**：Vercel 要先授权它的 GitHub App，没授权时
-`vercel git connect` 直接失败，所以每次改完仍要手工跑上面这一条。接上之后推送即部署，
-这一步就可以省掉（复核：`curl -s -H "Authorization: Bearer $VERCEL_TOKEN"
-https://api.vercel.com/v9/projects/luzzz-me`，看 `gitRepository` 字段是否非空）。
+要确认这一条真的生效（复核：`curl -s -H "Authorization: Bearer $VERCEL_TOKEN"
+https://api.vercel.com/v9/projects/luzzz-me`，`link.repo` 应为 `luzzz.me`、
+`link.productionBranch` 应为 `main`）。构建没跑起来时才需要手工兜底：
+
+```bash
+npx vercel --prod          # 直接上传本地内容构建，需要 VERCEL_TOKEN
+```
+
+两条路都能出线上版本，但日常只用 `git push` —— 手工上传的那次部署不会跟随仓库，
+下一次推送会被仓库版本覆盖。

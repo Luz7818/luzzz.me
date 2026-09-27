@@ -28,7 +28,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 导出产物 | `out/` 共 38 个文件，含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里只有一行 `output: "export"` | `grep -n output next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 1,647,095 字节、`public/corpus/` 342,874 字节，各 8 与 4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
-| 部署 | 项目 `luzzz-me`，最新 production 部署 `● Ready`；**未连 Git**（`gitRepository` 为空，缺 Vercel GitHub App 授权）；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
+| 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `luzzz.me` 与 `www.luzzz.me` 已绑到项目并出现在 Aliases，但 DNS 仍在万网，缺 `A luzzz.me 76.76.21.21`（Vercel 共用接入 IP） | `npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly` |
 | 源文件 | `src/` 下 14 个文件，其中 12 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l` |
 | 组件 | 9 个，全部以 `'use client'` 开头 | `grep -rl "^'use client'" src/components \| wc -l` |
