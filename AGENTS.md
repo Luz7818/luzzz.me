@@ -28,7 +28,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 导出产物 | `out/` 共 38 个文件，含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里只有一行 `output: "export"` | `grep -n output next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 1,647,095 字节、`public/corpus/` 342,874 字节，各 8 与 4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
-| 部署 | 项目 `luzzz-me`，已有 production 部署且 `● Ready`；自定义域名待 DNS（缺 `A luzzz.me 76.76.21.21`） | `npx vercel ls`、`npx vercel domains inspect luzzz.me`（要 `--token`） |
+| 部署 | 项目 `luzzz-me`，已有 production 部署且 `● Ready`；自定义域名待 DNS（缺 `A luzzz.me 76.76.21.21`，Vercel 共用接入 IP） | `npx vercel ls`、`npx vercel domains inspect luzzz.me`（要 `--token`） |
 | 源文件 | `src/` 下 14 个文件，其中 12 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l` |
 | 组件 | 9 个，全部以 `'use client'` 开头 | `grep -rl "^'use client'" src/components \| wc -l` |
 | 运行时依赖 | 3 个：`next` `react` `react-dom` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |

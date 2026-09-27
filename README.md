@@ -115,7 +115,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
    （复核：`pnpm build` 后 `grep -o "<circle" out/index.html | wc -l` 得 450 = 5 卡 × 90 点）。
 3. 移动端只做了断点适配，没有在真机上验证过 Contact 拖拽吊牌的手感和 WebGL 帧率。
 5. 域名还没生效。项目 `luzzz-me` 已绑定 `luzzz.me` 与 `www.luzzz.me`，但 DNS 仍在万网
-   （`dns14.hichina.com`）且缺 Vercel 要求的 `A luzzz.me 76.76.21.21`，所以现在只能访问
+   （`dns14.hichina.com`）且缺 Vercel 要求的 `A luzzz.me 76.76.21.21`（这是 Vercel 给所有
+   用户共用的接入地址，不是自己的服务器），所以现在只能访问
    `https://<部署名>-luz7818.vercel.app`（复核：`npx vercel domains inspect luzzz.me`，
    它会打印 `This Domain is not configured properly`）。补这条记录后才能用自定义域名。
 6. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
