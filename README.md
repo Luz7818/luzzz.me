@@ -90,6 +90,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 目录怎么分
 
+不知道东西在哪个路径，先看 [目录说明.md](目录说明.md)：整棵目录树、每个目录的入口都在里面，它只做导航。谁负责什么以 `AGENTS.md` 的「仓库地图」为准。
+
 | 目录 | 负责 |
 |---|---|
 | `src/app/` | App Router 入口：`layout.tsx` 出 metadata，`page.tsx` 装配板块并扫预览图，`globals.css` 放主题色 |

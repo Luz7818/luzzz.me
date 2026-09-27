@@ -39,6 +39,8 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 
 ## 仓库地图
 
+目录树本身与「每个目录的入口在哪」见仓根 [目录说明.md](目录说明.md)，本节只留职责与隐藏约束，两边不重复列目录。
+
 | 路径 | 职责 | 关键点 |
 |---|---|---|
 | `src/app/layout.tsx` | 根布局与 metadata | `metadata.description` 取的就是 `profile.lead`，改文案会同时改 SEO 描述 |
