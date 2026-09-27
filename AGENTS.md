@@ -25,8 +25,8 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 类型检查 | 退出码 0，无任何输出 | `npx tsc --noEmit` |
 | ESLint | 退出码 0，无输出；`npm run lint` 实际检查 16 个文件（`src/` 下 12 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
 | 构建 | 退出码 0，两条路由 `/` 与 `/_not-found`，均标为 Static | `pnpm build` |
-| 导出产物 | `out/` 共 38 个文件，含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
-| 导出模式 | `next.config.ts` 里只有一行 `output: "export"` | `grep -n output next.config.ts` |
+| 导出产物 | `out/` 共 39 个文件（`_next` 12 + `marx-cloud` 8 + `_not-found` 5 + `corpus` 4 + `404` 1 + 根下 9），含被原样拷进去的 `out/README.md` | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
+| 导出模式 | `next.config.ts` 里有两行：`output: "export"` 与 `trailingSlash: true`（后者为子页面的相对路径所需，见关键约定 9） | `grep -n "output\|trailingSlash" next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 1,647,095 字节、`public/corpus/` 342,874 字节，各 8 与 4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `luzzz.me` 与 `www.luzzz.me` 已绑到项目并出现在 Aliases，但 DNS 仍在万网，缺 `A luzzz.me 76.76.21.21`（Vercel 共用接入 IP） | `npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly` |
@@ -97,6 +97,19 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    没列时 `npm run lint` 退出码 1，末行打印 `✖ 878 problems (7 errors, 871 warnings)`
    （复核：临时注掉那两行后 `npm run lint; echo $?`，再改回来）。
 
+9. **`trailingSlash: true` 是子页面能在线上跑起来的前提，别当成风格选项**。子页面的资源用相对路径
+   （`./assets/…`、`data.js`），所以访问路径必须以 `/marx-cloud/` 结尾；默认配置下 Vercel 的 Next
+   预设会生成一条 308 把 `/marx-cloud/` 折成 `/marx-cloud`，此时相对路径的基准变成站点根，
+   实测表现是 HTML 正常渲染、但 `/assets/index-*.js` 与 `/data.js` 全 404，
+   星图停在默认 300×150 的画布、转换器没有 `window.TRAFFIC_DATA`（复核：线上打开
+   `https://<部署地址>/marx-cloud/` 看 Network 面板是否出现 404 的 `/assets/…`）。
+   本地 `python -m http.server` 不做这条重定向，所以这个故障只在部署后出现。
+   改回来的判据：`npx vercel build` 后读 `.vercel/output/config.json`，`Location` 为 `/$1/`
+   的那条 308 存在、`/$1`（不带斜杠）那条不存在。副作用是 `/_not-found` 与 `/404` 变成目录形式，
+   产物里多出 `out/404/index.html`（所以产物数是 39 而不是 38）。
+   另：`vercel build` / `vercel pull` 会把产物与项目元数据写进 `.vercel/`，
+   因此 `globalIgnores` 里也要有 `.vercel/**`，否则 `npm run lint` 会去检查那堆压缩 JS。
+
 ## 改动后的验证
 
 | 你动了 | 必须跑 | 通过标准 |
@@ -108,6 +121,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | `IridescentBackground.tsx` 的着色器源码 | `pnpm dev` 后开控制台 | 没有 `compile` 打出的 `console.error`（着色器编译失败只会静默降级成 CSS 渐变） |
 | `public/` 下任何文件 | `pnpm build` 后 `ls out` | 对应文件原样出现在 `out/` 下 |
 | 子页面（改的是 Marx_Cloud / Traffic_terminology） | `pnpm sync:showcases && pnpm build` 后 `grep -c 'class="back"' out/marx-cloud/index.html out/corpus/index.html` | 同步脚本会重跑 Marx 的 `vite build`；两条各输出 1，浏览器里点它应回到本站首页 |
+| `next.config.ts`（尤其 `trailingSlash`） | `pnpm build` 后 `npx vercel pull --yes && npx vercel build`，读 `.vercel/output/config.json` 里带 `Location` 的 308 方向 | `/$1/` 那条在、`/$1` 那条不在；线上 `/<子页面>/` 打开时 Network 面板没有 404 资源 |
 | 文档 | `python check_docs.py luzzz.me`（在 `Project/文档标准/` 里执行） | 无阻断项 |
 
 本仓库没有测试，`npx tsc --noEmit`、`npm run lint`、`pnpm build` 这三条就是全部门禁。

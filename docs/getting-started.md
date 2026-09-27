@@ -109,7 +109,7 @@ Route (app)
 ```
 
 判据：退出码 0（复核：`pnpm build; echo $?`），末段两条路由都带 `○ (Static)`。
-产物在 `out/`，共 38 个文件（复核：`find out -type f | wc -l`），其中 12 个是 `out/marx-cloud/`
+产物在 `out/`，共 39 个文件（复核：`find out -type f | wc -l`），其中 12 个是 `out/marx-cloud/`
 与 `out/corpus/` 两个子页面（见第 6 节），`out/README.md` 则是
 `public/README.md` 被原样拷过去的——`public/` 下的任何文件都会进产物。想本地看一眼：
 
@@ -202,6 +202,10 @@ pnpm build
 只取 `index.html`、`style.css`、`app.js`、`data.js`；**先整体删除** `public/<名字>/` 再拷贝，
 避免旧 hash 文件残留。源目录不存在时（例如就在 Vercel 构建机上）只打印跳过，不清空已有产物。
 
+两个子页面内部全用相对路径，所以访问它们的 URL 必须以斜杠结尾（`/corpus/` 而不是 `/corpus`）；
+`next.config.ts` 的 `trailingSlash: true` 就是为这一条服务的，去掉它线上门面会照常显示、
+脚本却全部 404（见第 7 节对应那行）。
+
 确认到位：
 
 ```bash
@@ -230,6 +234,7 @@ grep -o 'href="/marx-cloud/"' out/index.html
 | 移动端拖不动 Contact 的吊牌 | 吊牌靠 pointer 事件驱动，元素上写了 `touch-none` 阻止浏览器接管触摸，但这条路径从没在真机上测过 | 当作已知未验证项，见下面一段；先别去改文件里的物理常量 |
 | 访问 `/marx-cloud/` 或 `/corpus/` 是 404 | 产物没同步或没重新构建（`public/` 下没有这两个目录） | `node tools/sync-showcases.mjs` 后 `pnpm build` |
 | 子页面打开是空白、控制台报资源 404 | 子页面按相对路径引用资源，被从别的绝对路径访问时基准不对；本站部署是 `/<名字>/index.html`，正常不会遇到 | 用 `out/marx-cloud/index.html` 起服务复现，别改子页面里的路径 |
+| 线上打开 `/marx-cloud/` 或 `/corpus/`：页面文字都在，但星图不动、转换器点不动，Network 里 `/assets/index-….js` 或 `/data.js` 是 404 | 实际访问路径少了末尾斜杠（`/marx-cloud`），相对路径的基准就变成了站点根，资源全去找根目录 | 别去改子页面里的路径。确认 `next.config.ts` 的 `trailingSlash: true` 还在并重新部署（`npx vercel build` 后看 `.vercel/output/config.json` 应有一条把路径补成 `/$1/` 的 308）；本地 `python -m http.server` 不做这条重定向，复现不出来 |
 | 打开 `https://<部署名>-luz7818.vercel.app` 被跳到 `/login`，页面标题是 `Login – Vercel` | 项目开了 Deployment Protection，它只对 Vercel 自带的 `*.vercel.app` 域名生效（`ssoProtection.deploymentType` 为 `all_except_custom_domains`） | 用有权限的 Vercel 账号登录一次，或改用 `npx vercel curl <部署地址>` 取内容；绑定了自定义域名之后访客走 `luzzz.me` 不受这条影响 |
 | 源仓库已经改了，子页面还是旧的 | 子页面是构建产物副本，不会自动跟随 | 重跑同步与构建，把 `public/marx-cloud/`、`public/corpus/` 的变动一起提交 |
 
