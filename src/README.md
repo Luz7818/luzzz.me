@@ -7,6 +7,29 @@
 其中 12 个 TS/TSX。`app/` 提供路由与主题，`components/` 提供 9 个板块与动效，`data/` 提供唯一
 的手工数据源。产物 `out/` 完全由这三块加上 `public/` 生成，没有运行时代码从外部取数据。
 
+## 文件清单
+
+`src/` 根下不直接放代码文件，只有本 `README.md` 一份（复核：`find src -maxdepth 1 -type f`，
+输出只有 `src/README.md`）。其余 14 个入库文件全在下一节的三个二级目录里
+（复核：`git ls-files src | grep -v README | wc -l`），其中 12 个是 TS/TSX
+（复核：`git ls-files 'src/*.ts' 'src/*.tsx' | wc -l`）。这张表只做索引，逐文件的说明在下面三节。
+
+| 文件 | 干什么 | 备注 |
+|---|---|---|
+| `README.md` | 本文件，`src/` 的目录说明 | 不是站点资源：只有 `public/` 下的东西会被原样拷进 `out/`，这里不会 |
+| `app/page.tsx` | 唯一路由 `/` 的页面，装配背景、导航与五个板块 | 索引 → 下文「src/app —— App Router 根」；预览图扫描函数 `findPreviews()` 也在这个文件里 |
+| `app/layout.tsx`、`app/globals.css`、`app/favicon.ico` | 根布局与 metadata、主题令牌与工具类、站点图标 | 文件名由 Next 的 App Router 约定固定，不是本仓库自定的命名 |
+| `components/*.tsx` | 9 个客户端组件：五个板块加顶栏、背景与两个动效壳 | 索引 → 下文「src/components —— 9 个客户端组件」。`page.tsx` 只直接 import 其中 7 个，剩下 `Reveal.tsx` 与 `GradientBlurTitle.tsx` 由组件之间互相引用（复核：`grep -rl "from './Reveal'" src/components \| wc -l` 得 4，`grep -rl "from './GradientBlurTitle'" src/components` 只有 `Hero.tsx`） |
+| `data/site.ts` | 全站唯一手工数据源，导出 `profile`、`services`、`projects`、`palette` 与类型 `Project`、`Service` | 索引 → 下文「src/data —— 唯一手工数据源」与其后的「各字段被谁消费」。被 `src/` 下 8 个 TS/TSX 引用（复核：`grep -rl "@/data/site" src --include=*.ts --include=*.tsx \| wc -l`） |
+
+## 子目录
+
+| 子目录 | 负责 |
+|---|---|
+| `app/` | App Router 根：路由 `/`、根布局与 metadata、全局样式与主题令牌、站点图标，4 个文件（复核：`git ls-files src/app \| wc -l`）。逐文件说明见下文「src/app —— App Router 根」 |
+| `components/` | 9 个客户端组件，全部以 `'use client'` 开头（复核：`git ls-files src/components \| wc -l`、`grep -rl "^'use client'" src/components \| wc -l`）。逐文件说明见下文「src/components —— 9 个客户端组件」 |
+| `data/` | 唯一手工数据源 `site.ts`，1 个文件（复核：`git ls-files src/data`）。哪个字段被哪个组件读，见下文「各字段被谁消费」 |
+
 ## src/app —— App Router 根
 
 只有根路由 `/`，没有 `(group)` 分组、没有嵌套布局、没有 `route.ts`。
