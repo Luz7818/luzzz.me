@@ -120,7 +120,9 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
    `https://<部署名>-luz7818.vercel.app` 可访问，而这类地址带 Vercel 登录墙
    （项目开了 Deployment Protection，自定义域名不受这条限制）
    （复核：`npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly`）。
-   线上与本地产物的一致性目前只在本地 `out/` 上验证过，部署地址本身没能在本机打开确认。
+   线上已用浏览器实测通过：主页卡片 → `/marx-cloud/`（星图 canvas 起来、四个掩膜 200）→
+   「返回主页」回站点根，以及 `/corpus/` 的转换出术语；本机 curl 到 `*.vercel.app` 不通，
+   验证走的是登录过 Vercel 的浏览器。
 6. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
    （构建机上没有兄弟仓库）。副本会随源仓库更新而滞后，直到有人重跑 `pnpm sync:showcases`。
 7. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试

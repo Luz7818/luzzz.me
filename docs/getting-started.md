@@ -206,6 +206,10 @@ pnpm build
 `next.config.ts` 的 `trailingSlash: true` 就是为这一条服务的，去掉它线上门面会照常显示、
 脚本却全部 404（见第 7 节对应那行）。
 
+推送之后 `main` 的最新构建始终在 `https://luzzz-me-git-main-luz7818.vercel.app`，
+用它验收最省事（这个地址带 Vercel 登录墙，得先登录）。要确认的是三件事：
+子页面脚本与图片都是 200、星图的画布不是默认的 `300x150`、转换器点「转换为专业术语」能出术语卡。
+
 确认到位：
 
 ```bash

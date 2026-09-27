@@ -104,6 +104,10 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    星图停在默认 300×150 的画布、转换器没有 `window.TRAFFIC_DATA`（复核：线上打开
    `https://<部署地址>/marx-cloud/` 看 Network 面板是否出现 404 的 `/assets/…`）。
    本地 `python -m http.server` 不做这条重定向，所以这个故障只在部署后出现。
+   线上判据（需要登录过 Vercel 的浏览器）：打开 `https://luzzz-me-git-main-luz7818.vercel.app/marx-cloud/`，
+   Network 面板里 `marx-cloud/assets/index-*.js` 与四张 `*-mask.png` 都是 200，
+   `canvas` 尺寸不是默认的 `300x150`；`/corpus/` 那边 `window.TRAFFIC_DATA` 为真、
+   点「转换为专业术语」能出术语卡。地址始终跟 `main` 的最新构建。
    改回来的判据：`npx vercel build` 后读 `.vercel/output/config.json`，`Location` 为 `/$1/`
    的那条 308 存在、`/$1`（不带斜杠）那条不存在。副作用是 `/_not-found` 与 `/404` 变成目录形式，
    产物里多出 `out/404/index.html`（所以产物数是 39 而不是 38）。
