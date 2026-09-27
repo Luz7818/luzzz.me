@@ -114,11 +114,13 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 2. 5 张项目卡现在全是程序生成的星点占位图，没有一张真截图
    （复核：`pnpm build` 后 `grep -o "<circle" out/index.html | wc -l` 得 450 = 5 卡 × 90 点）。
 3. 移动端只做了断点适配，没有在真机上验证过 Contact 拖拽吊牌的手感和 WebGL 帧率。
-5. 域名还没生效。项目 `luzzz-me` 已绑定 `luzzz.me` 与 `www.luzzz.me`，但 DNS 仍在万网
+4. 域名还没生效。项目 `luzzz-me` 已绑定 `luzzz.me` 与 `www.luzzz.me`，但 DNS 仍在万网
    （`dns14.hichina.com`）且缺 Vercel 要求的 `A luzzz.me 76.76.21.21`（这是 Vercel 给所有
-   用户共用的接入地址，不是自己的服务器），所以现在只能访问
-   `https://<部署名>-luz7818.vercel.app`（复核：`npx vercel domains inspect luzzz.me`，
-   它会打印 `This Domain is not configured properly`）。补这条记录后才能用自定义域名。
+   用户共用的接入地址，不是自己的服务器）。补这条记录之前，站点只有
+   `https://<部署名>-luz7818.vercel.app` 可访问，而这类地址带 Vercel 登录墙
+   （项目开了 Deployment Protection，自定义域名不受这条限制）
+   （复核：`npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly`）。
+   线上与本地产物的一致性目前只在本地 `out/` 上验证过，部署地址本身没能在本机打开确认。
 6. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
    （构建机上没有兄弟仓库）。副本会随源仓库更新而滞后，直到有人重跑 `pnpm sync:showcases`。
 7. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
