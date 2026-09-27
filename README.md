@@ -114,18 +114,20 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 2. 5 张项目卡现在全是程序生成的星点占位图，没有一张真截图
    （复核：`pnpm build` 后 `grep -o "<circle" out/index.html | wc -l` 得 450 = 5 卡 × 90 点）。
 3. 移动端只做了断点适配，没有在真机上验证过 Contact 拖拽吊牌的手感和 WebGL 帧率。
-4. 域名还没生效。项目 `luzzz-me` 已绑定 `luzzz.me` 与 `www.luzzz.me`，但 DNS 仍在万网
-   （`dns14.hichina.com`）且缺 Vercel 要求的 `A luzzz.me 76.76.21.21`（这是 Vercel 给所有
-   用户共用的接入地址，不是自己的服务器）。补这条记录之前，站点只有
-   `https://<部署名>-luz7818.vercel.app` 可访问，而这类地址带 Vercel 登录墙
-   （项目开了 Deployment Protection，自定义域名不受这条限制）
-   （复核：`npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly`）。
-   线上已用浏览器实测通过：主页卡片 → `/marx-cloud/`（星图 canvas 起来、四个掩膜 200）→
-   「返回主页」回站点根，以及 `/corpus/` 的转换出术语；本机 curl 到 `*.vercel.app` 不通，
-   验证走的是登录过 Vercel 的浏览器。
-6. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
+4. apex 域名还没生效。`https://www.luzzz.me/` 已经公开可访问（含 `/marx-cloud/` 与
+   `/corpus/` 两个子页面），但裸域 `luzzz.me` 还没有 A 记录，访客直接输 `luzzz.me` 打不开。
+   DNS 仍在万网（NS 为 `dns13/dns14.hichina.com`），要补的那条 A 记录值以
+   `npx vercel domains inspect luzzz.me` 当场打印的为准，别抄固定 IP（Vercel 接入地址是任播、会变）。
+   补之前可用的公开地址只有 `www`；`https://<部署名>-luz7818.vercel.app` 这类地址带 Vercel
+   登录墙（项目开了 Deployment Protection，只对 `*.vercel.app` 生效，自定义域名不受限）。
+   （复核：`python -c "import json,urllib.request as u; print(json.load(u.urlopen('https://dns.google/resolve?name=luzzz.me&type=A',timeout=20)).get('Answer', []))"` 应为 `[]`；
+   换成 `name=www.luzzz.me` 就有答复）
+   线上子页面已实测通过：主页卡片 → `/marx-cloud/`（星图 canvas 起来、四个掩膜 200）→
+   「返回主页」回站点根，以及 `/corpus/` 的转换出术语。走 `www` 这个公开地址就能用普通
+   HTTP 客户端验，不必再借登录过 Vercel 的浏览器（`*.vercel.app` 那一圈仍然会被登录墙挡住）。
+5. `/marx-cloud/` 与 `/corpus/` 是另两个仓库的构建产物副本，提交进本仓库后才能被 Vercel 构建
    （构建机上没有兄弟仓库）。副本会随源仓库更新而滞后，直到有人重跑 `pnpm sync:showcases`。
-7. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
+6. 仓库里没有 `LICENSE`（复核：`ls LICENSE`），也没有 CI（复核：`ls .github`），没有任何测试
    （复核：`git ls-files | grep -iE "test|spec"`）。门禁只有类型检查、ESLint 和一次成功构建。
 
 ## 环境要求

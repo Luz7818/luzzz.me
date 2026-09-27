@@ -29,7 +29,7 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 导出模式 | `next.config.ts` 里有两行：`output: "export"` 与 `trailingSlash: true`（后者为子页面的相对路径所需，见关键约定 9） | `grep -n "output\|trailingSlash" next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 1,647,095 字节、`public/corpus/` 342,874 字节，各 8 与 4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
-| 域名 | `luzzz.me` 与 `www.luzzz.me` 已绑到项目并出现在 Aliases，但 DNS 仍在万网，缺 `A luzzz.me 76.76.21.21`（Vercel 共用接入 IP） | `npx vercel domains inspect luzzz.me`，它会打印 `This Domain is not configured properly` |
+| 域名 | `www.luzzz.me` **已生效**：HTTPS 200，返回真实站点（不是 Vercel 登录页），`/marx-cloud/` 与 `/corpus/` 两个子页面同样 200 且页内本地引用 0 断链。apex `luzzz.me` **仍未生效**：DoH 查 A 是空答复，直连表现为 `SSL: UNEXPECTED_EOF_WHILE_READING`。两个域名都在项目 Aliases 里但 `domains` 的 `verificationRecord` 为 `null`。**不要把任何具体接入 IP 写进 DNS 说明**：`www` 走任播，实测同一天两次解析结果就不同；apex 要填的值以 `npx vercel domains inspect luzzz.me` 当场打印的为准（本文早先写的 `76.76.21.21` 是 Vercel 旧共用 IP，已作废） | DoH 免登录复核（apex 那行应为 `[]`）：`python -c "import json,urllib.request as u; [print(n,t,[a['data'] for a in json.load(u.urlopen(f'https://dns.google/resolve?name={n}&type={t}',timeout=20)).get('Answer',[])]) for n,t in [('luzzz.me','A'),('www.luzzz.me','A')]]"`；线上确实返回站点而非登录墙：`python -c "import urllib.request as u;b=u.urlopen(u.Request('https://www.luzzz.me/marx-cloud/',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read();print(b'index-CTuIuwQs.js' in b)"` 应为 `True`（被登录墙挡时页面标题是 `Login – Vercel`） |
 | 源文件 | `src/` 下 14 个文件，其中 12 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l` |
 | 组件 | 9 个，全部以 `'use client'` 开头 | `grep -rl "^'use client'" src/components \| wc -l` |
 | 运行时依赖 | 3 个：`next` `react` `react-dom` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
@@ -104,10 +104,16 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    星图停在默认 300×150 的画布、转换器没有 `window.TRAFFIC_DATA`（复核：线上打开
    `https://<部署地址>/marx-cloud/` 看 Network 面板是否出现 404 的 `/assets/…`）。
    本地 `python -m http.server` 不做这条重定向，所以这个故障只在部署后出现。
-   线上判据（需要登录过 Vercel 的浏览器）：打开 `https://luzzz-me-git-main-luz7818.vercel.app/marx-cloud/`，
-   Network 面板里 `marx-cloud/assets/index-*.js` 与四张 `*-mask.png` 都是 200，
-   `canvas` 尺寸不是默认的 `300x150`；`/corpus/` 那边 `window.TRAFFIC_DATA` 为真、
-   点「转换为专业术语」能出术语卡。地址始终跟 `main` 的最新构建。
+   线上判据（用 `https://www.luzzz.me/`，公开无登录墙；`*.vercel.app` 那圈会被
+   Deployment Protection 挡成 `Login – Vercel`，才需要登录态浏览器）：
+   `https://www.luzzz.me/marx-cloud/` 的 `./assets/index-*.js`、`./assets/index-*.css` 与
+   运行时按 `?v=7` 拉的四张 `*-mask.png` 都是 200（2026-09-27 实测掩膜字节数与本机
+   `dist/` 逐个相同：138,432 / 223,803 / 277,936 / 269,135）；
+   `https://www.luzzz.me/corpus/data.js` 200 且含 `window.TRAFFIC_DATA`（302,381 字节，
+   与 `Traffic_terminology/web/data.js` 逐字节同尺寸）。`canvas` 尺寸与点「转换为专业术语」
+   出术语卡这两条要真跑 JS，只能开浏览器看。地址始终跟 `main` 的最新构建。
+   复核（不登录、可脚本化）：
+   `python -c "import urllib.request as u;f=lambda p:u.urlopen(u.Request('https://www.luzzz.me'+p,headers={'User-Agent':'Mozilla/5.0'}),timeout=30);[print(p,f('/marx-cloud/'+p).status) for p in ['marx-mask.png?v=7','engels-mask.png?v=7','lenin-mask.png?v=7','luxemburg-mask.png?v=7']];print('/corpus/data.js',f('/corpus/data.js').status)"`
    改回来的判据：`npx vercel build` 后读 `.vercel/output/config.json`，`Location` 为 `/$1/`
    的那条 308 存在、`/$1`（不带斜杠）那条不存在。副作用是 `/_not-found` 与 `/404` 变成目录形式，
    产物里多出 `out/404/index.html`（所以产物数是 39 而不是 38）。
