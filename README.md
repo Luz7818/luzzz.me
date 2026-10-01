@@ -54,7 +54,7 @@ Route (app)
 ○  (Static)  prerendered as static content
 ```
 
-产物落在 `out/`，共 39 个文件（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
+产物落在 `out/`，共 202 个文件，其中 `marx-cloud/` 的 171 个是随其图像资源数浮动的（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
 `public/README.md` 被原样拷过去的，`public/` 下任何文件都会进产物。想在本地看它：
 
 ```bash
