@@ -13,7 +13,7 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `fonts/jetbrains-mono-var.woff2` | 全站唯一的字体文件，JetBrains Mono 可变字重版 | 31432 字节（复核：`wc -c < public/fonts/jetbrains-mono-var.woff2`）。被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/jetbrains-mono-var.woff2` 引用，声明 `font-weight: 100 900` 与 `font-display: swap`，`--font-mono` 的回退链是 `PingFang SC` / `Microsoft YaHei` / `ui-monospace` |
-| `marx-cloud/` | 「思想云」星图，作为本站子页面挂在 `/marx-cloud/` | 171 个文件 9,709,985 字节，含 `avatars/`+`portraits/` 图像目录（复核：`find public/marx-cloud -type f \| wc -l`、`find public/marx-cloud -type f -printf '%s
+| `marx-cloud/` | 「思想云」星图，作为本站子页面挂在 `/marx-cloud/` | 171 个文件 9,709,985 字节，含 `avatars/`+`portraits/` 图像目录（复核：`find public/marx-cloud -type f \| wc -l`、`find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
 ' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
 | `corpus/` | 交通用语转换器，挂在 `/corpus/` | 4 个文件 394,800 字节（复核命令同形，换目录名）。**是 `Traffic_terminology/web/` 的拷贝**，见下节 |
 | `projects/` | 项目截图投放处 | **当前不存在**，需手工建，见下文「projects/」一节 |
@@ -29,7 +29,7 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 
 | 子目录 | 负责 |
 |---|---|
-| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 394,800 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s
+| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 394,800 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s\n' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
 ' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
 | `fonts/` | 全站唯一的自托管字体，1 个文件 31,432 字节（复核命令同形，换目录名）。三个子目录里唯一手工投放的那一个，被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/jetbrains-mono-var.woff2` 引用 |
 | `marx-cloud/` | `/marx-cloud/` 子页面的全部前端资源，171 个文件 9,709,985 字节：`index.html`、带哈希的 `assets/index-*.js` 与 `assets/index-*.css`、`avatars/` 83 张侧栏头像、`portraits/` 79 张换装掩膜，另有一份随 `dist/` 一起进来的 `README.md`（复核命令同形）。**是 `Marx_Cloud/dist/` 的构建产物副本，不可手改**，理由见下一节 |
