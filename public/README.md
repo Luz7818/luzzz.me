@@ -13,8 +13,9 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `fonts/jetbrains-mono-var.woff2` | 全站唯一的字体文件，JetBrains Mono 可变字重版 | 31432 字节（复核：`wc -c < public/fonts/jetbrains-mono-var.woff2`）。被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/jetbrains-mono-var.woff2` 引用，声明 `font-weight: 100 900` 与 `font-display: swap`，`--font-mono` 的回退链是 `PingFang SC` / `Microsoft YaHei` / `ui-monospace` |
-| `marx-cloud/` | 「思想云」星图，作为本站子页面挂在 `/marx-cloud/` | 8 个文件 1,647,095 字节（复核：`find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
-| `corpus/` | 交通用语转换器，挂在 `/corpus/` | 4 个文件 342,874 字节（复核命令同形，换目录名）。**是 `Traffic_terminology/web/` 的拷贝**，见下节 |
+| `marx-cloud/` | 「思想云」星图，作为本站子页面挂在 `/marx-cloud/` | 171 个文件 9,709,985 字节，含 `avatars/`+`portraits/` 图像目录（复核：`find public/marx-cloud -type f \| wc -l`、`find public/marx-cloud -type f -printf '%s
+' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
+| `corpus/` | 交通用语转换器，挂在 `/corpus/` | 4 个文件 394,800 字节（复核命令同形，换目录名）。**是 `Traffic_terminology/web/` 的拷贝**，见下节 |
 | `projects/` | 项目截图投放处 | **当前不存在**，需手工建，见下文「projects/」一节 |
 
 构建后可以在产物里核对到同一份：`out/fonts/jetbrains-mono-var.woff2`，字节数相同
@@ -28,9 +29,10 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 
 | 子目录 | 负责 |
 |---|---|
-| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 342,874 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s\n' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
+| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 394,800 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s
+' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
 | `fonts/` | 全站唯一的自托管字体，1 个文件 31,432 字节（复核命令同形，换目录名）。三个子目录里唯一手工投放的那一个，被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/jetbrains-mono-var.woff2` 引用 |
-| `marx-cloud/` | `/marx-cloud/` 子页面的全部前端资源，8 个文件 1,647,095 字节：`index.html`、带哈希的 `assets/index-*.js` 与 `assets/index-*.css`、四张 `*-mask.png` 掩膜，另有一份随 `dist/` 一起进来的 `README.md`（复核命令同形）。**是 `Marx_Cloud/dist/` 的构建产物副本，不可手改**，理由见下一节 |
+| `marx-cloud/` | `/marx-cloud/` 子页面的全部前端资源，171 个文件 9,709,985 字节：`index.html`、带哈希的 `assets/index-*.js` 与 `assets/index-*.css`、`avatars/` 83 张侧栏头像、`portraits/` 79 张换装掩膜，另有一份随 `dist/` 一起进来的 `README.md`（复核命令同形）。**是 `Marx_Cloud/dist/` 的构建产物副本，不可手改**，理由见下一节 |
 
 表里没有 `projects/`，因为它当前不存在（复核：`ls public/projects`，报 `No such file or directory`），
 见下文「projects/」一节。
@@ -39,13 +41,14 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 
 这两个目录不是本站手写的资源，而是**外仓产物拷贝，提交进本仓库**：
 
-- `marx-cloud/` ← `Marx_Cloud/` 的 `dist/`（Vite 构建产物，含哈希命名的 JS/CSS 与四张掩膜 PNG）
+- `marx-cloud/` ← `Marx_Cloud/` 的 `dist/`（Vite 构建产物，含哈希命名的 JS/CSS、固定掩膜与按需加载的 `avatars/`+`portraits/` 图像）
 - `corpus/` ← `Traffic_terminology/` 的 `web/`（零依赖静态页，无构建步骤）
 
 之所以要拷进来而不是构建时生成：Vercel 只构建 `luzzz-me` 这一个项目，构建机上没有
 `../Marx_Cloud` 与 `../Traffic_terminology`。代价是副本会滞后于源仓库。
 
-两个副本目录占本目录真实资源的 98.44%（1,986,044 / 2,017,476 字节，其余就是那个字体，
+两个副本目录占本目录真实资源的绝对大头（2026-10-02 实测 10,100,016 / 10,131,448 字节，即 99.69%，
+其余就是那个字体；图像入库后这个数随源仓构建产物浮动，以复核实测为准。
 复核：下面两条各跑一次再相除；两边都排除 `README.md`，否则总数会随本文件改动而变）：
 
 ```bash
