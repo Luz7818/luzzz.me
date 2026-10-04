@@ -8,6 +8,40 @@
 | 文件 | 干什么 | 什么时候跑 |
 |---|---|---|
 | `sync-showcases.mjs` | 把两个兄弟仓库的前端构建产物同步进 `public/marx-cloud/` 与 `public/corpus/` | 那两个仓库改过 UI 之后、`pnpm build` 之前 |
+| `covers/*.html` | 三个无真截图项目的风格化封面源文件（内联 SVG：智枢星枢纽光路、TestForge 锻造、Harness 评测环），配色取自 `globals.css` 令牌 | 想改封面构图时，改完用下面的命令重渲染 |
+
+## 子目录
+
+| 子目录 | 负责 |
+|---|---|
+| `covers/` | 3 张风格化封面的 HTML/SVG 源文件（`zhishuxing` / `testforge` / `transportation-harness`），重渲染步骤见下文 |
+
+## 重渲染封面（covers/）
+
+三张封面是确定性的 HTML/SVG，不是 AI 生图，改源文件后用无头 Edge 重出 PNG 再压成 WebP：
+
+```bash
+# 1) 拷到纯 ASCII 路径（Edge --screenshot 写不进含中文的路径）
+tmp=/c/Users/asus/AppData/Local/Temp/covers
+mkdir -p "$tmp/tools/covers" "$tmp/public/fonts"
+cp tools/covers/*.html "$tmp/tools/covers/"
+cp public/fonts/jetbrains-mono-var.woff2 "$tmp/public/fonts/"
+# 2) 逐张光栅化（1536x960 = 16:10,与卡面 aspect 一致）
+for n in zhishuxing testforge transportation-harness; do
+  "/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu     --hide-scrollbars --force-device-scale-factor=1 --window-size=1536,960 --no-first-run     --user-data-dir="$tmp/profile" --screenshot="$tmp/$n.png"     "file:///C:/Users/asus/AppData/Local/Temp/covers/tools/covers/$n.html"
+done
+# 3) Pillow 转 WebP 落到 public/projects/（findPreviews 按 png→webp 顺序拾取）
+python - <<'EOF'
+from PIL import Image
+for n in ["zhishuxing", "testforge", "transportation-harness"]:
+    Image.open(f"C:/Users/asus/AppData/Local/Temp/covers/{n}.png").convert("RGB").save(
+        rf"D:/<仓库路径>/public/projects/{n}.webp", "WEBP", quality=86, method=6)
+EOF
+# 4) pnpm build 让 findPreviews 拾取新图
+```
+
+**Edge 的 `--screenshot` 输出路径不能含中文**（静默失败、不产生文件），所以要先拷到 ASCII 临时目录；
+`--virtual-time-budget` 配合常驻动画会假死，别加。
 
 ## 为什么产物要提交进本仓库
 
@@ -57,6 +91,7 @@ node tools/sync-showcases.mjs     # 或 pnpm sync:showcases
 - **不要给这个脚本加 npm 依赖**：它只 import 四个 `node:` 内置模块（复核：
   `grep -c "^import .*from 'node:" tools/sync-showcases.mjs`），本仓库运行时依赖仍是 `next`、
   `react`、`react-dom` 三个（复核：`node -e "console.log(Object.keys(require('./package.json').dependencies))"`）。
-- **本目录新增文件会进 lint 面**：`npm run lint` 当前检查 16 个文件，含
-  `tools/sync-showcases.mjs`（复核：`npx eslint --format json .` 数 `filePath` 条数，本机实测 16）。
-  别在 `tools/` 下生成产物目录，那要连带改 `eslint.config.mjs` 的 `globalIgnores`。
+- **本目录新增文件会进 lint 面**：`npm run lint` 全仓检查 27 个文件（23 个 `src/` TS/TSX +
+  3 个根配置 + `tools/sync-showcases.mjs`；复核：`npx eslint --format json .` 数 `filePath`
+  条数，本机实测 27）。`covers/*.html` 是静态草稿不是模块，eslint 不检查；别在 `tools/` 下
+  生成产物目录，那要连带改 `eslint.config.mjs` 的 `globalIgnores`。

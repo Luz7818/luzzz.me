@@ -14,7 +14,7 @@
 | 第三方运行时 | 无。依赖只有 `next` / `react` / `react-dom` | 见第 2 节 |
 | 网络 | 装依赖时要；`dev` 与 `build` 期间应用代码不发请求（复核：`grep -rn "fetch(" src/`） | — |
 | 密钥 | 无。`src/` 下没有任何 `process.env`（复核：`grep -rn "process\.env" src/`） | — |
-| 想看真机效果 | 任意现代浏览器，需支持 WebGL1 | 见第 3.1 节 |
+| 想看真机效果 | 任意现代浏览器（背景是 Canvas 2D，不需要 WebGL） | 见第 3.1 节 |
 
 表里没有一项是可选的。包管理器要认准 pnpm：仓库带 `pnpm-lock.yaml` 且 `packageManager` 写死了
 `pnpm@10.33.0`；用 `npm install` 会绕过这份锁文件，装出来的版本可能与 CI 或他人机器不一致。
@@ -67,15 +67,16 @@ pnpm dev
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3000/
-curl -s http://localhost:3000/ | grep -o 'id="about"\|id="services"\|id="projects"\|id="contact"'
+curl -s http://localhost:3000/ | grep -o 'id="about"\|id="projects"\|id="contact"'
 ```
 
-分别是 `200`，以及四个 `id=` 全部出现——它们就是四个板块在 HTML 里的锚点，
-`Nav.tsx` 的菜单靠这四个值滚动定位。
+分别是 `200`，以及三个 `id=` 全部出现——它们就是三个板块在 HTML 里的锚点，
+`Nav.tsx` 的链接靠这三个值滚动定位。
 
-肉眼再看两条（按组件实现应当如此，本手册没有在浏览器里逐条截图确认）：背景是 `palette.colors`
-那 6 个色值组成的色带在缓慢流动、鼠标移动时色带跟着偏移；首屏大标题 `Hi, I'm Luz` 逐字由模糊转清晰。
-控制台不应有红色报错——注意背景着色器编译失败只会打一条 `console.error`，页面不会崩。
+肉眼再看三条（按组件实现应当如此，本手册没有在浏览器里逐条截图确认）：背景是 `LightTrails.tsx`
+画的长曝光车流光轨在缓缓流动（`prefers-reduced-motion` 下是静态一帧）；首屏两行大标题
+「把工程问题做成 / 能看、能玩、能复现的东西」遮罩式弹簧揭示；点导航右侧的圆形按钮，暗色/亮色
+主题应丝滑互切（圆形揭幕或颜色过渡），刷新后主题保持。控制台不应有红色报错。
 
 在 `pnpm dev` 下改 `src/data/site.ts` 的任意字段保存，页面热更新即可看到效果，不用重启。
 `- Network:` 那一行是同局域网地址，手机连同一个 Wi-Fi 时可以直接打开它——但这只是浏览器调试，
@@ -136,16 +137,17 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 先记住一句话：`src/data/site.ts` 管数据，`src/app/globals.css` 的 `@theme` 管页面配色，
 组件里还写死了一批文案。三步走：
 
-1. 打开 `src/data/site.ts`，改 `profile` / `services` / `projects` / `palette` 里的对应字段。
+1. 打开 `src/data/site.ts`，改 `profile` / `stats` / `marquee` / `projects` 里的对应字段。
    每个字段被哪个组件消费，列在 [src/README.md](../src/README.md)。
-2. 改 `src/data/site.ts` 之外的文字（比如 `About` 那几个数字），去
+2. 改 `src/data/site.ts` 之外的文字（比如 `Hero` 的两行大标题、`Projects` 的字型水印），去
    [AGENTS.md](../AGENTS.md) 的「已知坑」第 2 条查它在哪个组件里。
 3. `pnpm dev` 看效果，确认无误后跑第 8 节的三条门禁。
 
 ## 4. 换项目预览图
 
-`public/projects/` 这个目录**当前不存在**（复核：`ls public/projects`）。站点不会因此报错，
-五张卡片全部用程序生成的星点 SVG 兜底。要换成真截图：
+`public/projects/` 里有 2 张真截图（2026-10-03 实拍）：`marx-cloud.png` 与
+`traffic-terminology.png`，分别在 featured 卡和图片卡上；其余三张卡是刻意的字型水印卡，
+不需要截图。要换截图：
 
 ```bash
 mkdir -p public/projects
@@ -158,10 +160,10 @@ pnpm build
 输出 `zhishuxing`、`marx-cloud`、`testforge`、`transportation-harness`、`traffic-terminology`）。
 同一个 slug 支持的后缀与优先级是 `png` → `webp` → `jpg` → `jpeg`，只取第一个命中的。
 
-验证换图成功：改之前 `out/index.html` 里 `<img` 出现 0 次、`<circle` 出现 450 次
-（复核：`grep -o "<img" out/index.html | wc -l`，`grep -o "<circle" out/index.html | wc -l`）。
-实测放入 `public/projects/zhishuxing.png` 后：`pnpm dev` 刷新即见 `<img` 变 1、`<circle` 变 360；
-`pnpm build` 得到同样的数，且 `out/projects/zhishuxing.png` 出现。每张卡 90 个点，所以少 90 个。
+验证换图成功：`out/index.html` 里 `<img` 的出现次数等于有截图的卡片数
+（复核：`grep -o "<img" out/index.html | wc -l`，当前为 2）。
+放入 `public/projects/zhishuxing.png` 后：`pnpm dev` 刷新即见 `<img` 变 3；
+`pnpm build` 得到同样的数，且 `out/projects/zhishuxing.png` 出现。
 
 换图只在构建期生效：扫描 `public/projects/` 的动作发生在预渲染时，构建完再放图不会自动替换。
 `pnpm dev` 下则不同，它是每次请求现算，放完图刷新就能看到。
@@ -185,8 +187,9 @@ pnpm build
 ```
 
 加完必须跑的三件事：`npx tsc --noEmit`、`npm run lint`、`pnpm build`。少任何一个必填字段会在
-第一条就报类型错误。卡片数会自动跟着变（`Projects.tsx` 遍历 `projects`），但 `About.tsx` 里
-「5 主力项目」那个数字不会，要手工同步。
+第一条就报类型错误。卡片数会自动跟着变（`Projects.tsx` 遍历 `projects`），但 `site.ts` 里
+`stats` 的「5 主力项目」不会，要手工同步。桌面横向卷轴的卡宽是固定值（featured 720px /
+其余 480px），加项目即多一张横滑卡，不需要改布局代码。
 
 ## 6. 更新两个子页面
 
@@ -231,18 +234,16 @@ grep -o 'href="/marx-cloud/"' out/index.html
 | `⨯ Another next dev server is already running.` 并列出 `PID` 与 `Log: .next\dev\logs\next-development.log`，随后 `ELIFECYCLE Command failed with exit code 1` | 上一次 `next dev` 的进程还在，本仓库同时只允许一个 dev server | 用列出的 PID 结束它：Git Bash 里 `taskkill //PID <pid> //F` |
 | `⚠ Port 3000 is in use by process 29004, using available port 3001 instead.` | 3000 被**别的**程序占了（不是同一个项目的第二个 dev server） | 按提示的地址访问，或先释放 3000 |
 | `Error: EBUSY: resource busy or locked, rmdir '...\out'`，而前面的静态页面生成都正常 | Windows 下 `out/` 正被上一步的 `http.server` 或文件管理器占着，Next 清空产物时删不掉 | 关掉那个服务（`taskkill //PID <pid> //F`，PID 用 `netstat -ano \| grep 8099` 查），再 `pnpm build` |
-| 背景是一整片三色渐变，没有色带在动 | `canvas.getContext('webgl')` 返回 null，`IridescentBackground.tsx` 静默降级成一段 CSS 渐变，不打印任何日志 | 换支持 WebGL 的浏览器，或在浏览器设置里恢复图形加速；这不是构建错误，`pnpm build` 不会因此失败 |
-| 把截图放进了 `public/projects/`，刷新页面卡片还是星点 | 文件名不等于 `slug`，或后缀不在 `png/webp/jpg/jpeg` 里，或没重跑 `pnpm build` | `ls public/projects` 核对文件名，再 `pnpm build` |
-| 改了 `src/app/globals.css` 的 `--color-accent`，背景色带没变 | 背景色带读的是 `site.ts` 的 `palette.colors`，与 `@theme` 是两套 | 换背景配色改 `palette.colors` |
-| 从 `palette` 里删掉某个字段后，背景的观感跳了一下 | 组件里写了一套 `?? 默认值` 兜底，且默认值与 `site.ts` 的值不同（见 AGENTS.md 已知坑） | 把字段补回来，不要留空 |
-| 移动端拖不动 Contact 的吊牌 | 吊牌靠 pointer 事件驱动，元素上写了 `touch-none` 阻止浏览器接管触摸，但这条路径从没在真机上测过 | 当作已知未验证项，见下面一段；先别去改文件里的物理常量 |
+| 首屏没有光轨、一片纯色 | `prefers-reduced-motion` 开着时这是**预期行为**（静态只画一帧，画布尺寸异常时才可能全黑） | 先关掉系统的「减少动态效果」再刷新；仍异常再查控制台 |
+| 把截图放进了 `public/projects/`，刷新页面卡片还是字型水印 | 文件名不等于 `slug`，或后缀不在 `png/webp/jpg/jpeg` 里，或没重跑 `pnpm build` | `ls public/projects` 核对文件名，再 `pnpm build` |
+| 改了 `--color-accent`，光轨没变色 | 浏览器缓存了旧产物 | 硬刷新（Ctrl+Shift+R）；`LightTrails` 在 `resize` 时才重读 CSS 变量，dev 下改完可手动缩一下窗口 |
 | 访问 `/marx-cloud/` 或 `/corpus/` 是 404 | 产物没同步或没重新构建（`public/` 下没有这两个目录） | `node tools/sync-showcases.mjs` 后 `pnpm build` |
 | 子页面打开是空白、控制台报资源 404 | 子页面按相对路径引用资源，被从别的绝对路径访问时基准不对；本站部署是 `/<名字>/index.html`，正常不会遇到 | 用 `out/marx-cloud/index.html` 起服务复现，别改子页面里的路径 |
 | 线上打开 `/marx-cloud/` 或 `/corpus/`：页面文字都在，但星图不动、转换器点不动，Network 里 `/assets/index-….js` 或 `/data.js` 是 404 | 实际访问路径少了末尾斜杠（`/marx-cloud`），相对路径的基准就变成了站点根，资源全去找根目录 | 别去改子页面里的路径。确认 `next.config.ts` 的 `trailingSlash: true` 还在并重新部署（`npx vercel build` 后看 `.vercel/output/config.json` 应有一条把路径补成 `/$1/` 的 308）；本地 `python -m http.server` 不做这条重定向，复现不出来 |
 | 打开 `https://<部署名>-luz7818.vercel.app` 被跳到 `/login`，页面标题是 `Login – Vercel` | 项目开了 Deployment Protection，它只对 Vercel 自带的 `*.vercel.app` 域名生效（`ssoProtection.deploymentType` 为 `all_except_custom_domains`） | 用有权限的 Vercel 账号登录一次，或改用 `npx vercel curl <部署地址>` 取内容；绑定了自定义域名之后访客走 `luzzz.me` 不受这条影响 |
 | 源仓库已经改了，子页面还是旧的 | 子页面是构建产物副本，不会自动跟随 | 重跑同步与构建，把 `public/marx-cloud/`、`public/corpus/` 的变动一起提交 |
 
-移动端只做了 CSS 断点适配，**没有在真机上验证过**拖拽手感和 WebGL 帧率。这一条是现状，
+移动端只做了 CSS 断点适配，**没有在真机上验证过**光轨帧率。这一条是现状，
 不是故障；真机测过之后请把结果补进 [AGENTS.md](../AGENTS.md)。
 
 ## 8. 术语小词典
@@ -253,18 +254,20 @@ grep -o 'href="/marx-cloud/"' out/index.html
 | SSR 服务端渲染 | 在服务器上把组件跑成 HTML 再发出去。本仓库**没有**运行时服务，所以没有常驻 SSR |
 | 预渲染 prerender | 构建时就把组件执行一遍、把结果写成静态 HTML。`pnpm build` 输出里的 `(Static)` 就是它 |
 | 静态导出 `output: "export"` | 让 Next 只产出 HTML/CSS/JS 文件、不生成任何服务端代码。`out/` 因此能扔到任意静态托管上 |
-| 客户端组件 `'use client'` | 该文件会在浏览器里运行、能用 `useState` 和 DOM。`src/components/` 下 9 个文件全是；`src/app/` 下 2 个不是 |
+| 客户端组件 `'use client'` | 该文件会在浏览器里运行、能用 `useState` 和 DOM。`src/components/` 下 10 个是，`Aurora`/`Marquee` 这 2 个不是；`src/app/` 下 2 个不是 |
 | 水合 hydration | 浏览器接到服务端 HTML 后，把事件与状态挂上去、让它变成可交互的同一棵树 |
 | `route.ts` / `middleware.ts` | 服务端接口与请求拦截入口。本仓库刻意没有，加了就会和静态导出冲突 |
-| WebGL | 浏览器里直接驱动 GPU 画东西的 API。背景的色带就是一张全屏 WebGL 画布 |
-| 片段着色器 `FRAG` | 在 GPU 上对每个像素跑一遍的那段 GLSL 源码，决定这个像素取哪个色带、多亮。在 `IridescentBackground.tsx` 里 |
-| 顶点着色器 `VERT` | 同一段程序的另一半，只负责把两个三角形顶点铺满屏幕 |
-| uniform | 从 JS 侧传进着色器的一次性参数，如 `uTime`、`uColors`、`uBandScale`。`site.ts` 的 `palette` 就是通过它们生效 |
-| 域扭曲 domain warp | 先把坐标用一层 `sin`/`cos` 折一遍再取色带，色带因此显得像流体而不是同心圆 |
-| DPR `devicePixelRatio` | 物理像素与 CSS 像素的比值，代码里取 `min(dpr, 2)` 上限，防止高刷屏上着色器跑不动 |
-| rAF `requestAnimationFrame` | 逐帧回调，驱动 `uTime` 递增。标签页不可见时代码会停掉它以省 GPU |
-| `IntersectionObserver` | 元素进没进视口。这里两处用：`Reveal` 的进场动画，和背景滚出屏幕时暂停 |
-| `prefers-reduced-motion` | 系统级「减少动态效果」开关。三处响应它，改的时候要一起改（AGENTS.md 约定第 7 条） |
+| Canvas 2D | 浏览器自带的二维画布 API。首屏的长曝光车流就是一张全屏 canvas，不需要 WebGL |
+| `lighter` 混合 | canvas 的叠加混合模式，光轨靠它把前后帧的光点亮度叠起来，做出长曝光观感 |
+| 拖尾 trail fade | 每帧先用半透明底色盖一遍画布再画新光点，旧光点逐帧变暗，形成尾迹 |
+| DPR `devicePixelRatio` | 物理像素与 CSS 像素的比值，代码里取 `min(dpr, 2)` 上限，防止高刷屏上画布跑不动 |
+| rAF `requestAnimationFrame` | 逐帧回调，驱动车流前进。标签页不可见时代码会停掉它以省 GPU |
+| `IntersectionObserver` | 元素进没进视口。`Reveal` 的进场动画用它，命中一次即断开 |
+| `prefers-reduced-motion` | 系统级「减少动态效果」开关。三层响应它：`globals.css` 的全局规则、`LightTrails` 的静态单帧、各 Motion 组件的 `useReducedMotion()` 降级（AGENTS.md 约定第 7 条） |
+| Motion (`motion/react`) | 本站唯一的动画引擎：进场揭示、磁性按钮、聚光边框、3D 倾斜、数字滚动、滚动编排都由它驱动。不要与 GSAP 混用 |
+| `@property` | 把自定义属性注册成带类型的可动画属性。9 个颜色 token 注册后,`:root` 上的 `transition` 让主题切换呈全页涟漪渐变 |
+| Lenis | 惯性平滑滚动库(`SmoothScroll.tsx`),滚轮经 lerp 平滑后仍驱动原生滚动,`useScroll` 一切照常;锚点经 `smoothTo()` 走它的缓动 |
+| `data-theme` | `<html>` 上的主题标记，值为 `dark`/`light`。预水合脚本首帧前写入，`globals.css` 的亮色变量靠 `[data-theme='light']` 选择器生效 |
 | 变量字体 woff2 | 一个字体文件里内嵌多档字重。`@font-face` 声明 `font-weight: 100 900` 覆盖整段 |
 | Tailwind v4 `@theme` | 用 CSS 变量声明设计令牌，`--color-accent` 会自动变成 `text-accent` 这类工具类 |
 | Turbopack | Next 16 默认的打包器，`pnpm dev` 与 `pnpm build` 输出第一行的 `(Turbopack)` 就是它 |

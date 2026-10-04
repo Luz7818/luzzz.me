@@ -17,6 +17,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务端、没有接口、没有数据库，
 页面内容全部来自 `src/data/site.ts` 与组件里的硬编码文案，构建结果是 `out/` 下的一堆静态文件。
+桌面与移动端走「三幕滚动驱动场景」（开场 → 项目环形 → 工牌联系），`prefers-reduced-motion`
+用户由 CSS 切换到经典竖排布局（Hero/About/Projects/Contact 原有堆叠）。
 
 ## 当前真实状态
 
@@ -25,14 +27,14 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 | 类型检查 | 退出码 0，无任何输出 | `npx tsc --noEmit` |
 | ESLint | 退出码 0，无输出；`npm run lint` 实际检查 16 个文件（`src/` 下 12 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
 | 构建 | 退出码 0，两条路由 `/` 与 `/_not-found`，均标为 Static | `pnpm build` |
-| 导出产物 | `out/` 共 202 个文件（`_next` 12 + `marx-cloud` 171 + `_not-found` 5 + `corpus` 4 + `404` 2 + 根下 8），含被原样拷进去的 `out/README.md`；`marx-cloud` 的文件数随其 `portraits/`+`avatars/` 图像数浮动，别拿总数当判据 | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
+| 导出产物 | `out/` 共 212 个文件（`_next` 12 + `marx-cloud` 171 + `_not-found` 5 + `corpus` 4 + `404` 2 + 根下 8 + `projects/` 5 张图（2 真截图 + 3 风格化封面 webp）+ `fonts/` 2 个字体），含被原样拷进去的 `out/README.md`；`marx-cloud` 的文件数随其 `portraits/`+`avatars/` 图像数浮动，别拿总数当判据 | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里有两行：`output: "export"` 与 `trailingSlash: true`（后者为子页面的相对路径所需，见关键约定 9） | `grep -n "output\|trailingSlash" next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 9,709,985 字节、171 个文件（2026-10-02 起包含 `avatars/`+`portraits/` 共 163 张图，此前副本缺这两目录，换装与侧栏头像在线上是 404）；`public/corpus/` 394,800 字节、4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `www.luzzz.me` **已生效**：HTTPS 200，返回真实站点（不是 Vercel 登录页），`/marx-cloud/` 与 `/corpus/` 两个子页面同样 200 且页内本地引用 0 断链。apex `luzzz.me` **仍未生效**：DoH 查 A 是空答复，直连表现为 `SSL: UNEXPECTED_EOF_WHILE_READING`。两个域名都在项目 Aliases 里但 `domains` 的 `verificationRecord` 为 `null`。**不要把任何具体接入 IP 写进 DNS 说明**：`www` 走任播，实测同一天两次解析结果就不同；apex 要填的值以 `npx vercel domains inspect luzzz.me` 当场打印的为准（本文早先写的 `76.76.21.21` 是 Vercel 旧共用 IP，已作废） | DoH 免登录复核（apex 那行应为 `[]`）：`python -c "import json,urllib.request as u; [print(n,t,[a['data'] for a in json.load(u.urlopen(f'https://dns.google/resolve?name={n}&type={t}',timeout=20)).get('Answer',[])]) for n,t in [('luzzz.me','A'),('www.luzzz.me','A')]]"`；线上确实返回站点而非登录墙：`python -c "import urllib.request as u;b=u.urlopen(u.Request('https://www.luzzz.me/marx-cloud/',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read();print('思想云' in b.decode('utf-8'))"` 应为 `True`（探测页面标题里的「思想云」，不钉死会随部署变掉的资源哈希；被登录墙挡时页面标题是 `Login – Vercel`） |
-| 源文件 | `src/` 下 14 个文件，其中 12 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l` |
-| 组件 | 9 个，全部以 `'use client'` 开头 | `grep -rl "^'use client'" src/components \| wc -l` |
-| 运行时依赖 | 3 个：`next` `react` `react-dom` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
+| 源文件 | `src/` 下 25 个文件，其中 23 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
+| 组件 | 20 个（`src/components/` 17 + `src/components/scenes/` 3），其中 18 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 20）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 18） |
+| 运行时依赖 | 6 个：`next` `react` `react-dom` `motion` `@phosphor-icons/react` `lenis` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
 | Node / pnpm | `v24.19.0` / `10.33.0`（`packageManager` 声明 `pnpm@10.33.0`） | `node -v && pnpm -v` |
 | `next start` | 不可用：先打印 `✓ Ready`，紧接着抛错，退出码 1 | `npx next start` |
 | 测试 | 仓库内没有任何测试或 CI | `git ls-files \| grep -iE "test\|spec"` 与 `ls .github` |
@@ -43,12 +45,13 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 
 | 路径 | 职责 | 关键点 |
 |---|---|---|
-| `src/app/layout.tsx` | 根布局与 metadata | `metadata.description` 取的就是 `profile.lead`，改文案会同时改 SEO 描述 |
-| `src/app/page.tsx` | 唯一的页面，装配背景、导航与五个板块 | `findPreviews()` 在预渲染时读 `public/projects/` |
-| `src/app/globals.css` | Tailwind 入口 + `@theme` 主题色 + `@font-face` | UI 配色在这里，不在 `site.ts` |
-| `src/components/` | 9 个客户端组件 | 逐文件说明与字段消费表见 `src/README.md` |
-| `src/data/site.ts` | 全站手工数据 | 导出 `profile` / `services` / `projects` / `palette` 与类型 `Project` / `Service` |
-| `public/` | 原样进产物的静态资源 | `fonts/jetbrains-mono-var.woff2` 是唯一手写资源；`marx-cloud/` 与 `corpus/` 是外仓构建产物副本；`projects/` **当前不存在**需手工建；本目录的 `README.md` 也会被拷进 `out/` |
+| `src/app/layout.tsx` | 根布局与 metadata | `metadata.description` 取的就是 `profile.lead`，改文案会同时改 SEO 描述；body 首行有内联主题脚本，在首屏渲染前把 `<html data-theme>` 定为 localStorage 的 `luzzz-theme`（缺省跟随系统、默认暗色），删了会白闪 |
+| `src/app/page.tsx` | 唯一的页面，装配双树：三幕场景（`motion-safe` 才显示）+ 经典竖排（reduced 兜底） | `findPreviews()` 在预渲染时读 `public/projects/`；两棵树共享同一份 `previews` |
+| `src/app/globals.css` | Tailwind 入口 + `@theme` 主题令牌 + `@font-face` | UI 配色在这里，不在 `site.ts`；`@theme` 9 个 `--color-*`（暗色默认）+ `[data-theme='light']` 同名覆盖 9 个（亮色），共 18 行（复核：`grep -c "^  --color-" src/app/globals.css`）；强调色唯一（琥珀家族，两主题各一档对比度），`--color-live` 是语义色；光轨/聚光/极光/颗粒/导航玻璃的氛围变量也分主题放在这里 |
+| `src/components/` | 17 个组件（15 客户端 + 2 服务端）：三幕之外的全部板块与动效件 | 逐文件说明与字段消费表见 `src/README.md` |
+| `src/components/scenes/` | 三幕组件：`Act1Intro`（开场两拍）、`Act2Ring`（3D 环形轮播 + 滚动吸附）、`Act3Badge`（工牌放大 → 联系页） | 每幕 = 高 wrapper + `sticky top-0 h-dvh` 舞台；锚点经 `registerSceneAnchors()` 注册，不占元素 id |
+| `src/data/site.ts` | 全站手工数据 | 导出 `profile` / `stats` / `marquee` / `projects` 与类型 `Project` |
+| `public/` | 原样进产物的静态资源 | `fonts/` 两个自托管字体；`projects/` 两张真截图（2026-10-03 起，换图后要重跑 `pnpm build`）；`marx-cloud/` 与 `corpus/` 是外仓构建产物副本；本目录的 `README.md` 也会被拷进 `out/` |
 | `out/` `.next/` `tsconfig.tsbuildinfo` | 构建产物 | 均被 `.gitignore` 忽略，不要手改 |
 | `CLAUDE.md` | 一行 `@AGENTS.md` | 由同一个 Next.js 机制写入，内容不要展开 |
 
@@ -61,9 +64,9 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    `next/image`**。在 `next dev` 里用这些会直接报错。本仓库这三项都是空的：
    `find src -name "route.ts" -o -name "middleware.ts"`、`grep -rn "next/image" src/`、
    `grep -rn "next/font" src/`。
-2. **`Projects.tsx` 用原生 `<img>` 是配套选择**：导出模式要用 `next/image` 得另配 custom image loader，
-   而这里只是本地截图，不值当。它带一行 `// eslint-disable-next-line @next/next/no-img-element`
-   （`Projects.tsx` 第 58 行）。该规则配的是 warn 级（复核：`npx eslint --print-config
+2. **`Projects.tsx` 与 `Act2Ring.tsx` 用原生 `<img>` 是配套选择**：导出模式要用 `next/image` 得另配
+   custom image loader，而这里只是本地截图，不值当。两处各带一行
+   `// eslint-disable-next-line @next/next/no-img-element`。该规则配的是 warn 级（复核：`npx eslint --print-config
    src/components/Projects.tsx` 里 `no-img-element` 的值为 `[1]`），所以删掉那行注释后
    `npm run lint` 依然退出码 0，只能从输出多出来的那一行发现。
 3. **预览图的换图逻辑在 `src/app/page.tsx` 的 `findPreviews()`**：用 `node:fs` 按 `site.ts` 里
@@ -71,9 +74,9 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    `/projects/<slug>.<ext>` 传给 `Projects`；目录不存在时返回空对象，`Projects.tsx` 于是渲染
    `GeneratedPreview` 的星点 SVG 兜底。这一步发生在**预渲染时**，所以截图放进 `public/projects/`
    之后必须重跑 `pnpm build` 才会换图，`pnpm dev` 下则是每次请求现算。
-4. **`site.ts` 是唯一数据源，但不是全部文案**：`palette` 只管 WebGL 背景的 6 个色值；
-   页面文字配色是 `globals.css` 的 `@theme` 里 7 个 `--color-*`
-   （复核：`grep -c "^  --color-" src/app/globals.css`）。写死在组件里的文案见「已知坑」第 2 条。
+4. **`site.ts` 是唯一数据源，但不是全部文案**：页面配色是 `globals.css` 的两套 `--color-*`
+   token（暗色 `@theme` 默认 + 亮色 `[data-theme='light']` 覆盖，复核：
+   `grep -c "^  --color-" src/app/globals.css` 得 18）。写死在组件里的文案见「已知坑」第 2 条。
 5. **`.env.local` 与应用代码无关**：`.gitignore` 忽略 `.env*`；`src/` 下没有任何 `process.env`
    （复核：`grep -rn "process\.env" src/`）。`next dev` / `next build` 打印的
    `- Environments: .env.local` 只是 Next 自己在加载它，导出的 HTML 里没有任何来自它的值。
@@ -82,9 +85,15 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    扫预览图那处，依赖「运行时工作目录 = 仓库根」这个前提，dev 与 build 下都成立。换成 `__dirname`
    或 `import.meta.url` 作基准就变成产物目录内的相对位置，路径要跟着改；改完的判据是放一张截图后
    `grep -o "<img" out/index.html \| wc -l` 从 0 变成非 0。
-7. **`prefers-reduced-motion` 有三处实现，要一起改**：`globals.css` 末尾把动画时长压到 `0.001ms`；
-   `IridescentBackground.tsx` 把 `uTime` 钉在 12 且不起 rAF 循环；`Contact.tsx` 的 `Lanyard`
-   只调一次 `draw()`。只改一处会出现「页面不动但背景还在流」。
+7. **`prefers-reduced-motion` 的实现分四层，要一起改**：`page.tsx` 的双树由 CSS 切换
+   （三幕包在 `hidden motion-safe:block` 里，经典竖排在 `block motion-safe:hidden` 里，纯 CSS 无闪烁）；
+   `globals.css` 末尾把 CSS 动画时长压到 `0.001ms`；`LightTrails.tsx` 在 reduced 下只画一帧带尾迹的
+   静态光轨、不起 rAF 循环（`FluidGlass` 的 WebGL 层在 reduced 下直接不初始化）；
+   各 Motion 组件用 `useReducedMotion()` 把进场/磁性/倾斜/数字滚动降级为直接可见或禁用。
+   只改一处会出现「卡片不动但光轨还在流」。**注意：`useReducedMotion()` 在客户端首帧就同步读
+   matchMedia（SSR 恒为 false），禁止按它的返回值分支 DOM 结构，只许分支 Motion props——
+   否则 reduced 用户 hydration 文本不匹配整树重渲染**（`SplitChars` 曾踩过，见已知坑）。
+
 
 8. **`public/marx-cloud/` 与 `public/corpus/` 是别的仓库的构建产物，不要手改**。
    它们是 Marx_Cloud 与 Traffic_terminology 的 `dist/`、`web/` 拷贝，提交进本仓库是因为
@@ -119,18 +128,47 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
    改回来的判据：`npx vercel build` 后读 `.vercel/output/config.json`，`Location` 为 `/$1/`
    的那条 308 存在、`/$1`（不带斜杠）那条不存在。副作用是 `/_not-found` 与 `/404` 变成目录形式，
    产物里多出 `out/404/index.html`（所以产物数是 39 而不是 38）。
+
+10. **主题切换链路不能拆**：预水合脚本（`layout.tsx`，首帧前写 `<html data-theme>`）→
+    `ThemeToggle.tsx` 改 `data-theme` 并写 localStorage `luzzz-theme`、分发 `luzzz-themechange` 事件 →
+    `LightTrails.tsx` 监听该事件重读 `--trail-*` 变量重绘画布。切主题的丝滑感来自 `globals.css` 里
+    9 个 `@property` 注册的颜色 token + `:root` 上的 `transition`（颜色全页涟漪渐变）；
+    **不要改回 View Transitions 整页快照**——持续动画画布下它会卡。滚动丝滑来自 `SmoothScroll.tsx`
+    的 Lenis（实例挂 `window.__lenis`，锚点经 `smoothTo()` 走它的缓动）。
+    动画引擎只用 `motion`，不要引入 GSAP 与它混用（同一棵树会争帧）。
    另：`vercel build` / `vercel pull` 会把产物与项目元数据写进 `.vercel/`，
    因此 `globalIgnores` 里也要有 `.vercel/**`，否则 `npm run lint` 会去检查那堆压缩 JS。
+
+11. **三幕场景的锚点与吸附**：三幕里锚点不再是元素 id（经典树已占用 `#top/#about/#projects/#contact`），
+    各幕挂载时经 `registerSceneAnchors()`（`SmoothScroll.tsx`）注册「锚点 → 目标滚动位置」解析器，
+    `smoothTo()` 优先查场景锚点（reduced 下跳过走老锚点），两套互不冲突、无重复 id。
+    **滚动吸附是全局的**（SmoothScroll 的 settle）：三幕经 `registerSnapAnchors()` 注册 9 个
+    「完整画面」锚点（页顶 / 开场第二拍 / 5 张环卡 / 工牌落定 / 联系页），停滚 300ms 后吸附到
+    最近锚点（阈值 0.92×视口高，幕间过渡走廊无死角；四次缓动 0.65s）；`wheel`/`touchmove`
+    立即取消吸附让位给用户。`Act2Ring` 内部不再有自己的吸附循环。
+    环形旋转窗口常量 `CORE = [0.06, 0.94]`（头尾留入场与交棒），改幕高（480vh）或卡宽时
+    锚点与 `goTo()` 都从同一常量推导，别单改一处。
+
+12. **背景 = 纯 2D 光轨 + 遮罩；水波只在透镜上**：`TrailsBackdrop.tsx`（三幕树）=
+    `LightTrails` 2D 画布直出 + 两层半透压暗遮罩，**没有 WebGL**。早年这里有过 ogl 流体合成层，
+    因刷新时机产生画面撕裂、每帧全屏纹理上传拖累滚动，已整体移除（ogl 依赖随之删除）——
+    别再往背景里加 WebGL 层；「背后的元素晕开」由 `Cursor.tsx` 的水滴透镜承担：
+    `.cursor-lens`（80px，**无任何可见描边**）挂 `backdrop-filter: url(#luzzz-liquid)`
+    （feTurbulence + feDisplacementMap，scale 由光标速度驱动、上限 64、快攻慢放），
+    透镜底下真实 DOM（文字/卡片/导航）实时扭成水波；光标本体是 4px 的 `--cursor-core`
+    小点（暗暖白/亮墨色）+ 一层 accent 光晕。透镜用 transform 模板定位时 x/y 必须写进模板
+    （Motion 里 `transform` 字符串会整体覆盖 x/y）。Chromium 生效；Firefox/Safari 不支持
+    SVG backdrop-filter，自动退化为纯小点（不可修，别为此引库）。
 
 ## 改动后的验证
 
 | 你动了 | 必须跑 | 通过标准 |
 |---|---|---|
 | `src/` 下任何 TS/TSX | `npx tsc --noEmit && npm run lint && pnpm build` | 三条命令退出码都是 0 |
-| `src/data/site.ts` 的 `projects` | `pnpm build` 后 `grep -o "<circle" out/index.html \| wc -l` | 数值等于项目卡数 × 90（当前 450，且只在没有截图时成立） |
-| `src/data/site.ts` 的 `palette` | `pnpm dev` 刷新看背景 | 色带随之变化，不需要改组件 |
-| `src/app/globals.css` 的 `@theme` | `pnpm dev` 刷新 | 文字与强调色变化；背景色带**不会**变，那归 `palette.colors` |
-| `IridescentBackground.tsx` 的着色器源码 | `pnpm dev` 后开控制台 | 没有 `compile` 打出的 `console.error`（着色器编译失败只会静默降级成 CSS 渐变） |
+| `src/data/site.ts` 的 `projects` | `pnpm build` 后 `grep -o "<img" out/index.html \| wc -l` | 数值 = 有图卡片数 × 2（双树各渲染一遍，当前 5 张全有图 → 10；`marx-cloud`/`traffic-terminology` 是真截图，其余 3 张是 `tools/covers/` 生成的风格化封面）；无图卡渲染 `.hairline-grid` 字型水印兜底，不报错 |
+| `src/app/globals.css` 的 `@theme` | `pnpm dev` 刷新 | 文字与强调色变化；`--color-accent` 同时驱动 `LightTrails` 的琥珀光轨，改它光轨跟着变 |
+| 主题切换链路（约定 10） | 点 `ThemeToggle`，查 `<html data-theme>` 与 `localStorage['luzzz-theme']`；再刷一次确认无白闪 | 两主题都渲染正常，光轨颜色跟随主题重绘；`prefers-reduced-motion` 下切换是瞬时的 |
+| `LightTrails.tsx` 的车道常量 | `pnpm dev` 刷新，缩窄窗口过 640px | 车道整体下移（`LANES_NARROW`），不穿过正文文字区 |
 | `public/` 下任何文件 | `pnpm build` 后 `ls out` | 对应文件原样出现在 `out/` 下 |
 | 子页面（改的是 Marx_Cloud / Traffic_terminology） | `pnpm sync:showcases && pnpm build` 后 `grep -c 'class="back"' out/marx-cloud/index.html out/corpus/index.html` | 同步脚本会重跑 Marx 的 `vite build`；两条各输出 1，浏览器里点它应回到本站首页 |
 | `next.config.ts`（尤其 `trailingSlash`） | `pnpm build` 后 `npx vercel pull --yes && npx vercel build`，读 `.vercel/output/config.json` 里带 `Location` 的 308 方向 | `/$1/` 那条在、`/$1` 那条不在；线上 `/<子页面>/` 打开时 Network 面板没有 404 资源 |
@@ -142,23 +180,39 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务�
 
 - **本文件顶部的 `nextjs-agent-rules` 块由 `next dev` 管理**，缺失时会被重新写回。正文一律写在块
   之外，`upsertAgentRulesBlock` 只替换两个标记之间的内容，块外的东西不会被动。
-- **写死在组件里的文案**，改站点文字时最容易漏：`Hero.tsx` 的 `EST 2022`；`About.tsx` 的 4 组数字
-  （`7 公开仓库`、`2022 GitHub 元年`、`5 主力项目`、`∞ 未完成的点子`）；各板块 `<h2>` 下面那句说明；
-  `Contact.tsx` 里 `ROWS` 的 `HOMEPAGE` 一栏文案与 `https://luz7818.github.io/` 链接；
-  `Projects.tsx` 的「查看详情」与网格断点。这些都不在 `site.ts`。
-- **`About.tsx` 的数字与 `site.ts` 没有代码级关联**：`5 主力项目` 与 `projects` 的 5 条
-  （复核：`grep -c "url: 'https" src/data/site.ts`）现在恰好一致，加一条项目后就不会了。
-- **`site.ts` 内部已经自相矛盾**：`services` 里交通用语语料库的 `sub` 写「8 领域」，`projects` 里
-  同一条目的 `summary` 写「9 类领域」（复核：`grep -n 领域 src/data/site.ts`）。两行都是从源仓库手抄
-  来的，改的时候两处一起改。
-- **`IridescentBackground.tsx` 的 `?? 默认值` 与 `site.ts` 的实际值不同**：例如 `intensity ?? 1.5`
-  而 `palette.intensity` 是 `1.05`，`soft ?? 1.1` 而实际是 `1.7`，`noise ?? 0.15` 而实际是 `0.12`
-  （复核：对照 `palette` 与该文件的 `frame()`）。从 `palette` 里删字段不报错，只会静默换成另一套观感。
-- **着色器文件头注释与实现不符**：`IridescentBackground.tsx` 第 6–9 行写「Bands accumulate additively」，
-  `FRAG` 的实现早已改成按等值环取色加环心过曝（复核：`FRAG` 里的 `float e = abs(2.0 * fract(x) - 1.0);`）。
-  信注释会误判配色模型，以代码为准。
-- **WebGL 不可用时是静默降级**：`getContext('webgl')` 拿不到上下文时给 host 设一个 CSS 渐变就 return，
-  不打印任何东西。背景变成三色渐变不是 bug，先确认运行环境有没有 WebGL。
+- **写死在组件里的文案**，改站点文字时最容易漏：`Hero.tsx` 的两行大标题与「看项目」按钮；
+  `Act1Intro.tsx` 的两行大标题（与 Hero 各存一份，两棵树）；`Act2Ring.tsx` 的「滚动旋转环岛 · 停住自动对齐整卡」
+  提示行；`Act3Badge.tsx` 的工牌装饰行（`LUZ · STAFF PASS`、`luzzz.me · № 0001`、挂绳孔）；
+  `Projects.tsx` 的字型水印 `ZSX`/`TF`/`TH`、横向卡宽（featured 720px / 其余 480px）与
+  卷轴降级断点（≥1024px 且非 reduced 才钉屏平移）；`Nav.tsx` 的 `LINKS`（关于/项目/联系）；
+  `Marquee.tsx` 消费 `site.ts` 的 `marquee`，但词条内容改数据即可。这些都不在 `site.ts`。
+- **`useReducedMotion()` 会破坏 hydration**：motion 的实现是 `useState(prefersReducedMotion.current)`，
+  客户端首帧就同步读 matchMedia，而 SSR 恒为 false。按它的返回值分支 DOM 结构（如 reduced 时返回纯文本）
+  会让 reduced 用户控制台报「server rendered text didn't match」并整树重渲染。正确姿势：
+  结构恒定，只分支 Motion props（`initial`/`whileInView`/variants）。`Cursor` 用
+  `useSyncExternalStore`（hydration 期取 server snapshot）则不受影响。
+- **无头截图的合成帧滞后**：IAB/无头浏览器里 Motion 每帧改 transform，`screenshot()` 常捕到上一帧
+  （表现为「DOM 计算样式是对的、截图里元素却没动」）。对策：截图前 `window.scrollTo(0, scrollY ± 1)`
+  触发重合成，等 1–2s 再截；偶发 `screenshot surface preparation timed out` 时隔几秒重试。
+  Edge 无头 `--virtual-time-budget` 遇常驻 rAF 会假死挂起，别用。
+- **IAB 面板后台化会冻结一切 rAF/CSS 动画**：浏览器走查前先
+  `await (await browser.capabilities.get("visibility")).set(true)`，否则截图全是冻结帧，
+  且画布类效果看起来像坏了（其实是环境的锅）。
+- **内嵌面板隐藏时视口坍缩为 0**：隐藏期间挂载/测量的元素拿到的 `getBoundingClientRect`
+  全是 0（会被 `Math.max(1, …)` 钳成 1px），面板恢复后**没有任何 resize 事件**，测量值就永远错下去
+  （2026-10-04 实际踩过：LightTrails 画布 2×2 被拉伸成全屏糊状「连线」）。对策：
+  一切按元素尺寸工作的画布/量测必须挂 ResizeObserver（LightTrails 的画布、Act3Badge 的工牌、
+  SmoothScroll 代理 body 高度给 Lenis），不要只依赖 window resize；页面里同时存在两棵树时，
+  `window` 上的调试探针会被后挂载的实例覆盖，要按实例分别暴露。
+- **持续动画会让浏览器截图超时或拿到过期帧**：光轨（rAF）、跑马灯与极光（CSS 无限动画）常驻运行，
+  无头截图容易 30s 超时或捕到旧合成帧（表现为「内容明明在 DOM 里却没画出来」）。更隐蔽的是：
+  标签页处于后台时 rAF 与 CSS transition 全部冻结——`@property` 主题过渡采样会停在起始色、
+  Motion 的 whileInView 内容停在入场前透明态，全是环境的锅不是代码的锅。验证办法：
+  注入 `*{animation-play-state:paused !important}` 与 `:root{transition:none !important}` 后再切主题截图，
+  或超时后隔几秒重试；别把截图里的异常当真 bug，先拿 DOM 计算样式核对。
+- **压缩器会吃掉 `.panel` 的标准 `backdrop-filter`**：`backdrop-filter` 与 `-webkit-backdrop-filter`
+  同时声明时，顺序必须是 **标准属性在后**，否则构建产物只留 `-webkit-` 前缀版，Chromium 的
+  computed 值变 `none`，玻璃模糊静默失效（复核：构建后 grep `.panel{` 应同时含两者）。
 - **`public/` 下的任何文件都原样进产物，包括文档本身**：`public/README.md` 会被拷成 `out/README.md`
   （复核：`diff -q public/README.md out/README.md` 无输出）。这是 Next 对 `public/` 的固定行为，
   改不了；不想让说明进部署包就别放在 `public/` 下。

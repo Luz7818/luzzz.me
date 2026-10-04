@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../../public/fonts/jetbrains-mono-var.woff2') format('woff2');
+    font-weight: 100 900;
+  }
+  html, body { margin: 0; padding: 0; background: #0a1016; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1536" height="960" viewBox="0 0 1536 960" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1016"/>
+      <stop offset="0.55" stop-color="#0c1520"/>
+      <stop offset="1" stop-color="#0a1016"/>
+    </linearGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgba(232,238,244,0.04)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="riseAmber" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="rgba(245,168,60,0)"/>
+      <stop offset="0.4" stop-color="rgba(245,168,60,0.8)"/>
+      <stop offset="0.72" stop-color="rgba(245,168,60,0.95)"/>
+      <stop offset="1" stop-color="rgba(58,223,146,1)"/>
+    </linearGradient>
+    <radialGradient id="loopGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.62" stop-color="rgba(245,168,60,0)"/>
+      <stop offset="0.8" stop-color="rgba(245,168,60,0.1)"/>
+      <stop offset="0.87" stop-color="rgba(245,168,60,0.22)"/>
+      <stop offset="0.95" stop-color="rgba(245,168,60,0)"/>
+    </radialGradient>
+    <radialGradient id="terminal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#eafff4"/>
+      <stop offset="0.3" stop-color="#3adf92"/>
+      <stop offset="1" stop-color="rgba(58,223,146,0)"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.48" r="0.75">
+      <stop offset="0.55" stop-color="rgba(4,8,12,0)"/>
+      <stop offset="1" stop-color="rgba(4,8,12,0.6)"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="softer" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="15"/></filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <rect width="1536" height="960" fill="url(#bg)"/>
+  <rect width="1536" height="960" fill="url(#grid)"/>
+
+  <!-- 评测闭环:四段弧,琥珀/冰白交替,箭头示意循环 -->
+  <circle cx="920" cy="480" r="330" fill="url(#loopGlow)"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M 920 150 A 330 330 0 0 1 1250 480" stroke="rgba(245,168,60,0.85)" stroke-width="10" filter="url(#softer)" opacity="0.5"/>
+    <path d="M 920 150 A 330 330 0 0 1 1250 480" stroke="rgba(245,168,60,0.9)" stroke-width="3.5"/>
+    <path d="M 1250 480 A 330 330 0 0 1 920 810" stroke="rgba(208,224,240,0.7)" stroke-width="8" filter="url(#softer)" opacity="0.4"/>
+    <path d="M 1250 480 A 330 330 0 0 1 920 810" stroke="rgba(208,224,240,0.75)" stroke-width="2.5"/>
+    <path d="M 920 810 A 330 330 0 0 1 590 480" stroke="rgba(245,168,60,0.8)" stroke-width="9" filter="url(#softer)" opacity="0.45"/>
+    <path d="M 920 810 A 330 330 0 0 1 590 480" stroke="rgba(245,168,60,0.85)" stroke-width="3"/>
+    <path d="M 590 480 A 330 330 0 0 1 920 150" stroke="rgba(208,224,240,0.6)" stroke-width="7" filter="url(#softer)" opacity="0.35"/>
+    <path d="M 590 480 A 330 330 0 0 1 920 150" stroke="rgba(208,224,240,0.65)" stroke-width="2.2"/>
+  </g>
+  <!-- 弧段箭头 -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 1214 420 L 1250 480 L 1218 536" stroke="rgba(208,224,240,0.8)" stroke-width="3"/>
+    <path d="M 862 776 L 920 810 L 864 848" stroke="rgba(245,168,60,0.85)" stroke-width="3"/>
+    <path d="M 626 540 L 590 480 L 622 424" stroke="rgba(208,224,240,0.7)" stroke-width="2.6"/>
+    <path d="M 978 184 L 920 150 L 976 112" stroke="rgba(245,168,60,0.9)" stroke-width="3"/>
+  </g>
+  <!-- 环上节点 -->
+  <g>
+    <circle cx="920" cy="150" r="9" fill="#0a1016" stroke="rgba(245,168,60,0.9)" stroke-width="2.5"/>
+    <circle cx="1250" cy="480" r="8" fill="#0a1016" stroke="rgba(208,224,240,0.8)" stroke-width="2.5"/>
+    <circle cx="920" cy="810" r="9" fill="#0a1016" stroke="rgba(245,168,60,0.85)" stroke-width="2.5"/>
+    <circle cx="590" cy="480" r="8" fill="#0a1016" stroke="rgba(208,224,240,0.7)" stroke-width="2.5"/>
+  </g>
+  <!-- 环心:当前分数 -->
+  <text x="920" y="470" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-weight="700" font-size="96" fill="rgba(232,238,244,0.92)">100%</text>
+  <text x="920" y="524" text-anchor="middle" font-family="'JetBrains Mono', Consolas, monospace" font-weight="500" font-size="26" fill="rgba(150,168,187,0.75)" letter-spacing="6">REGRESSION</text>
+
+  <!-- 自进化上升曲线:从环左下切入,穿环心,冲出右上 -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M 60 880 C 340 830, 560 740, 780 610 C 1000 480, 1120 350, 1310 210" stroke="url(#riseAmber)" stroke-width="18" filter="url(#softer)" opacity="0.55"/>
+    <path d="M 60 880 C 340 830, 560 740, 780 610 C 1000 480, 1120 350, 1310 210" stroke="url(#riseAmber)" stroke-width="5"/>
+  </g>
+  <!-- 曲线刻度标签 -->
+  <g font-family="'JetBrains Mono', Consolas, monospace" font-weight="500" font-size="24" fill="rgba(150,168,187,0.6)">
+    <text x="200" y="828">7.7%</text>
+    <text x="600" y="694">38%</text>
+    <text x="1120" y="378">71%</text>
+  </g>
+  <!-- 终点星爆 -->
+  <circle cx="1310" cy="210" r="90" fill="url(#terminal)" filter="url(#soft)" opacity="0.9"/>
+  <circle cx="1310" cy="210" r="14" fill="#eafff4"/>
+  <g stroke="rgba(58,223,146,0.8)" stroke-width="3" stroke-linecap="round">
+    <path d="M 1310 160 v -34"/><path d="M 1310 260 v 34"/><path d="M 1260 210 h -34"/><path d="M 1360 210 h 34"/>
+    <path d="M 1275 175 l -24 -24"/><path d="M 1345 245 l 24 24"/><path d="M 1275 245 l -24 24"/><path d="M 1345 175 l 24 -24"/>
+  </g>
+
+  <!-- 背景仪表刻度 -->
+  <g stroke="rgba(208,224,240,0.14)" stroke-width="2" stroke-linecap="round">
+    <path d="M 140 120 h 60"/><path d="M 220 120 h 24"/><path d="M 140 160 h 36"/>
+    <path d="M 1330 700 h 80"/><path d="M 1330 740 h 44"/>
+  </g>
+
+  <!-- 字型水印 -->
+  <text x="80" y="240" font-family="'JetBrains Mono', Consolas, monospace" font-weight="700" font-size="200" fill="rgba(232,238,244,0.07)" letter-spacing="6">TH</text>
+  <text x="80" y="896" font-family="'JetBrains Mono', Consolas, monospace" font-weight="500" font-size="22" fill="rgba(150,168,187,0.4)" letter-spacing="3">EVAL · LOCATE · EVOLVE</text>
+
+  <rect width="1536" height="960" fill="url(#vignette)"/>
+  <rect width="1536" height="960" filter="url(#grain)" opacity="0.5" fill="transparent"/>
+</svg>
+</body>
+</html>

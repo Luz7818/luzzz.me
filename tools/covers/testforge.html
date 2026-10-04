@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../../public/fonts/jetbrains-mono-var.woff2') format('woff2');
+    font-weight: 100 900;
+  }
+  html, body { margin: 0; padding: 0; background: #0a1016; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg width="1536" height="960" viewBox="0 0 1536 960" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1016"/>
+      <stop offset="0.5" stop-color="#0d1420"/>
+      <stop offset="1" stop-color="#0a1016"/>
+    </linearGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="rgba(232,238,244,0.04)" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="beam" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="rgba(245,168,60,0)"/>
+      <stop offset="0.6" stop-color="rgba(245,168,60,0.75)"/>
+      <stop offset="1" stop-color="rgba(255,244,224,1)"/>
+    </linearGradient>
+    <linearGradient id="bed" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="rgba(245,168,60,0)"/>
+      <stop offset="0.35" stop-color="rgba(245,168,60,0.85)"/>
+      <stop offset="0.62" stop-color="rgba(255,214,140,1)"/>
+      <stop offset="1" stop-color="rgba(245,168,60,0)"/>
+    </linearGradient>
+    <radialGradient id="flash" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="rgba(255,244,224,0.95)"/>
+      <stop offset="0.3" stop-color="rgba(245,168,60,0.5)"/>
+      <stop offset="1" stop-color="rgba(245,168,60,0)"/>
+    </radialGradient>
+    <radialGradient id="bedGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="rgba(245,168,60,0.22)"/>
+      <stop offset="1" stop-color="rgba(245,168,60,0)"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.48" r="0.75">
+      <stop offset="0.55" stop-color="rgba(4,8,12,0)"/>
+      <stop offset="1" stop-color="rgba(4,8,12,0.6)"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="softer" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="16"/></filter>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"/>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <rect width="1536" height="960" fill="url(#bg)"/>
+  <rect width="1536" height="960" fill="url(#grid)"/>
+
+  <!-- 背景代码残片:低透明度的"待检片段" -->
+  <g stroke="rgba(208,224,240,0.14)" stroke-width="5" stroke-linecap="round">
+    <path d="M 120 150 h 90"/><path d="M 230 150 h 46"/><path d="M 296 150 h 120"/>
+    <path d="M 160 190 h 60"/><path d="M 240 190 h 130"/>
+    <path d="M 120 230 h 44"/><path d="M 184 230 h 96"/>
+    <path d="M 980 120 h 80"/><path d="M 1080 120 h 120"/>
+    <path d="M 1040 160 h 60"/><path d="M 1120 160 h 90"/>
+    <path d="M 1300 300 h 100"/><path d="M 1300 340 h 60"/>
+  </g>
+
+  <!-- 锻造台辉光 -->
+  <ellipse cx="770" cy="640" rx="560" ry="200" fill="url(#bedGlow)"/>
+
+  <!-- 砧座 -->
+  <g>
+    <path d="M 560 640 L 980 640 L 950 668 L 590 668 Z" fill="#0e1622" stroke="rgba(245,168,60,0.55)" stroke-width="2"/>
+    <path d="M 620 668 L 920 668 L 900 712 L 640 712 Z" fill="#0b1219" stroke="rgba(245,168,60,0.3)" stroke-width="1.5"/>
+  </g>
+
+  <!-- 锻床熔线 -->
+  <path d="M 470 640 L 1070 640" stroke="url(#bed)" stroke-width="14" filter="url(#softer)" opacity="0.8"/>
+  <path d="M 470 640 L 1070 640" stroke="url(#bed)" stroke-width="4"/>
+
+  <!-- 锤击光束 -->
+  <g stroke-linecap="round">
+    <path d="M 1240 60 L 772 616" stroke="url(#beam)" stroke-width="22" filter="url(#softer)" opacity="0.7"/>
+    <path d="M 1240 60 L 772 616" stroke="url(#beam)" stroke-width="6"/>
+    <path d="M 1330 150 L 880 640" stroke="rgba(245,168,60,0.35)" stroke-width="3"/>
+    <path d="M 1160 40 L 720 590" stroke="rgba(245,168,60,0.3)" stroke-width="2.5"/>
+  </g>
+
+  <!-- 撞击闪光与火花 -->
+  <circle cx="772" cy="616" r="150" fill="url(#flash)" filter="url(#soft)"/>
+  <circle cx="772" cy="616" r="46" fill="url(#flash)"/>
+  <g stroke-linecap="round">
+    <path d="M 772 596 L 800 520" stroke="rgba(255,214,140,0.9)" stroke-width="3"/>
+    <path d="M 796 620 L 880 590" stroke="rgba(255,214,140,0.7)" stroke-width="2.5"/>
+    <path d="M 750 600 L 690 540" stroke="rgba(255,214,140,0.7)" stroke-width="2.5"/>
+    <path d="M 762 640 L 700 700" stroke="rgba(245,168,60,0.6)" stroke-width="2"/>
+    <path d="M 790 640 L 850 706" stroke="rgba(245,168,60,0.55)" stroke-width="2"/>
+  </g>
+
+  <!-- 悬浮待锻片段(被击中) -->
+  <g transform="rotate(-8 772 520)">
+    <rect x="700" y="486" width="144" height="68" rx="10" fill="rgba(14,22,34,0.9)" stroke="rgba(245,168,60,0.9)" stroke-width="2"/>
+    <path d="M 724 520 h 44 M 784 520 h 36" stroke="rgba(245,168,60,0.8)" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- 已锻成:三个绿勾片段 -->
+  <g>
+    <g transform="rotate(-3 560 760)">
+      <rect x="486" y="726" width="148" height="68" rx="10" fill="rgba(14,22,34,0.92)" stroke="rgba(58,223,146,0.75)" stroke-width="2"/>
+      <path d="M 524 760 l 16 16 l 32 -34" fill="none" stroke="#3adf92" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="rotate(2 770 780)">
+      <rect x="696" y="746" width="148" height="68" rx="10" fill="rgba(14,22,34,0.92)" stroke="rgba(58,223,146,0.6)" stroke-width="2"/>
+      <path d="M 734 780 l 16 16 l 32 -34" fill="none" stroke="#3adf92" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="rotate(-2 980 758)">
+      <rect x="906" y="724" width="148" height="68" rx="10" fill="rgba(14,22,34,0.92)" stroke="rgba(58,223,146,0.5)" stroke-width="2"/>
+      <path d="M 944 758 l 16 16 l 32 -34" fill="none" stroke="#3adf92" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <!-- 字型水印 -->
+  <text x="1150" y="240" font-family="'JetBrains Mono', Consolas, monospace" font-weight="700" font-size="200" fill="rgba(232,238,244,0.07)" letter-spacing="6">TF</text>
+  <text x="80" y="896" font-family="'JetBrains Mono', Consolas, monospace" font-weight="500" font-size="22" fill="rgba(150,168,187,0.4)" letter-spacing="3">FORGE · MUTATION · ACH</text>
+
+  <rect width="1536" height="960" fill="url(#vignette)"/>
+  <rect width="1536" height="960" filter="url(#grain)" opacity="0.5" fill="transparent"/>
+</svg>
+</body>
+</html>

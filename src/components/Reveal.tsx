@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 
+/** 进场包壳:进入视口后弹簧上浮,只演一次。减弱动效下直接可见。 */
 export default function Reveal({
   children,
   className = '',
-  y = 18,
+  y = 22,
   delay = 0,
 }: {
   children: React.ReactNode;
@@ -13,36 +14,16 @@ export default function Reveal({
   y?: number;
   delay?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setShown(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
+  const reduce = useReducedMotion();
   return (
-    <div
-      ref={ref}
+    <motion.div
       className={className}
-      style={{
-        opacity: shown ? 1 : 0,
-        transform: shown ? 'translateY(0)' : `translateY(${y}px)`,
-        transition: `opacity .7s ease ${delay}ms, transform .8s cubic-bezier(.22,1,.36,1) ${delay}ms`,
-      }}
+      initial={reduce ? false : { opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ type: 'spring', stiffness: 80, damping: 20, delay }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
