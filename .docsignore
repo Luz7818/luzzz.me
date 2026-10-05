@@ -7,3 +7,6 @@
 #   - 手工截图目录请放成 public/projects/，它是二级目录，不会被检查到，不要写在这里
 #   - 若把仓库改成 pnpm workspace 并在根下生成 packages/ 之类的聚合目录
 #   - 若接入图片处理或抓图工具生成的一次性产物目录（如 .turbo/、coverage/）
+
+# 文件组织检查(6c)的豁免:根目录散文件
+tsconfig.tsbuildinfo   # tsc 增量构建缓存,自动重建、已 gitignore;Next/TS 默认落在仓根,挪不走
