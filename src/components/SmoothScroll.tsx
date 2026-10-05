@@ -23,6 +23,9 @@ export function registerSceneAnchors(map: Record<string, () => number>) {
 /** 幕页边界:各幕注册自己的 wrap 顶,导航跳转时长 = 1.25s × 跨越幕数 */
 const pageBounds: Array<() => number> = [];
 
+/** easeOutQuart:t⁴ 减速曲线——Lenis 的锚点跳转、吸附回位共用这一条 */
+export const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
+
 /** 幕组件挂载时注册自己的页顶解析器(跳转时才求值),返回注销函数。 */
 export function registerPageBound(resolve: () => number) {
   pageBounds.push(resolve);
@@ -81,7 +84,7 @@ export function smoothTo(id: string) {
   if (scene) {
     const y = Math.max(0, scene());
     if (lenis) {
-      lenis.scrollTo(y, { duration: 1.25 * pagesBetween(window.scrollY, y), easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+      lenis.scrollTo(y, { duration: 1.25 * pagesBetween(window.scrollY, y), easing: easeOutQuart });
     } else {
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -90,7 +93,7 @@ export function smoothTo(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
   if (lenis) {
-    lenis.scrollTo(el, { duration: 1.25, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+    lenis.scrollTo(el, { duration: 1.25, easing: easeOutQuart });
   } else {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -167,7 +170,7 @@ export default function SmoothScroll() {
       snapping = true;
       snapTarget = best;
       lastSnapAt = performance.now();
-      lenis.scrollTo(best, { duration: 0.45, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+      lenis.scrollTo(best, { duration: 0.45, easing: easeOutQuart });
     };
     const onScroll = () => {
       if (snapping && Math.abs(window.scrollY - snapTarget) < 4) snapping = false;

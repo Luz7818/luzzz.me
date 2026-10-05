@@ -3,9 +3,9 @@
 > 用途：说明这个目录现在有什么、`projects/` 的命名约定、以及它为什么还不存在。
 
 Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不参与打包、不做哈希改名、不改内容。
-本目录跟踪 178 个文件（复核：`git ls-files public | grep -v README | wc -l`），分四处：
-自托管字体 2 个、`marx-cloud/` 170 个、`corpus/` 4 个（两个子页面各含一份自己的 `README.md`，
-所以 `ls-files` 比下表少两个）、`projects/` 2 张真截图。本 `README.md` 是文档，不是站点资源。
+本目录跟踪 181 个文件（复核：`git ls-files public | grep -v README | wc -l`），分四处：
+自托管字体 2 个、`marx-cloud/` 171 个、`corpus/` 4 个（两个子页面各含一份自己的 `README.md`，
+所以 `ls-files` 比下表少两个）、`projects/` 5 张真截图。本 `README.md` 是文档，不是站点资源。
 页面图标不在这里，它在 `src/app/favicon.ico`，走的是 App Router 的约定而不是 `public/`。
 
 ## 文件清单
@@ -34,7 +34,7 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 ' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
 | `fonts/` | 两个自托管字体，共 70,812 字节（复核命令同形，换目录名）。子目录里手工投放的资源，被 `src/app/globals.css` 的两条 `@font-face` 引用 |
 | `marx-cloud/` | `/marx-cloud/` 子页面的全部前端资源，171 个文件 9,709,985 字节：`index.html`、带哈希的 `assets/index-*.js` 与 `assets/index-*.css`、`avatars/` 83 张侧栏头像、`portraits/` 79 张换装掩膜，另有一份随 `dist/` 一起进来的 `README.md`（复核命令同形）。**是 `Marx_Cloud/dist/` 的构建产物副本，不可手改**，理由见下一节 |
-| `projects/` | 项目卡真截图，2 个文件 1,079,982 字节（复核命令同形）。命名 `<slug>.<ext>`，被 `src/app/page.tsx` 的 `findPreviews()` 在预渲染时扫描 |
+| `projects/` | 项目卡真截图，5 个文件 1,174,388 字节（复核命令同形）。命名 `<slug>.<ext>`，被 `src/app/page.tsx` 的 `findPreviews()` 在预渲染时扫描 |
 
 表里的 `projects/` 有一个易错点：`git ls-files "public/projects/*"` 才是它的正确核对命令
 （**不要**用 `git ls-files "public/*.png"` 来判有无截图——`marx-cloud/` 里就有 4 张掩膜 PNG 会命中，
@@ -74,10 +74,12 @@ node tools/sync-showcases.mjs && git status --porcelain public/marx-cloud public
 
 ## projects/ —— 项目卡真截图
 
-`public/projects/` 里有 2 张真截图（2026-10-03 实拍）：
+`public/projects/` 里有 5 张真截图（2026-10-03 实拍 2 张 + 2026-10-04 `tools/covers` 渲染 3 张 webp）：
 
 - `marx-cloud.png`（668,875 字节）：`/marx-cloud/` 星图主视图，1600×1000
 - `traffic-terminology.png`（411,107 字节）：`/corpus/` 转换器首屏，1600×1000
+- `testforge.webp`（28,162 字节）、`transportation-harness.webp`（38,412 字节）、
+  `zhishuxing.webp`（27,832 字节）：`tools/covers/` 三个 HTML 源经 Playwright 截出的项目卡封面
 
 `src/app/page.tsx` 的 `findPreviews()` 先用 `fs.existsSync(dir)` 判目录，再按 `projects[].slug`
 试 `png`→`webp`→`jpg`→`jpeg`（常量 `EXT`），第一个命中的拼成 `/projects/<slug>.<ext>`。

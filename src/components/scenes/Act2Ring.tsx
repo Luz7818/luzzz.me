@@ -12,7 +12,7 @@ import {
 } from 'motion/react';
 import SplitChars from '../SplitChars';
 import { Glyph, LiveBadge } from '../Projects';
-import { registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
+import { easeOutQuart, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
 import type { Project } from '@/data/site';
 
 const N = 5; // 与 site.ts 的 projects 数量一致
@@ -20,8 +20,6 @@ const STEP = 360 / N;
 /** 环旋转占幕进度的窗口:头尾留出入场/交棒 */
 const CORE: [number, number] = [0.06, 0.94];
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
-/** useTransform 的 ease 只收函数形态;四次缓出,与全站 lenis 吸附同一手感 */
-const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 
 type LenisLike = { scrollTo: (t: number, o?: object) => void };
 
@@ -31,7 +29,7 @@ function lenis() {
 
 function scrollToY(y: number) {
   const l = lenis();
-  if (l) l.scrollTo(Math.max(0, y), { duration: 0.6, easing: (t: number) => 1 - Math.pow(1 - t, 4) });
+  if (l) l.scrollTo(Math.max(0, y), { duration: 0.6, easing: easeOutQuart });
   else window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 

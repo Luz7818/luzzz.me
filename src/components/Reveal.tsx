@@ -6,19 +6,17 @@ import { motion, useReducedMotion } from 'motion/react';
 export default function Reveal({
   children,
   className = '',
-  y = 22,
   delay = 0,
 }: {
   children: React.ReactNode;
   className?: string;
-  y?: number;
   delay?: number;
 }) {
   const reduce = useReducedMotion();
   return (
     <motion.div
       className={className}
-      initial={reduce ? false : { opacity: 0, y }}
+      initial={reduce ? false : { opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ type: 'spring', stiffness: 80, damping: 20, delay }}

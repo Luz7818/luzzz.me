@@ -24,7 +24,8 @@ function dirSize(p) {
   let n = 0;
   for (const f of readdirSync(p)) {
     const q = join(p, f);
-    n += statSync(q).isDirectory() ? dirSize(q) : statSync(q).size;
+    const st = statSync(q);
+    n += st.isDirectory() ? dirSize(q) : st.size;
   }
   return n;
 }
