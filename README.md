@@ -77,7 +77,7 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 两条都返回 `200`。
 
-完整步骤、故障表与术语解释见 [上手手册](docs/getting-started.md)。
+完整步骤、故障表与术语解释见 [上手手册](docs/GET-START.md)。
 
 ## 改内容去哪
 
@@ -99,7 +99,7 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 目录怎么分
 
-不知道东西在哪个路径，先看 [目录说明.md](目录说明.md)：整棵目录树、每个目录的入口都在里面，它只做导航。谁负责什么以 `AGENTS.md` 的「仓库地图」为准。
+不知道东西在哪个路径，先看 [目录说明.md](目录说明.md)：整棵目录树、每个目录的入口都在里面，它只做导航。谁负责什么见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 与各目录 README。
 
 | 目录 | 负责 |
 |---|---|

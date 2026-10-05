@@ -224,7 +224,7 @@ grep -o 'href="/marx-cloud/"' out/index.html
 这枚回链只在「确实有上一级」时出现：两个子页面各自的代码会比较 `../` 解析出的路径与当前路径，
 相等时（源仓库单独部署在站点根）就把它摘掉，否则点了等于刷新本页；`corpus` 另外在 `file://`
 下也摘掉，因为那一页本来就能双击打开，而那时上一级只是一个本地目录列表。实测判据见
-[AGENTS.md](../AGENTS.md) 关键约定 8。
+[docs/ARCHITECTURE.md](ARCHITECTURE.md) 关键约定 8。
 
 ## 7. 常见故障
 
