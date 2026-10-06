@@ -15,9 +15,8 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 | `fonts/overpass-var.woff2` | 展示字体，Overpass 可变字重版（源自美国公路标志字体 Highway Gothic 的开源复刻，正贴本站「交通工程」身份） | 39380 字节（复核：`wc -c < public/fonts/overpass-var.woff2`）。被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/overpass-var.woff2` 引用，`--font-sans` 的回退链是 `PingFang SC` / `Hiragino Sans GB` / `Microsoft YaHei` |
 | `fonts/jetbrains-mono-var.woff2` | 数据标签字体，JetBrains Mono 可变字重版 | 31432 字节（复核：`wc -c < public/fonts/jetbrains-mono-var.woff2`）。被 `src/app/globals.css` 的 `@font-face` 以 `/fonts/jetbrains-mono-var.woff2` 引用，`--font-mono` 的回退链是 `PingFang SC` / `Microsoft YaHei` / `ui-monospace` |
 | `marx-cloud/` | 「思想云」星图，作为本站子页面挂在 `/marx-cloud/` | 171 个文件 9,709,985 字节，含 `avatars/`+`portraits/` 图像目录（复核：`find public/marx-cloud -type f \| wc -l`、`find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
-' \| awk '{s+=$1} END{print s}'`）。**是 `Marx_Cloud/` 的 `dist/` 拷贝**，见下节 |
-| `corpus/` | 交通用语转换器，挂在 `/corpus/` | 4 个文件 394,800 字节（复核命令同形，换目录名）。**是 `Traffic_terminology/web/` 的拷贝**，见下节 |
-| `projects/` | 项目卡真截图（`marx-cloud.png` 668,875 字节、`traffic-terminology.png` 411,107 字节） | 2026-10-03 从本站托管的两个子页面实拍，命名约定见下文「projects/」一节 |
+| `corpus/` | 交通用语转换器，挂在 `/corpus/` | 4 个文件 394,641 字节（复核命令同形，换目录名）。**是 `Traffic_terminology/web/` 的拷贝**，见下节 |
+| `projects/` | 项目卡配图（2 张真截图：`marx-cloud.png` 668,875 字节、`traffic-terminology.png` 411,107 字节；3 张风格化封面 webp：zhishuxing / testforge / transportation-harness） | 截图 2026-10-03 从本站托管的两个子页面实拍；封面源文件在 `tools/covers/`，命名约定见下文「projects/」一节 |
 
 构建后可以在产物里核对到同一份：`out/fonts/` 下两个字体文件，字节数相同
 （复核：`ls -la out/fonts`）。因为字体是本地的，产物在没有外网的机器上也能正常显示，
@@ -30,8 +29,7 @@ Next 会把 `public/` 下的文件**按相对路径原样**拷进 `out/`，不�
 
 | 子目录 | 负责 |
 |---|---|
-| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 394,800 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s\n' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
-' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
+| `corpus/` | `/corpus/` 子页面的全部前端资源，4 个文件 394,641 字节：`index.html`、`style.css`、`app.js`、`data.js`（复核：`find public/corpus -type f \| wc -l`、`find public/corpus -type f -printf '%s\n' \| awk '{s+=$1}END{print s}'`）。**是 `Traffic_terminology/web/` 的构建产物副本，不可手改**，理由见下一节 |
 | `fonts/` | 两个自托管字体，共 70,812 字节（复核命令同形，换目录名）。子目录里手工投放的资源，被 `src/app/globals.css` 的两条 `@font-face` 引用 |
 | `marx-cloud/` | `/marx-cloud/` 子页面的全部前端资源，171 个文件 9,709,985 字节：`index.html`、带哈希的 `assets/index-*.js` 与 `assets/index-*.css`、`avatars/` 83 张侧栏头像、`portraits/` 79 张换装掩膜，另有一份随 `dist/` 一起进来的 `README.md`（复核命令同形）。**是 `Marx_Cloud/dist/` 的构建产物副本，不可手改**，理由见下一节 |
 | `projects/` | 项目卡真截图，5 个文件 1,174,388 字节（复核命令同形）。命名 `<slug>.<ext>`，被 `src/app/page.tsx` 的 `findPreviews()` 在预渲染时扫描 |

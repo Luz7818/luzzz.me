@@ -53,11 +53,11 @@ luzzz.me/
 5. **`.env.local` 与应用代码无关**：`src/` 下没有任何 `process.env`；它服务的是 `.vercel/`
    CLI 链接。**不要读它，也不要把它的内容或变量名写进文档**。
 6. **`process.cwd()` 在 `src/` 下只出现一次**（`page.tsx` 扫预览图），依赖「运行时工作目录 =
-   仓库根」。换成 `__dirname` 或 `import.meta.url` 作基准时路径要跟着改；判据是放一张截图后
-   `grep -o "<img" out/index.html | wc -l` 从 0 变非 0。
+   仓库根」。换成 `__dirname` 或 `import.meta.url` 作基准时路径要跟着改；判据是放一张新图后
+   `grep -o "<img" out/index.html | wc -l` 计数随之变化（当前基线 10 = 5 图 × 双树）。
 7. **`prefers-reduced-motion` 的实现分四层，要一起改**：`page.tsx` 双树 CSS 切换（纯 CSS
-   无闪烁）；`globals.css` 把 CSS 动画压到 0.001ms；`LightTrails` reduced 下只画一帧静态光轨
-   （`FluidGlass` 的 WebGL 层直接不初始化）；Motion 组件用 `useReducedMotion()` 降级。
+   无闪烁）；`globals.css` 把 CSS 动画压到 0.001ms；`LightTrails` reduced 下只画一帧静态光轨；
+   Motion 组件用 `useReducedMotion()` 降级。
    **`useReducedMotion()` 禁止按返回值分支 DOM 结构，只许分支 Motion props**——否则 reduced
    用户 hydration 文本不匹配整树重渲染（`SplitChars` 踩过）。
 8. **`public/marx-cloud/` 与 `public/corpus/` 是别的仓库的构建产物，不要手改**：它们是
@@ -103,5 +103,5 @@ luzzz.me/
 ## 已知架构问题
 
 - 项目 star/updated 数据手填，不自动跟随 GitHub（导出模式无运行时，见 `AGENTS.md` 不要做的事）。
-- 真机 WebGL 帧率与触屏滚动手感未验证过（桌面与模拟器已走查），低端机可调低 `FluidGlass` 的 dpr。
+- 真机触屏滚动手感与动画帧率未验证过（桌面与模拟器已走查；背景是纯 2D 光轨，无 WebGL）。
 - apex 域名未生效（DNS 侧事务，见 `TODO.md` 任务 1）。

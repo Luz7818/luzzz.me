@@ -11,7 +11,7 @@
 | 操作系统 | Windows / Linux / macOS 均可（本手册的命令与输出在 Windows + Git Bash 下采集） | — |
 | Node.js | ≥ 20.9.0，这是 `next@16.3.6` 的 `engines` 下限 | `node -v`，本机 `v24.19.0` |
 | 包管理器 | pnpm 10.33.0（`package.json` 的 `packageManager` 字段指定） | `pnpm -v` |
-| 第三方运行时 | 无。依赖只有 `next` / `react` / `react-dom` | 见第 2 节 |
+| 第三方运行时 | 无。依赖共 5 个：`next` / `react` / `react-dom` / `motion` / `lenis` | 见第 2 节 |
 | 网络 | 装依赖时要；`dev` 与 `build` 期间应用代码不发请求（复核：`grep -rn "fetch(" src/`） | — |
 | 密钥 | 无。`src/` 下没有任何 `process.env`（复核：`grep -rn "process\.env" src/`） | — |
 | 想看真机效果 | 任意现代浏览器（背景是 Canvas 2D，不需要 WebGL） | 见第 3.1 节 |
@@ -110,8 +110,8 @@ Route (app)
 ```
 
 判据：退出码 0（复核：`pnpm build; echo $?`），末段两条路由都带 `○ (Static)`。
-产物在 `out/`，共 39 个文件（复核：`find out -type f | wc -l`），其中 12 个是 `out/marx-cloud/`
-与 `out/corpus/` 两个子页面（见第 6 节），`out/README.md` 则是
+产物在 `out/`，共 210 个文件（复核：`find out -type f | wc -l`），其中 175 个是 `out/marx-cloud/`
+与 `out/corpus/` 两个子页面（171 + 4，见第 6 节），`out/README.md` 则是
 `public/README.md` 被原样拷过去的——`public/` 下的任何文件都会进产物。想本地看一眼：
 
 ```bash
@@ -145,9 +145,10 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 4. 换项目预览图
 
-`public/projects/` 里有 2 张真截图（2026-10-03 实拍）：`marx-cloud.png` 与
-`traffic-terminology.png`，分别在 featured 卡和图片卡上；其余三张卡是刻意的字型水印卡，
-不需要截图。要换截图：
+`public/projects/` 现有 5 张图（复核：`ls public/projects`）：2 张真截图（2026-10-03 实拍）——
+`marx-cloud.png` 与 `traffic-terminology.png`，分别在 featured 卡和图片卡上；3 张风格化封面
+`zhishuxing.webp` / `testforge.webp` / `transportation-harness.webp`（源文件在 `tools/covers/`，
+重渲染方法见该目录 README）。要换图：
 
 ```bash
 mkdir -p public/projects
@@ -160,10 +161,8 @@ pnpm build
 输出 `zhishuxing`、`marx-cloud`、`testforge`、`transportation-harness`、`traffic-terminology`）。
 同一个 slug 支持的后缀与优先级是 `png` → `webp` → `jpg` → `jpeg`，只取第一个命中的。
 
-验证换图成功：`out/index.html` 里 `<img` 的出现次数等于有截图的卡片数
-（复核：`grep -o "<img" out/index.html | wc -l`，当前为 2）。
-放入 `public/projects/zhishuxing.png` 后：`pnpm dev` 刷新即见 `<img` 变 3；
-`pnpm build` 得到同样的数，且 `out/projects/zhishuxing.png` 出现。
+验证换图成功：`out/index.html` 里 `<img` 的出现次数 = 有配图的卡片数 × 2（双树各渲染一份，
+复核：`grep -o "<img" out/index.html | wc -l`，当前 5 张图全就位 → 10）。
 
 换图只在构建期生效：扫描 `public/projects/` 的动作发生在预渲染时，构建完再放图不会自动替换。
 `pnpm dev` 下则不同，它是每次请求现算，放完图刷新就能看到。
@@ -254,7 +253,7 @@ grep -o 'href="/marx-cloud/"' out/index.html
 | SSR 服务端渲染 | 在服务器上把组件跑成 HTML 再发出去。本仓库**没有**运行时服务，所以没有常驻 SSR |
 | 预渲染 prerender | 构建时就把组件执行一遍、把结果写成静态 HTML。`pnpm build` 输出里的 `(Static)` 就是它 |
 | 静态导出 `output: "export"` | 让 Next 只产出 HTML/CSS/JS 文件、不生成任何服务端代码。`out/` 因此能扔到任意静态托管上 |
-| 客户端组件 `'use client'` | 该文件会在浏览器里运行、能用 `useState` 和 DOM。`src/components/` 下 10 个是，`Aurora`/`Marquee` 这 2 个不是；`src/app/` 下 2 个不是 |
+| 客户端组件 `'use client'` | 该文件会在浏览器里运行、能用 `useState` 和 DOM。`src/components/` 下 15 个是，`Aurora`/`Marquee` 这 2 个不是（`scenes/` 下 3 个也是）；`src/app/` 下 2 个不是 |
 | 水合 hydration | 浏览器接到服务端 HTML 后，把事件与状态挂上去、让它变成可交互的同一棵树 |
 | `route.ts` / `middleware.ts` | 服务端接口与请求拦截入口。本仓库刻意没有，加了就会和静态导出冲突 |
 | Canvas 2D | 浏览器自带的二维画布 API。首屏的长曝光车流就是一张全屏 canvas，不需要 WebGL |

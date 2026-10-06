@@ -50,7 +50,7 @@
 
 ## src/components —— 17 个组件
 
-11 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是纯静态的服务端组件。
+15 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是纯静态的服务端组件。
 每个板块自己 `import { profile } from '@/data/site'`，没有 context 也没有状态管理层。
 
 | 文件 | 渲染哪一块 | 值得知道的实现点 |

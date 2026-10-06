@@ -30,12 +30,12 @@ cp public/fonts/jetbrains-mono-var.woff2 "$tmp/public/fonts/"
 for n in zhishuxing testforge transportation-harness; do
   "/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --headless=new --disable-gpu     --hide-scrollbars --force-device-scale-factor=1 --window-size=1536,960 --no-first-run     --user-data-dir="$tmp/profile" --screenshot="$tmp/$n.png"     "file:///C:/Users/asus/AppData/Local/Temp/covers/tools/covers/$n.html"
 done
-# 3) Pillow 转 WebP 落到 public/projects/（findPreviews 按 png→webp 顺序拾取）
+# 3) Pillow 转 WebP 落到 public/projects/（findPreviews 按 png→webp 顺序拾取；在仓库根执行）
 python - <<'EOF'
 from PIL import Image
 for n in ["zhishuxing", "testforge", "transportation-harness"]:
     Image.open(f"C:/Users/asus/AppData/Local/Temp/covers/{n}.png").convert("RGB").save(
-        rf"D:/<仓库路径>/public/projects/{n}.webp", "WEBP", quality=86, method=6)
+        rf"public/projects/{n}.webp", "WEBP", quality=86, method=6)
 EOF
 # 4) pnpm build 让 findPreviews 拾取新图
 ```

@@ -88,7 +88,6 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 | 跑马灯关键词 | 同文件 `marquee` | 同上 |
 | 项目卡（标题 / 摘要 / 标签 / star / 语言 / 更新日期 / 链接） | 同文件 `projects` | 同上 |
 | 三幕的节拍 / 环形吸附 / 工牌转场 | `src/components/scenes/` 三个 Act 组件（节拍窗口是各文件顶部常量） | 同上 |
-| 流体扭曲的强度 / 衰减 | `src/components/FluidGlass.tsx` 的 uniform 常量（`uStrength`/`uDecay`/`uRadius`） | 同上 |
 | 背景光轨的车道、车速与配色 | `src/components/LightTrails.tsx` 常量与 `globals.css` 的 `--trail-*` | 同上 |
 | 两套主题的配色令牌 | `src/app/globals.css` 的 `@theme`（暗）与 `[data-theme='light']`（亮） | 同上 |
 | 某个板块的结构或交互 | `src/components/` 下对应组件 | 同上 |
@@ -125,8 +124,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 2. 5 张项目卡里 2 张是真截图（2026-10-03 从本站托管的两个子页面实拍：`public/projects/marx-cloud.png`
    与 `traffic-terminology.png`），其余 3 张是程序化生成的风格化封面（`tools/covers/*.html` 里的 SVG 场景经无头 Edge 光栅化为 WebP：`zhishuxing` / `testforge` / `transportation-harness`），不是假截图冒充实拍
    （复核：`pnpm build` 后 `grep -o "<img" out/index.html | wc -l` 得 10，= 5 图 × 双树）。
-3. 流体扭曲、环形吸附与工牌转场在桌面浏览器与移动端模拟器里走查过，但没有在真机上验证过
-   WebGL 帧率与触屏滚动手感；低端手机如掉帧，可把 `FluidGlass.tsx` 的 dpr 上限再调低。
+3. 环形吸附与工牌转场在桌面浏览器与移动端模拟器里走查过，但没有在真机上验证过
+   触屏滚动手感与动画帧率（背景已是纯 2D 光轨，无 WebGL）。
 4. apex 域名还没生效。`https://www.luzzz.me/` 已经公开可访问（含 `/marx-cloud/` 与 `/corpus/` 两个子页面），
    但裸域 `luzzz.me` 还没有 A 记录，访客直接输 `luzzz.me` 打不开。DNS 仍在万网（NS 为 `dns13/dns14.hichina.com`），
    要补的那条 A 记录值以 `npx vercel domains inspect luzzz.me` 当场打印的为准，别抄固定 IP（Vercel 接入地址是任播、会变）。

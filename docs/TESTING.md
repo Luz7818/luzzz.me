@@ -8,7 +8,7 @@
 | 层 | 管什么 | 怎么做 |
 |---|---|---|
 | 类型检查 | TS 全量 | `npx tsc --noEmit`，退出码 0 无输出 |
-| ESLint | 16 个文件（src 12 + 根配置 3 + sync-showcases） | `npm run lint`，0 error 0 warning |
+| ESLint | 27 个文件（src 23 + 根配置 3 + sync-showcases） | `npm run lint`，0 error 0 warning |
 | 构建 | 静态导出成功、路由与产物 | `pnpm build`，两条路由均 Static |
 | 浏览器走查 | 三幕交互、主题切换、子页面 | `pnpm dev` / `pnpm build` 后按 `docs/TESTING.md` 各项目测 |
 
