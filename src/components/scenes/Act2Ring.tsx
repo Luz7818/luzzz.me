@@ -11,7 +11,7 @@ import {
   type MotionValue,
 } from 'motion/react';
 import SplitChars from '../SplitChars';
-import { Glyph, LiveBadge } from '../Projects';
+import { CoverGrade, Glyph, LiveBadge } from '../Projects';
 import { easeOutQuart, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
 import type { Project } from '@/data/site';
 
@@ -83,7 +83,7 @@ function RingCard({
           aria-label={`${p.name}${p.demo ? ' 在线演示' : ' 仓库'}`}
           className="group block"
         >
-          <div className="relative aspect-[16/10] overflow-hidden border-b border-line">
+          <div className={`relative aspect-[16/10] overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}>
             {preview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -98,6 +98,7 @@ function RingCard({
                 <Glyph text={p.slug.slice(0, 2).toUpperCase()} className="right-4 top-3 text-[64px]" />
               </div>
             )}
+            {preview && <CoverGrade />}
             {p.demo && <LiveBadge />}
             <span className="shine" aria-hidden />
           </div>

@@ -76,6 +76,12 @@
 }
 
 :root {
+  /* 全局动效 token:所有过渡只用 transform/opacity,缓动与时长统一从这里取 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 180ms;
+  --dur-med: 320ms;
+  --dur-slow: 600ms; /* 与主题切换 0.6s 涟漪对齐 */
   transition:
     --color-bg 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     --color-surface 0.6s cubic-bezier(0.4, 0, 0.2, 1),
@@ -120,15 +126,13 @@
   --shadow-pop: 0 18px 60px rgba(180, 83, 9, 0.18);
   --hero-spot: rgba(180, 83, 9, 0.07);
   --spot: rgba(180, 83, 9, 0.1);
-  --shine: rgba(180, 83, 9, 0.1);
+  --shine: rgba(180, 83, 9, 0.32);
+  --btn-hover-bg: #c05f0c;
+  --btn-hover-shadow: 0 12px 28px -8px rgb(180 83 9 / 0.45);
   --border-hi: rgba(255, 255, 255, 0.95);
   --border-lo: rgba(24, 48, 76, 0.16);
   --panel-hi: rgba(255, 255, 255, 0.9);
-  --aurora-1: rgba(250, 178, 90, 0.4);
-  --aurora-2: rgba(124, 170, 220, 0.36);
-  --aurora-3: rgba(133, 214, 180, 0.24);
-  --aurora-4: rgba(240, 148, 122, 0.2);
-  --grain-opacity: 0.05;
+  --grain-opacity: 0.07;
   --panel-edge: rgba(24, 48, 76, 0.14);
   --badge-slot: rgba(24, 48, 76, 0.16);
   --trail-primary: 168, 122, 52;
@@ -156,6 +160,8 @@
   --hero-spot: rgba(245, 168, 60, 0.09);
   --spot: rgba(245, 168, 60, 0.14);
   --shine: rgba(245, 168, 60, 0.12);
+  --btn-hover-bg: #ffb84d;
+  --btn-hover-shadow: 0 12px 28px -8px rgb(245 168 60 / 0.4);
   --border-hi: rgba(180, 210, 240, 0.22);
   --border-lo: rgba(130, 165, 200, 0.05);
   --panel-hi: rgba(210, 230, 250, 0.09);
@@ -302,10 +308,33 @@ body {
   }
 }
 
+/* 浅色:色块加浓、放慢漂移,贴着白底做出"隐约呼吸";深色保持原样 */
+:root[data-theme='light'] .aurora-1 {
+  background: radial-gradient(42% 38% at 18% 22%, rgb(245 168 60 / 0.16), transparent 70%);
+  filter: blur(90px);
+  animation-duration: 88s;
+}
+:root[data-theme='light'] .aurora-2 {
+  background: radial-gradient(40% 36% at 78% 30%, rgb(147 178 205 / 0.18), transparent 70%);
+  filter: blur(90px);
+  animation-duration: 76s;
+}
+:root[data-theme='light'] .aurora-3 {
+  background: radial-gradient(38% 34% at 30% 82%, rgb(152 200 180 / 0.14), transparent 70%);
+  filter: blur(90px);
+  animation-duration: 95s;
+}
+:root[data-theme='light'] .aurora-4 {
+  background: radial-gradient(36% 32% at 82% 78%, rgb(232 170 180 / 0.13), transparent 70%);
+  filter: blur(90px);
+  animation-duration: 70s;
+}
+
 .grain {
   position: absolute;
   inset: 0;
   opacity: var(--grain-opacity);
+  transition: opacity var(--dur-slow) ease;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -331,15 +360,103 @@ body {
 .shine {
   position: absolute;
   inset: 0;
+  z-index: 3; /* 压住封面罩层,扫光从暗角上划过而不是被盖住 */
   transform: translateX(-130%) skewX(-12deg);
   background: linear-gradient(105deg, transparent 42%, var(--shine) 50%, transparent 58%);
-  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.9s var(--ease-out);
   pointer-events: none;
 }
 
 .group:hover .shine,
 .shine-host:hover .shine {
   transform: translateX(130%) skewX(-12deg);
+}
+
+/* ---------- 项目封面统一罩:暗角 + 底部渐隐 + 主题色 tint + 内描边 ----------
+   罩层全静态,hover 只放大 img;黑封面不再像洞、白封面不再晃眼,换图自动成一家人。 */
+
+.cover {
+  position: relative;
+  isolation: isolate; /* tint 的 overlay 混合只在封面内部发生,不穿透玻璃 */
+}
+
+.cover-grade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 120% at 50% 38%, transparent 58%, rgb(10 16 22 / 0.2) 100%),
+    linear-gradient(to bottom, transparent 52%, var(--color-surface) 100%);
+}
+
+.cover-tint {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background: linear-gradient(135deg, rgb(180 83 9 / 0.1), rgb(20 32 44 / 0.08));
+}
+
+:root[data-theme='dark'] .cover-tint {
+  background: linear-gradient(135deg, rgb(245 168 60 / 0.12), rgb(10 16 22 / 0.1));
+}
+
+/* 1px 内描边:封面从"贴上去的图"变成"嵌进去的窗" */
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+
+/* ---------- 按钮:hover 三件套(位移 + 阴影 + 换色) ----------
+   磁吸按钮由 motion 写内联 transform,CSS hover 的 transform 会被压掉;
+   位移必须走原生 translate/scale 属性才能与磁性吸附叠加。 */
+
+.btn-primary {
+  transition:
+    translate var(--dur-fast) var(--ease-out),
+    scale var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-med) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.btn-primary:hover {
+  translate: 0 -2px;
+  background-color: var(--btn-hover-bg);
+  box-shadow: var(--btn-hover-shadow);
+}
+
+.btn-primary:active {
+  translate: 0 0;
+}
+
+.btn-ghost .arrow {
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.btn-ghost:hover .arrow {
+  transform: translate(3px, -3px);
+}
+
+/* ---------- 首屏径向高光:视线落点,浅色下也有一团暖光呼吸 ---------- */
+
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(60% 50% at 50% 42%, rgb(245 168 60 / 0.1), transparent 70%);
+}
+
+:root[data-theme='dark'] .hero-glow {
+  background: radial-gradient(60% 50% at 50% 42%, rgb(245 168 60 / 0.16), transparent 70%);
 }
 
 /* ---------- 主题图标:两枚都渲染,CSS 按 data-theme 决定显示哪枚 ---------- */

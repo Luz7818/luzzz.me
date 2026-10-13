@@ -60,6 +60,16 @@ export function LiveBadge() {
   );
 }
 
+/** 封面统一罩:暗角 + 底部渐隐 + 主题色 tint,黑/白封面与正文不再割裂(Act2Ring 环卡复用) */
+export function CoverGrade() {
+  return (
+    <>
+      <div className="cover-grade" aria-hidden />
+      <div className="cover-tint" aria-hidden />
+    </>
+  );
+}
+
 export function Glyph({ text, className }: { text: string; className: string }) {
   return (
     <span
@@ -89,6 +99,7 @@ function Shot({ p, preview, eager = false }: { p: Project; preview?: string; eag
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
         loading={eager ? 'eager' : 'lazy'}
       />
+      <CoverGrade />
       <span className="shine" aria-hidden />
     </>
   );
@@ -103,7 +114,7 @@ function ProjectCard({ p, preview, featured = false }: { p: Project; preview?: s
         target={p.demo ? undefined : '_blank'}
         rel="noreferrer"
         aria-label={`${p.name}${p.demo ? ' 在线演示' : ' 仓库'}`}
-        className="relative block aspect-[16/10] overflow-hidden border-b border-line"
+        className={`relative block aspect-[16/10] overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}
       >
         <Shot p={p} preview={preview} eager={featured} />
         {p.demo && <LiveBadge />}

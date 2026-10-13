@@ -18,11 +18,11 @@ export default function CountUp({ value }: { value: string }) {
       duration: 1.4,
       ease: [0.16, 1, 0.3, 1],
       onUpdate: (v) => {
-        el.textContent = String(Math.round(v));
+        el.textContent = Math.round(v).toLocaleString('en-US');
       },
     });
     return () => controls.stop();
   }, [inView, target, reduce]);
 
-  return <span ref={ref}>{value}</span>;
+  return <span ref={ref}>{Number.isNaN(target) ? value : target.toLocaleString('en-US')}</span>;
 }

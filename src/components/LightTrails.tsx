@@ -12,18 +12,70 @@ type Car = {
   alpha: number;
 };
 
+type RGB = [number, number, number];
+
+/** 一次绘制所需的全部颜色与合成参数,全部来自当前主题的 CSS 变量 */
+type Palette = {
+  primary: RGB;
+  secondary: RGB;
+  fade: RGB;
+  sky: RGB;
+  glow: RGB;
+  head: RGB;
+  glowAlpha: number;
+  vignetteAlpha: number;
+  alphaScale: number;
+  blend: GlobalCompositeOperation;
+};
+
 const LANES = [0.55, 0.66, 0.79, 0.93];
 /** 窄屏上文字块更靠下,车道整体下移避开正文 */
 const LANES_NARROW = [0.68, 0.78, 0.88, 0.96];
+
+/** 画布换天的时长,与 :root 上 @property 颜色的 0.6s 涟漪对齐 */
+const THEME_LERP_S = 0.6;
 
 function readVar(name: string, fallback: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
 
+function parseRgb(raw: string, fallback: RGB): RGB {
+  const parts = raw.split(',').map((n) => Number.parseFloat(n.trim()));
+  return parts.length === 3 && parts.every((n) => Number.isFinite(n))
+    ? [parts[0], parts[1], parts[2]]
+    : fallback;
+}
+
+function readPalette(): Palette {
+  return {
+    primary: parseRgb(readVar('--trail-primary', '245,168,60'), [245, 168, 60]),
+    secondary: parseRgb(readVar('--trail-secondary', '208,224,240'), [208, 224, 240]),
+    fade: parseRgb(readVar('--trail-fade', '10,16,22'), [10, 16, 22]),
+    sky: parseRgb(readVar('--trail-sky', '17,28,41'), [17, 28, 41]),
+    glow: parseRgb(readVar('--trail-glow', '245,168,60'), [245, 168, 60]),
+    head: parseRgb(readVar('--trail-head', '255,255,255'), [255, 255, 255]),
+    glowAlpha: Number.parseFloat(readVar('--trail-glow-alpha', '0.12')) || 0,
+    vignetteAlpha: Number.parseFloat(readVar('--trail-vignette-alpha', '0.32')) || 0,
+    alphaScale: Number.parseFloat(readVar('--trail-alpha', '1')) || 1,
+    // 只接受两种合法合成模式,其余值回落暗房叠加
+    blend: readVar('--trail-blend', 'lighter') === 'source-over' ? 'source-over' : 'lighter',
+  };
+}
+
+const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+const mixRgb = (a: RGB, b: RGB, t: number): RGB => [
+  Math.round(mix(a[0], b[0], t)),
+  Math.round(mix(a[1], b[1], t)),
+  Math.round(mix(a[2], b[2], t)),
+];
+const rgb = (c: RGB) => c.join(',');
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
 /**
  * 长曝光车流:四条车道、双向车灯拖出光轨。
  * 暗房用 lighter 叠加发光,浅底日间改 source-over 正常合成(叠加在近白背景上会被钳成纯白);
- * 颜料、车头与合成模式全部来自当前主题的 CSS 变量(随明暗切换重读);
+ * 颜料、车头与合成模式全部来自当前主题的 CSS 变量,换主题时颜色在 0.6s 内逐帧插值,
+ * 与 CSS @property 的颜色涟漪同步换天,而不是瞬间跳变(reduced-motion 仍直接落位);
  * 指针移动时整幅光轨轻微视差;prefers-reduced-motion 时只画一帧带尾迹的静态光轨。
  */
 export default function LightTrails() {
@@ -44,16 +96,11 @@ export default function LightTrails() {
     let raf = 0;
     let last = performance.now();
     let running = true;
-    let primary = '245,168,60';
-    let secondary = '208,224,240';
-    let fade = '10,16,22';
-    let sky = '17,28,41';
-    let glow = '245,168,60';
-    let head = '255,255,255';
-    let blend: GlobalCompositeOperation = 'lighter';
-    let glowAlpha = 0.12;
-    let vignetteAlpha = 0.32;
-    let alphaScale = 1;
+    // 调色板三态:from/to 是插值端点,cur(pal)是绘制用的混合值;themeT=1 表示已落位
+    let pal = readPalette();
+    let palFrom = pal;
+    let palTo = pal;
+    let themeT = 1;
     // 指针视差:目标偏移与当前偏移,帧循环里插值
     const offset = { tx: 0, ty: 0, x: 0, y: 0 };
     // 背景合成:天空渐变 + 地平线暖辉 + 暗角,缓存渐变对象,resize/换主题时重建
@@ -61,33 +108,41 @@ export default function LightTrails() {
     let glowGradient: CanvasGradient | null = null;
     let vignetteGradient: CanvasGradient | null = null;
 
-    const readTheme = () => {
-      primary = readVar('--trail-primary', primary);
-      secondary = readVar('--trail-secondary', secondary);
-      fade = readVar('--trail-fade', fade);
-      sky = readVar('--trail-sky', sky);
-      glow = readVar('--trail-glow', glow);
-      glowAlpha = Number.parseFloat(readVar('--trail-glow-alpha', '0.12')) || 0;
-      vignetteAlpha = Number.parseFloat(readVar('--trail-vignette-alpha', '0.32')) || 0;
-      alphaScale = Number.parseFloat(readVar('--trail-alpha', '1')) || 1;
-      head = readVar('--trail-head', head);
-      // 只接受两种合法合成模式,其余值回落暗房叠加
-      blend = readVar('--trail-blend', 'lighter') === 'source-over' ? 'source-over' : 'lighter';
+    const applyPalette = (t: number) => {
+      pal = {
+        primary: mixRgb(palFrom.primary, palTo.primary, t),
+        secondary: mixRgb(palFrom.secondary, palTo.secondary, t),
+        fade: mixRgb(palFrom.fade, palTo.fade, t),
+        sky: mixRgb(palFrom.sky, palTo.sky, t),
+        glow: mixRgb(palFrom.glow, palTo.glow, t),
+        head: mixRgb(palFrom.head, palTo.head, t),
+        glowAlpha: mix(palFrom.glowAlpha, palTo.glowAlpha, t),
+        vignetteAlpha: mix(palFrom.vignetteAlpha, palTo.vignetteAlpha, t),
+        alphaScale: mix(palFrom.alphaScale, palTo.alphaScale, t),
+        // 合成模式无法插值,过半切到目标主题,此时天色也已大体翻转
+        blend: t < 0.5 ? palFrom.blend : palTo.blend,
+      };
+    };
+
+    const snapPalette = () => {
+      pal = palTo;
+      palFrom = palTo;
+      themeT = 1;
     };
 
   const buildBackdrop = () => {
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, `rgb(${sky})`);
-    g.addColorStop(0.5, `rgb(${fade})`);
-    g.addColorStop(1, `rgb(${fade})`);
+    g.addColorStop(0, `rgb(${rgb(pal.sky)})`);
+    g.addColorStop(0.5, `rgb(${rgb(pal.fade)})`);
+    g.addColorStop(1, `rgb(${rgb(pal.fade)})`);
     skyGradient = g;
 
     const gl = ctx.createRadialGradient(w * 0.5, h * 0.82, 0, w * 0.5, h * 0.82, Math.max(w, h) * 0.52);
-    gl.addColorStop(0, `rgba(${glow},${glowAlpha})`);
-    gl.addColorStop(1, `rgba(${glow},0)`);
+    gl.addColorStop(0, `rgba(${rgb(pal.glow)},${pal.glowAlpha})`);
+    gl.addColorStop(1, `rgba(${rgb(pal.glow)},0)`);
     glowGradient = gl;
 
-    if (vignetteAlpha > 0.001) {
+    if (pal.vignetteAlpha > 0.001) {
       const vg = ctx.createRadialGradient(
         w * 0.5,
         h * 0.5,
@@ -97,7 +152,7 @@ export default function LightTrails() {
         Math.max(w, h) * 0.74,
       );
       vg.addColorStop(0, 'rgba(4,8,12,0)');
-      vg.addColorStop(1, `rgba(4,8,12,${vignetteAlpha})`);
+      vg.addColorStop(1, `rgba(4,8,12,${pal.vignetteAlpha})`);
       vignetteGradient = vg;
     } else {
       vignetteGradient = null;
@@ -135,14 +190,17 @@ export default function LightTrails() {
             dir,
             warm: dir === 1,
             tail: 50 + Math.random() * 90,
-            alpha: (0.3 + Math.random() * 0.38) * alphaScale,
+            // 主题强度系数(alphaScale)在绘制时再乘,换主题时车灯亮度才能跟着渐变
+            alpha: 0.3 + Math.random() * 0.38,
           });
         }
       });
     };
 
     const resize = () => {
-      readTheme();
+      palTo = readPalette();
+      // 过渡中遇到 resize 保留插值进度,只刷新目标;已落位则直接对齐
+      if (themeT >= 1) snapPalette();
       buildBackdrop();
       const rect = canvas.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -158,22 +216,23 @@ export default function LightTrails() {
     };
 
     const drawTrails = (longTail: boolean) => {
-      ctx.globalCompositeOperation = blend;
+      ctx.globalCompositeOperation = pal.blend;
       for (const car of cars) {
         const y = laneY[car.lane];
         const len = longTail ? car.tail * 3.2 : car.tail;
         const x2 = car.x - car.dir * len;
-        const rgb = car.warm ? primary : secondary;
+        const rgbStr = car.warm ? rgb(pal.primary) : rgb(pal.secondary);
+        const a = car.alpha * pal.alphaScale;
         const grad = ctx.createLinearGradient(car.x, y, x2, y);
-        grad.addColorStop(0, `rgba(${rgb},${car.alpha})`);
-        grad.addColorStop(1, `rgba(${rgb},0)`);
+        grad.addColorStop(0, `rgba(${rgbStr},${a})`);
+        grad.addColorStop(1, `rgba(${rgbStr},0)`);
         ctx.strokeStyle = grad;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(car.x, y);
         ctx.lineTo(x2, y);
         ctx.stroke();
-        ctx.fillStyle = `rgba(${head},${Math.min(1, car.alpha + 0.35)})`;
+        ctx.fillStyle = `rgba(${rgb(pal.head)},${Math.min(1, a + 0.35)})`;
         ctx.fillRect(car.x - 1.2, y - 1.2, 2.4, 2.4);
       }
       ctx.globalCompositeOperation = 'source-over';
@@ -188,6 +247,12 @@ export default function LightTrails() {
       if (!running) return;
       const dt = Math.min(0.1, Math.max(0.001, (now - last) / 1000));
       last = now;
+      // 主题颜色插值:逐帧追赶目标调色板,天、光、车灯一起换色
+      if (themeT < 1) {
+        themeT = Math.min(1, themeT + dt / THEME_LERP_S);
+        applyPalette(easeInOut(themeT));
+        buildBackdrop();
+      }
       // 视差插值
       offset.x += (offset.tx - offset.x) * 0.06;
       offset.y += (offset.ty - offset.y) * 0.06;
@@ -196,7 +261,7 @@ export default function LightTrails() {
       paintBackdrop(1 - Math.pow(0.8, dt * 60));
       ctx.save();
       ctx.translate(offset.x, offset.y);
-      ctx.globalCompositeOperation = blend;
+      ctx.globalCompositeOperation = pal.blend;
       for (const car of cars) {
         car.x += car.speed * car.dir * dt;
         wrap(car);
@@ -224,11 +289,18 @@ export default function LightTrails() {
     };
 
     const onThemeChange = () => {
-      readTheme();
-      buildBackdrop();
-      seed();
-      paintBase();
-      if (reduced) drawTrails(true);
+      palTo = readPalette();
+      if (reduced) {
+        // 静帧模式没有帧循环,直接落位重画
+        snapPalette();
+        buildBackdrop();
+        paintBase();
+        drawTrails(true);
+        return;
+      }
+      // 从当前混合态出发重新插值:连点两下主题也不跳变
+      palFrom = pal;
+      themeT = 0;
     };
 
     resize();

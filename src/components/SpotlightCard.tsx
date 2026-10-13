@@ -16,7 +16,10 @@ export default function SpotlightCard({ children, className = '', tilt = false }
   const reduce = useReducedMotion();
   const mx = useMotionValue(-400);
   const my = useMotionValue(-400);
-  const spot = useMotionTemplate`radial-gradient(340px circle at ${mx}px ${my}px, var(--spot), transparent 66%)`;
+  // 高光"追"指针而非贴住:弹簧滞后约一拍,液态感;离场 reset 时顺势弹回角落
+  const smx = useSpring(mx, { stiffness: 400, damping: 40 });
+  const smy = useSpring(my, { stiffness: 400, damping: 40 });
+  const spot = useMotionTemplate`radial-gradient(340px circle at ${smx}px ${smy}px, var(--spot), transparent 66%)`;
 
   const rx = useSpring(0, { stiffness: 160, damping: 18 });
   const ry = useSpring(0, { stiffness: 160, damping: 18 });

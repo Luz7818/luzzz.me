@@ -19,7 +19,7 @@ export default function Contact() {
           <MagneticButton
             href={`mailto:${profile.email}`}
             strength={0.22}
-            className="shine-host relative inline-flex overflow-hidden rounded-full bg-accent px-8 py-4 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] transition-[filter] duration-300 hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="shine-host btn-primary relative inline-flex overflow-hidden rounded-full bg-accent px-8 py-4 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <span className="shine" aria-hidden />
             <span className="relative">{profile.email}</span>

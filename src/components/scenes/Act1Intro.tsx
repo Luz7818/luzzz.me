@@ -59,6 +59,8 @@ export default function Act1Intro() {
   return (
     <div ref={wrapRef} className="relative h-[260vh]">
       <div className="sticky top-0 flex h-dvh flex-col overflow-hidden">
+        {/* 首屏暖光:浅色下也有一团呼吸,视线落在标题 */}
+        <div className="hero-glow" aria-hidden />
         {/* 拍一:开场 */}
         <motion.div
           style={{ transform: b1t, opacity: b1o, pointerEvents: b1pe }}
@@ -98,16 +100,19 @@ export default function Act1Intro() {
                   e.preventDefault();
                   smoothTo('projects');
                 }}
-                className="inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] transition-[filter] duration-300 hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                className="btn-primary inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 看项目
               </MagneticButton>
               <MagneticButton
                 href={profile.github}
                 external
-                className="inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                className="btn-ghost inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
               >
                 GitHub @{profile.handle}
+                <span className="arrow ml-1.5" aria-hidden>
+                  ↗
+                </span>
               </MagneticButton>
             </motion.div>
           </div>

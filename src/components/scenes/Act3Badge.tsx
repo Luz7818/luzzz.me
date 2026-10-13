@@ -200,16 +200,19 @@ export default function Act3Badge() {
             >
               <MagneticButton
                 href={`mailto:${profile.email}`}
-                className="inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] transition-[filter] duration-300 hover:brightness-110 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                className="btn-primary inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
               >
                 发邮件
               </MagneticButton>
               <MagneticButton
                 href={profile.github}
                 external
-                className="inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent"
+                className="btn-ghost inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent"
               >
                 GitHub @{profile.handle}
+                <span className="arrow ml-1.5" aria-hidden>
+                  ↗
+                </span>
               </MagneticButton>
               <button
                 type="button"
