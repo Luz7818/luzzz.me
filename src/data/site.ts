@@ -35,16 +35,16 @@ export const stats = [
   { value: '866', label: '交通术语' },
 ];
 
-/** 跑马灯关键词带(全页唯一一条)。全部来自真实项目,不是装饰性填充。 */
-export const marquee = [
-  'MADDPG 多智能体强化学习',
-  'Three.js 星图',
-  'LLM Agent',
-  '变异测试',
-  '枢纽换乘引导',
-  '评测闭环',
-  '数据可视化',
-  'PWA 双端',
+/** 跑马灯关键词带(全页唯一一条)。全部来自真实项目,slug 指向点击直达的项目卡。 */
+export const marquee: Array<{ text: string; slug: string }> = [
+  { text: 'MADDPG 多智能体强化学习', slug: 'zhishuxing' },
+  { text: 'Three.js 星图', slug: 'marx-cloud' },
+  { text: 'LLM Agent', slug: 'testforge' },
+  { text: '变异测试', slug: 'testforge' },
+  { text: '枢纽换乘引导', slug: 'zhishuxing' },
+  { text: '评测闭环', slug: 'transportation-harness' },
+  { text: '数据可视化', slug: 'marx-cloud' },
+  { text: 'PWA 双端', slug: 'zhishuxing' },
 ];
 
 export const projects: Project[] = [

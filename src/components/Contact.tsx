@@ -1,10 +1,26 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import MagneticButton from './MagneticButton';
 import Reveal from './Reveal';
 import { profile } from '@/data/site';
 
 export default function Contact() {
+  // 邮箱一键复制:点击就地翻成「已复制 ✓」,1.2s 后翻回(无 toast)
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
+  const copyTimer = useRef(0);
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(profile.email);
+      setCopied('ok');
+    } catch {
+      setCopied('fail');
+    }
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied('idle'), 1200);
+  };
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
+
   return (
     <section id="contact" className="relative mx-auto max-w-[1200px] px-6 pt-24 pb-10 md:px-10 md:pt-28">
       <Reveal>
@@ -24,6 +40,16 @@ export default function Contact() {
             <span className="shine" aria-hidden />
             <span className="relative">{profile.email}</span>
           </MagneticButton>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={copyEmail}
+              aria-live="polite"
+              className="font-mono text-[11px] text-muted transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              {copied === 'ok' ? '已复制 ✓' : copied === 'fail' ? '复制失败' : '复制邮箱'}
+            </button>
+          </div>
         </div>
       </Reveal>
 

@@ -21,6 +21,21 @@ export default function Act3Badge() {
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 110, damping: 30, mass: 0.5 });
 
+  // 邮箱一键复制:点击大标题即复制,字符就地翻成「已复制 ✓」,1.2s 后翻回(无 toast)
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
+  const copyTimer = useRef(0);
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(profile.email);
+      setCopied('ok');
+    } catch {
+      setCopied('fail');
+    }
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopied('idle'), 1200);
+  };
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
+
   // 落场:从下方带透视递入
   const dropY = useTransform(sp, [0, 0.14], ['46vh', '0vh']);
   const dropRX = useTransform(sp, [0, 0.14], [26, 0]);
@@ -175,14 +190,34 @@ export default function Act3Badge() {
         >
           <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col justify-center px-6 md:px-10">
             <p className="font-mono text-[13px] text-muted">联系 · 保持通话</p>
-            <h2 className="mt-4 text-[clamp(1.6rem,4.6vw,3.6rem)] font-bold leading-[1.2] tracking-tight">
-              <SplitChars
-                text={profile.email}
-                wrapperClassName="block"
-                charClassName="text-accent"
-                stagger={0.022}
-                delay={0.1}
-              />
+            <h2 className="mt-4 text-[clamp(1.6rem,4.6vw,3.6rem)] font-bold leading-[1.2] tracking-[-0.01em]">
+              <button
+                type="button"
+                onClick={copyEmail}
+                title="点击复制邮箱"
+                data-cursor-label="复制"
+                aria-live="polite"
+                className="block cursor-pointer text-left transition-opacity duration-300 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+              >
+                {copied === 'idle' ? (
+                  <SplitChars
+                    text={profile.email}
+                    wrapperClassName="block"
+                    charClassName="text-accent"
+                    stagger={0.022}
+                    delay={0.1}
+                  />
+                ) : (
+                  <motion.span
+                    className="block text-accent"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: EASE_OUT }}
+                  >
+                    {copied === 'ok' ? '已复制 ✓' : '复制失败,请手动输入'}
+                  </motion.span>
+                )}
+              </button>
             </h2>
             <motion.p
               initial={{ opacity: 0 }}

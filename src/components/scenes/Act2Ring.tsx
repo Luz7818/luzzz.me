@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   motion,
   useMotionTemplate,
@@ -33,12 +33,6 @@ function lenis() {
 function healLenis() {
   const l = lenis();
   if (l && l.limit < 100) l.resize();
-}
-
-function scrollToY(y: number) {
-  const l = lenis();
-  if (l) l.scrollTo(Math.max(0, y), { duration: 0.6, easing: easeOutQuart });
-  else window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 
 /** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms;
@@ -326,16 +320,32 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     };
   }, []);
 
-  const goTo = (k: number) => {
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const total = wrap.offsetHeight - window.innerHeight;
-    const y =
-      wrap.getBoundingClientRect().top +
-      window.scrollY +
-      (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * total;
-    scrollToY(y);
-  };
+  const goTo = useCallback(
+    (k: number) => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+      const total = wrap.offsetHeight - window.innerHeight;
+      glideScrollTo(
+        wrap.getBoundingClientRect().top +
+          window.scrollY +
+          (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * total,
+        0.6,
+      );
+    },
+    [],
+  );
+
+  // 跑马灯词条直达:按 slug 吸附到对应整卡(经典竖排树由 Projects 接管)
+  useEffect(() => {
+    const onJump = (e: Event) => {
+      const slug = (e as CustomEvent<{ slug?: string }>).detail?.slug;
+      if (!slug) return;
+      const k = projects.findIndex((p) => p.slug === slug);
+      if (k >= 0) goTo(k);
+    };
+    window.addEventListener('luzzz-project-jump', onJump);
+    return () => window.removeEventListener('luzzz-project-jump', onJump);
+  }, [projects, goTo]);
 
   const p = projects[active];
 

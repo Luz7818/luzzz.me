@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'motion/react';
 import Reveal from './Reveal';
 import SpotlightCard from './SpotlightCard';
@@ -180,6 +180,21 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
     return () => window.removeEventListener('resize', setVar);
   }, [vw]);
 
+  // 跑马灯词条直达(经典竖排树):滚到对应堆叠卡(三幕树由 Act2Ring 接管)
+  useEffect(() => {
+    const onJump = (e: Event) => {
+      const slug = (e as CustomEvent<{ slug?: string }>).detail?.slug;
+      if (!slug) return;
+      const i = projects.findIndex((p) => p.slug === slug);
+      if (i < 0) return;
+      document
+        .querySelector(`[data-project-card="${i}"]`)
+        ?.scrollIntoView({ block: 'center' });
+    };
+    window.addEventListener('luzzz-project-jump', onJump);
+    return () => window.removeEventListener('luzzz-project-jump', onJump);
+  }, [projects]);
+
   return (
     <div
       ref={sectionRef}
@@ -200,6 +215,7 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
           {projects.map((p, i) => (
             <div
               key={p.slug}
+              data-project-card={i}
               className={`w-full shrink-0 motion-safe:lg:h-[62vh] motion-safe:lg:w-[480px] ${
                 i === 0 ? 'motion-safe:lg:w-[720px]' : ''
               }`}
