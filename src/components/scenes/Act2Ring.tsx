@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   motion,
   useMotionTemplate,
+  useMotionValue,
   useMotionValueEvent,
   useScroll,
   useSpring,
@@ -40,9 +41,12 @@ function scrollToY(y: number) {
   else window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 
-/** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms */
+/** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms;
+ *  橡皮筋:超出首末整卡的拖拽量按 RUBBER 阻尼折成视觉旋转,最多过冲 MAX_OVER_DEG */
 const DRAG_DEADZONE = 5;
 const FLICK_V = 0.35;
+const RUBBER = 0.3;
+const MAX_OVER_DEG = 12;
 
 /** 单张环卡:固定在环上的角度,亮度/透明度随正面角变化,背面不渲染 */
 function RingCard({
@@ -149,7 +153,11 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   // ease-out 减速落位:透视放大本身前慢后快,反着衬正好匀速长大
   const enterZ = useTransform(sp, [0, 0.045], [-950, 0], { ease: easeOutQuart });
   const enterO = useTransform(sp, [0.008, 0.04], [0, 1], { ease: easeOutQuart });
-  const ringT = useMotionTemplate`translateZ(${enterZ}px) rotateY(${rotation}deg)`;
+  // 拖拽橡皮筋:拖出首末整卡时滚动钉在边界,超出量以阻尼折成视觉旋转(弹簧跟随,松手弹回)
+  const dragOffset = useMotionValue(0);
+  const dragOffsetSpring = useSpring(dragOffset, { stiffness: 320, damping: 32 });
+  const totalRot = useTransform([rotation, dragOffsetSpring] as const, ([r, d]: readonly number[]) => r + d);
+  const ringT = useMotionTemplate`translateZ(${enterZ}px) rotateY(${totalRot}deg)`;
 
   // 半径由实测卡宽推出:相邻卡心弦长 = 2R·sin(π/N) ≥ 卡宽 + 间隙
   useLayoutEffect(() => {
@@ -202,6 +210,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     pointerId: -1,
     startX: 0,
     startScroll: 0,
+    minS: 0,
+    maxS: 0,
     moved: false,
     samples: [] as Array<{ x: number; t: number }>,
   });
@@ -214,10 +224,24 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     d.startX = e.clientX;
     d.startScroll = window.scrollY;
     d.moved = false;
-  d.samples = [{ x: e.clientX, t: performance.now() }];
-  e.currentTarget.setPointerCapture(e.pointerId);
-  healLenis();
-};
+    d.samples = [{ x: e.clientX, t: performance.now() }];
+    healLenis();
+    // 拖拽边界 = 首末整卡锚点:超出部分不滚页面,走橡皮筋
+    // (先算边界再捕获——capture 失败不应拖垮边界状态)
+    const wrap = wrapRef.current;
+    if (wrap) {
+      const span = wrap.offsetHeight - window.innerHeight;
+      const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
+      d.minS = wrapTop + CORE[0] * span;
+      d.maxS = wrapTop + CORE[1] * span;
+    }
+    dragOffset.set(0);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* 合成事件/已释放的 pointerId 无从捕获:拖拽仍可用,只是指针移出舞台后不再跟踪 */
+    }
+  };
 
   const onStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
@@ -234,20 +258,25 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     // 一整卡对应的拖拽距离:随视口宽缩放,窄屏更短更好甩
     const dragCardPx = Math.min(640, Math.max(260, window.innerWidth * 0.42));
     const target = d.startScroll - dx * (scrollPerCard / dragCardPx);
+    // 钉在首末整卡之间;超出量按阻尼折成视觉旋转过冲,不再泄漏到相邻幕
+    const clamped = Math.min(d.maxS, Math.max(d.minS, target));
+    const over = target - clamped;
     const l = lenis();
-    if (l) l.scrollTo(target, { immediate: true });
-    else window.scrollTo(0, target);
+    if (l) l.scrollTo(clamped, { immediate: true });
+    else window.scrollTo(0, clamped);
+    const degPerScroll = ((N - 1) * STEP) / span;
+    dragOffset.set(Math.max(-MAX_OVER_DEG, Math.min(MAX_OVER_DEG, -over * degPerScroll * RUBBER)));
   };
 
   const onStagePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
     if (!d.active || e.pointerId !== d.pointerId) return;
     d.active = false;
-  if (!d.moved) return;
-  const wrap = wrapRef.current;
-  if (!wrap) return;
-  healLenis();
-  // 最近 100ms 的横向速度决定是否甩到下一张/上一张
+    if (!d.moved) return;
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    healLenis();
+    // 最近 100ms 的横向速度决定是否甩到下一张/上一张
     const s = d.samples;
     const last = s[s.length - 1];
     const first = s.find((p) => last.t - p.t < 100) ?? s[0];
@@ -260,10 +289,10 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     if (Math.abs(vx) > FLICK_V) k += vx < 0 ? 1 : -1;
     k = Math.min(N - 1, Math.max(0, k));
     const yk =
-      wrap.getBoundingClientRect().top +
-      window.scrollY +
-      (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * span;
+      wrapTop + (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * span;
     glideScrollTo(yk, 0.55);
+    // 橡皮筋回弹:过冲的视觉旋转弹簧归零(范围内本就是 0,无感)
+    dragOffset.set(0);
   };
 
   /** 拖拽过后不触发卡片链接:位移超过 deadzone 的手势在捕获阶段拦掉 click */
