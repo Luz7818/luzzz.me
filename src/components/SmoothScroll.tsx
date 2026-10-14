@@ -76,26 +76,49 @@ export function navSectionAt(y: number): string {
   return active;
 }
 
-/** 锚点平滑跳转:场景锚点在先,Lenis 在时走它的缓动,否则退回原生平滑滚动。 */
+/** rAF 心跳:动画循环每帧盖戳。内嵌面板/被遮挡窗口的 rAF 可能被节流到停摆,
+ *  此时 Lenis 的动画循环冻住、scrollTo 永远到不了——跳转必须退回原生滚动。 */
+let lastRafAt = 0;
+
+/** Lenis 跳转 + 停摆兜底:动画循环若在点击时已冻或飞到一半被冻(内嵌面板被遮挡的
+ *  典型症状),用原生滚动直接送达;正常环境 rAF 存活、动画按时走完,兜底不触发。 */
+function lenisToWithBail(lenis: LenisLike, y: number, duration: number) {
+  lenis.scrollTo(y, { duration, easing: easeOutQuart });
+  const deadline = performance.now() + duration * 1000 + 400;
+  const watch = window.setInterval(() => {
+    if (Math.abs(window.scrollY - y) < 8 || performance.now() > deadline) {
+      window.clearInterval(watch);
+      return;
+    }
+    if (performance.now() - lastRafAt > 400) {
+      window.clearInterval(watch);
+      window.scrollTo(0, y);
+    }
+  }, 300);
+}
+
+/** 锚点平滑跳转:场景锚点在先;Lenis 在且其动画循环存活时走它的缓动,
+ *  循环停摆(点击无响应的根源)则退回原生瞬时滚动,保证点击必达。 */
 export function smoothTo(id: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis;
+  const rafAlive = performance.now() - lastRafAt < 400;
   const scene = reduced ? undefined : sceneAnchors.get(id);
   if (scene) {
     const y = Math.max(0, scene());
-    if (lenis) {
-      lenis.scrollTo(y, { duration: 1.25 * pagesBetween(window.scrollY, y), easing: easeOutQuart });
+    if (lenis && rafAlive) {
+      lenisToWithBail(lenis, y, 1.25 * pagesBetween(window.scrollY, y));
     } else {
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      window.scrollTo(0, y);
     }
     return;
   }
   const el = document.getElementById(id);
   if (!el) return;
-  if (lenis) {
-    lenis.scrollTo(el, { duration: 1.25, easing: easeOutQuart });
+  if (lenis && rafAlive) {
+    lenisToWithBail(lenis, el.getBoundingClientRect().top + window.scrollY, 1.25);
   } else {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.scrollIntoView({ block: 'start' });
   }
 }
 
@@ -136,6 +159,7 @@ export default function SmoothScroll() {
       contentObserver.observe(document.body);
       window.addEventListener('load', onWindowLoad, { once: true });
       const loop = (time: number) => {
+        lastRafAt = time;
         lenis?.raf(time);
         raf = requestAnimationFrame(loop);
       };
@@ -170,7 +194,7 @@ export default function SmoothScroll() {
       snapping = true;
       snapTarget = best;
       lastSnapAt = performance.now();
-      lenis.scrollTo(best, { duration: 0.45, easing: easeOutQuart });
+      lenisToWithBail(lenis, best, 0.45);
     };
     const onScroll = () => {
       if (snapping && Math.abs(window.scrollY - snapTarget) < 4) snapping = false;
