@@ -26,24 +26,13 @@ const pageBounds: Array<() => number> = [];
 /** easeOutQuart:t⁴ 减速曲线——Lenis 的锚点跳转、吸附回位共用这一条 */
 export const easeOutQuart = (t: number): number => 1 - Math.pow(1 - t, 4);
 
-/** 幕组件挂载时注册自己的页顶解析器(跳转时才求值),返回注销函数。 */
+/** 幕组件挂载时注册自己的页顶解析器,返回注销函数。 */
 export function registerPageBound(resolve: () => number) {
   pageBounds.push(resolve);
   return () => {
     const i = pageBounds.indexOf(resolve);
     if (i >= 0) pageBounds.splice(i, 1);
   };
-}
-
-/** 跨越的幕数:按当前/目标落点在页界之间的区段计数;同幕内(如开场↔关于)按 1 页计 */
-function pagesBetween(fromY: number, toY: number): number {
-  const tops = [0, ...pageBounds.map((r) => Math.max(0, r()))].sort((a, b) => a - b);
-  const zone = (y: number) => {
-    let i = 0;
-    while (i < tops.length - 1 && y >= tops[i + 1]) i += 1;
-    return i;
-  };
-  return Math.max(1, Math.abs(zone(toY) - zone(fromY)));
 }
 
 /** 吸附锚点:各幕注册「值得停住」的滚动位置(开场拍/每张环卡/工牌落定/联系页) */
@@ -97,17 +86,17 @@ function lenisToWithBail(lenis: LenisLike, y: number, duration: number) {
   }, 300);
 }
 
-/** 锚点平滑跳转:场景锚点在先;Lenis 在且其动画循环存活时走它的缓动,
- *  循环停摆(点击无响应的根源)则退回原生瞬时滚动,保证点击必达。 */
+/** 锚点直达:程序化导航(主菜单/页内按钮)一律瞬时落位,不顺着滚过去。
+ *  Lenis 在时用 immediate 同步其内部状态(即使 rAF 被节流也同步生效),
+ *  否则原生滚动;落位后由各幕的弹簧把入场/换场动画快进到目标态(可中断)。 */
 export function smoothTo(id: string) {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis;
-  const rafAlive = performance.now() - lastRafAt < 400;
   const scene = reduced ? undefined : sceneAnchors.get(id);
   if (scene) {
     const y = Math.max(0, scene());
-    if (lenis && rafAlive) {
-      lenisToWithBail(lenis, y, 1.25 * pagesBetween(window.scrollY, y));
+    if (lenis) {
+      lenis.scrollTo(y, { immediate: true });
     } else {
       window.scrollTo(0, y);
     }
@@ -115,8 +104,8 @@ export function smoothTo(id: string) {
   }
   const el = document.getElementById(id);
   if (!el) return;
-  if (lenis && rafAlive) {
-    lenisToWithBail(lenis, el.getBoundingClientRect().top + window.scrollY, 1.25);
+  if (lenis) {
+    lenis.scrollTo(el, { immediate: true });
   } else {
     el.scrollIntoView({ block: 'start' });
   }
