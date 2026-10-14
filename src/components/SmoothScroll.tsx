@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 type LenisLike = {
   scrollTo: (t: number | string | HTMLElement, o?: object) => void;
   resize: () => void;
+  limit: number;
 };
 
 /** 场景锚点:三幕结构里锚点不再是元素 id,而是各幕注册的目标滚动位置解析器 */
@@ -70,20 +71,56 @@ export function navSectionAt(y: number): string {
 let lastRafAt = 0;
 
 /** Lenis 跳转 + 停摆兜底:动画循环若在点击时已冻或飞到一半被冻(内嵌面板被遮挡的
- *  典型症状),用原生滚动直接送达;正常环境 rAF 存活、动画按时走完,兜底不触发。 */
+ *  典型症状),用瞬时置位直接送达;正常环境 rAF 存活、动画按时走完,兜底不触发。 */
 function lenisToWithBail(lenis: LenisLike, y: number, duration: number) {
   lenis.scrollTo(y, { duration, easing: easeOutQuart });
   const deadline = performance.now() + duration * 1000 + 400;
+  let lastY = window.scrollY;
   const watch = window.setInterval(() => {
-    if (Math.abs(window.scrollY - y) < 8 || performance.now() > deadline) {
+    const cur = window.scrollY;
+    if (Math.abs(cur - y) < 8 || performance.now() > deadline) {
       window.clearInterval(watch);
       return;
     }
     if (performance.now() - lastRafAt > 400) {
       window.clearInterval(watch);
-      window.scrollTo(0, y);
+      setScrollInstant(y);
+      return;
     }
+    // 引擎活着但位置纹丝不动:limit 被钳成 0 之类的自身塌陷——自愈后直接落位
+    if (Math.abs(cur - lastY) < 1) {
+      if (lenis.limit < 100) lenis.resize();
+      setScrollInstant(y);
+      window.clearInterval(watch);
+      return;
+    }
+    lastY = cur;
   }, 300);
+}
+
+/** 瞬时置位:Lenis 在时用 immediate 同步其内部状态(比原生滚动更可靠——
+ *  内嵌面板会钳制原生滚动通道;limit 因后台节流塌成 0 时先自愈),否则原生滚动。 */
+function setScrollInstant(y: number) {
+  const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis;
+  const target = Math.max(0, y);
+  if (!lenis) {
+    window.scrollTo(0, target);
+    return;
+  }
+  if (lenis.limit < 100) lenis.resize();
+  lenis.scrollTo(target, { immediate: true });
+}
+
+/** 带停摆兜底的滑动滚动:正常环境走 Lenis 缓动;rAF 停摆(内嵌面板被遮挡)退回瞬时置位。
+ *  供环形岛拖拽释放吸附等需要"动画到位但必须到位"的场景使用。 */
+export function glideScrollTo(y: number, duration = 0.55) {
+  const lenis = (window as unknown as { __lenis?: LenisLike }).__lenis;
+  const target = Math.max(0, y);
+  if (lenis && performance.now() - lastRafAt < 400) {
+    lenisToWithBail(lenis, target, duration);
+  } else {
+    setScrollInstant(target);
+  }
 }
 
 /** 锚点直达:程序化导航(主菜单/页内按钮)一律瞬时落位,不顺着滚过去。
@@ -199,6 +236,8 @@ export default function SmoothScroll() {
     };
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('scroll', onScroll, { passive: true });
+    // 按下即接管:拖拽环岛等手势开始时,中止进行中的吸附归位
+    window.addEventListener('pointerdown', onInput);
     window.addEventListener('wheel', onInput, { passive: true });
     window.addEventListener('touchmove', onInput, { passive: true });
 
@@ -208,6 +247,7 @@ export default function SmoothScroll() {
       (window as unknown as { __lenis?: unknown }).__lenis = undefined;
       lenis?.destroy();
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointerdown', onInput);
       window.removeEventListener('wheel', onInput);
       window.removeEventListener('touchmove', onInput);
       document.removeEventListener('visibilitychange', onVisibility);

@@ -13,7 +13,7 @@ import {
 import SplitChars from '../SplitChars';
 import SpotlightCard from '../SpotlightCard';
 import { CoverGrade, Glyph, LiveBadge } from '../Projects';
-import { easeOutQuart, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
+import { easeOutQuart, glideScrollTo, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
 import type { Project } from '@/data/site';
 
 const N = 5; // 与 site.ts 的 projects 数量一致
@@ -22,10 +22,16 @@ const STEP = 360 / N;
 const CORE: [number, number] = [0.06, 0.94];
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
-type LenisLike = { scrollTo: (t: number, o?: object) => void };
+type LenisLike = { scrollTo: (t: number, o?: object) => void; limit: number; resize: () => void };
 
 function lenis() {
   return (window as unknown as { __lenis?: LenisLike }).__lenis;
+}
+
+/** 后台节流会把 Lenis 的 limit 塌成 0(其 resize 跑在 rAF 里);拖拽前自愈一次 */
+function healLenis() {
+  const l = lenis();
+  if (l && l.limit < 100) l.resize();
 }
 
 function scrollToY(y: number) {
@@ -33,6 +39,10 @@ function scrollToY(y: number) {
   if (l) l.scrollTo(Math.max(0, y), { duration: 0.6, easing: easeOutQuart });
   else window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
+
+/** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms */
+const DRAG_DEADZONE = 5;
+const FLICK_V = 0.35;
 
 /** 单张环卡:固定在环上的角度,亮度/透明度随正面角变化,背面不渲染 */
 function RingCard({
@@ -90,6 +100,7 @@ function RingCard({
               <img
                 src={preview}
                 alt={`${p.name} 封面`}
+                draggable={false}
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                 loading="eager"
                 decoding="async"
@@ -185,6 +196,84 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     return () => unsnap();
   }, []);
 
+  // ---- 拖拽转环:横向位移实时折算成滚动(复用 scroll→rotation 管线,面板/点阵/吸附零改动) ----
+  const dragRef = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    startScroll: 0,
+    moved: false,
+    samples: [] as Array<{ x: number; t: number }>,
+  });
+
+  const onStagePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const d = dragRef.current;
+    d.active = true;
+    d.pointerId = e.pointerId;
+    d.startX = e.clientX;
+    d.startScroll = window.scrollY;
+    d.moved = false;
+  d.samples = [{ x: e.clientX, t: performance.now() }];
+  e.currentTarget.setPointerCapture(e.pointerId);
+  healLenis();
+};
+
+  const onStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d.active || e.pointerId !== d.pointerId) return;
+    const dx = e.clientX - d.startX;
+    if (!d.moved && Math.abs(dx) < DRAG_DEADZONE) return;
+    d.moved = true;
+    d.samples.push({ x: e.clientX, t: performance.now() });
+    if (d.samples.length > 5) d.samples.shift();
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const span = wrap.offsetHeight - window.innerHeight;
+    const scrollPerCard = (span * (CORE[1] - CORE[0])) / (N - 1);
+    // 一整卡对应的拖拽距离:随视口宽缩放,窄屏更短更好甩
+    const dragCardPx = Math.min(640, Math.max(260, window.innerWidth * 0.42));
+    const target = d.startScroll - dx * (scrollPerCard / dragCardPx);
+    const l = lenis();
+    if (l) l.scrollTo(target, { immediate: true });
+    else window.scrollTo(0, target);
+  };
+
+  const onStagePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d.active || e.pointerId !== d.pointerId) return;
+    d.active = false;
+  if (!d.moved) return;
+  const wrap = wrapRef.current;
+  if (!wrap) return;
+  healLenis();
+  // 最近 100ms 的横向速度决定是否甩到下一张/上一张
+    const s = d.samples;
+    const last = s[s.length - 1];
+    const first = s.find((p) => last.t - p.t < 100) ?? s[0];
+    const vx = (last.x - first.x) / Math.max(1, last.t - first.t);
+    const span = wrap.offsetHeight - window.innerHeight;
+    // 当前进度按幕内位置算:scrollY 要先减掉第二幕的页顶偏移
+    const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
+    const v = ((window.scrollY - wrapTop) / span - CORE[0]) / (CORE[1] - CORE[0]);
+    let k = Math.round(v * (N - 1));
+    if (Math.abs(vx) > FLICK_V) k += vx < 0 ? 1 : -1;
+    k = Math.min(N - 1, Math.max(0, k));
+    const yk =
+      wrap.getBoundingClientRect().top +
+      window.scrollY +
+      (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * span;
+    glideScrollTo(yk, 0.55);
+  };
+
+  /** 拖拽过后不触发卡片链接:位移超过 deadzone 的手势在捕获阶段拦掉 click */
+  const onStageClickCapture = (e: React.MouseEvent) => {
+    if (dragRef.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
   // 导航「项目」直落第一张卡的整卡对齐位(与吸附锚点 0 重合),避免先落到幕顶空帧再被吸附拉走
   useEffect(() => {
     const unscene = registerSceneAnchors({
@@ -229,7 +318,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             <div className="flex items-end justify-between gap-6">
               <div>
                 <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
-                <p className="mt-2 hidden text-sm text-muted md:block">滚动旋转环岛 · 停住自动对齐整卡</p>
+                <p className="mt-2 hidden text-sm text-muted md:block">拖拽或滚动旋转环岛 · 松手自动对齐整卡</p>
               </div>
               <p aria-hidden className="font-mono text-xs text-muted">
                 0{active + 1} / 0{N}
@@ -237,7 +326,15 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             </div>
           </header>
 
-          <div className="ring-stage relative flex-1">
+          <div
+            className="ring-stage relative flex-1 select-none touch-pan-y"
+            data-cursor-label="拖转"
+            onPointerDown={onStagePointerDown}
+            onPointerMove={onStagePointerMove}
+            onPointerUp={onStagePointerEnd}
+            onPointerCancel={onStagePointerEnd}
+            onClickCapture={onStageClickCapture}
+          >
             <motion.div
               className="ring-3d absolute left-1/2 top-1/2 h-0 w-0 will-change-transform"
               style={{ transform: ringT, opacity: enterO }}
