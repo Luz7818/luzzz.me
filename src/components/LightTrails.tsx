@@ -10,6 +10,9 @@ type Car = {
   warm: boolean;
   tail: number;
   alpha: number;
+  /** 即兴车:绝对 y(不占车道),驶出画布后移除 */
+  y?: number;
+  ephemeral?: boolean;
 };
 
 type RGB = [number, number, number];
@@ -76,7 +79,8 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2,
  * 暗房用 lighter 叠加发光,浅底日间改 source-over 正常合成(叠加在近白背景上会被钳成纯白);
  * 颜料、车头与合成模式全部来自当前主题的 CSS 变量,换主题时颜色在 0.6s 内逐帧插值,
  * 与 CSS @property 的颜色涟漪同步换天,而不是瞬间跳变(reduced-motion 仍直接落位);
- * 指针移动时整幅光轨轻微视差;prefers-reduced-motion 时只画一帧带尾迹的静态光轨。
+ * 指针移动时整幅光轨轻微视差;单击非交互处,一辆高速长尾车从点击点即兴驶过(彩蛋);
+ * prefers-reduced-motion 时只画一帧带尾迹的静态光轨。
  */
 export default function LightTrails() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -218,7 +222,7 @@ export default function LightTrails() {
     const drawTrails = (longTail: boolean) => {
       ctx.globalCompositeOperation = pal.blend;
       for (const car of cars) {
-        const y = laneY[car.lane];
+        const y = car.y ?? laneY[car.lane];
         const len = longTail ? car.tail * 3.2 : car.tail;
         const x2 = car.x - car.dir * len;
         const rgbStr = car.warm ? rgb(pal.primary) : rgb(pal.secondary);
@@ -239,6 +243,7 @@ export default function LightTrails() {
     };
 
     const wrap = (car: Car) => {
+      if (car.ephemeral) return; // 即兴车驶出即除名,不循环
       if (car.dir === 1 && car.x - car.tail > w + 40) car.x = -40 - Math.random() * 260;
       if (car.dir === -1 && car.x + car.tail < -40) car.x = w + 40 + Math.random() * 260;
     };
@@ -266,6 +271,12 @@ export default function LightTrails() {
         car.x += car.speed * car.dir * dt;
         wrap(car);
       }
+      // 即兴车完全驶出画布后除名
+      if (cars.some((c) => c.ephemeral)) {
+        cars = cars.filter(
+          (c) => !c.ephemeral || (c.dir === 1 ? c.x - c.tail < w + 60 : c.x + c.tail > -60),
+        );
+      }
       drawTrails(false);
       ctx.restore();
       raf = requestAnimationFrame(frame);
@@ -286,6 +297,32 @@ export default function LightTrails() {
       if (e.pointerType !== 'mouse') return;
       offset.tx = (e.clientX / window.innerWidth - 0.5) * 14;
       offset.ty = (e.clientY / window.innerHeight - 0.5) * 10;
+    };
+
+    /** 彩蛋:单击非交互处,一辆高速长尾车从点击点即兴驶过(拖拽/链接/按钮不发车) */
+    const onBgClick = (e: MouseEvent) => {
+      if (reduced || document.hidden) return;
+      if (e.button !== 0) return;
+      const el = e.target as Element | null;
+      if (el && el.closest('a, button, [data-cursor-label]')) return;
+      if (cars.filter((c) => c.ephemeral).length >= 6) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 50 || rect.height < 50) return;
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      if (cx < 0 || cx > rect.width || cy < 0 || cy > rect.height) return;
+      const dir: 1 | -1 = cx < rect.width / 2 ? 1 : -1;
+      cars.push({
+        lane: 0,
+        x: cx,
+        speed: 620 + Math.random() * 260,
+        dir,
+        warm: dir === 1,
+        tail: 300 + Math.random() * 150,
+        alpha: 0.85 + Math.random() * 0.15,
+        y: cy,
+        ephemeral: true,
+      });
     };
 
     const onThemeChange = () => {
@@ -310,6 +347,7 @@ export default function LightTrails() {
     canvasObserver.observe(canvas);
     window.addEventListener('resize', resize);
     window.addEventListener('pointermove', onPointer);
+    window.addEventListener('click', onBgClick);
     window.addEventListener('luzzz-themechange', onThemeChange);
     document.addEventListener('visibilitychange', onVisibility);
     if (!reduced) raf = requestAnimationFrame(frame);
@@ -320,6 +358,7 @@ export default function LightTrails() {
       canvasObserver.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('click', onBgClick);
       window.removeEventListener('luzzz-themechange', onThemeChange);
       document.removeEventListener('visibilitychange', onVisibility);
     };

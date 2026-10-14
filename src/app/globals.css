@@ -775,6 +775,19 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
+/* 点击涟漪:一圈琥珀涟漪自按下点扩散消散(与自定义光标同一体系) */
+.cursor-ripple {
+  position: fixed;
+  z-index: 90;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent);
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

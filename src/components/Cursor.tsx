@@ -79,6 +79,9 @@ export default function Cursor() {
   const on = useSyncExternalStore(subscribeMedia, enabledSnapshot, () => false);
   const [hidden, setHidden] = useState(true);
   const [hover, setHover] = useState<Hover>({ kind: 'idle' });
+  // 点击涟漪:每次按下自按下点扩散一圈琥珀涟漪,动画结束即除名
+  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const rippleId = useRef(0);
 
   const dispRef = useRef<SVGFEDisplacementMapElement | null>(null);
   const last = useRef({ x: -1, y: -1 });
@@ -130,13 +133,20 @@ export default function Cursor() {
       setHover(label ? { kind: 'label', text: label } : { kind: 'link' });
     };
     const leave = () => setHidden(true);
+    const down = (e: PointerEvent) => {
+      if (document.hidden) return;
+      const id = ++rippleId.current;
+      setRipples((rs) => [...rs.slice(-4), { id, x: e.clientX, y: e.clientY }]);
+    };
 
     window.addEventListener('pointermove', move, { passive: true });
     document.addEventListener('pointerover', over, { passive: true });
+    window.addEventListener('pointerdown', down, { passive: true });
     document.documentElement.addEventListener('pointerleave', leave);
     return () => {
       window.removeEventListener('pointermove', move);
       document.removeEventListener('pointerover', over);
+      window.removeEventListener('pointerdown', down);
       document.documentElement.removeEventListener('pointerleave', leave);
       delete document.documentElement.dataset.cursor;
     };
@@ -184,6 +194,20 @@ export default function Cursor() {
       >
         {label ?? ''}
       </motion.div>
+
+      {/* 点击涟漪:一圈琥珀涟漪自按下点扩散消散(scale+opacity,与光标同一体系) */}
+      {ripples.map((r) => (
+        <motion.span
+          key={r.id}
+          aria-hidden
+          className="cursor-ripple"
+          style={{ left: r.x, top: r.y }}
+          initial={{ scale: 0.25, opacity: 0.55 }}
+          animate={{ scale: 1, opacity: 0 }}
+          transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+          onAnimationComplete={() => setRipples((rs) => rs.filter((x) => x.id !== r.id))}
+        />
+      ))}
 
       {/* 琥珀光点:可点元素上放大发亮 */}
       <motion.div
