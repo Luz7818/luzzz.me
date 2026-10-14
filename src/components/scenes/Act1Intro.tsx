@@ -69,14 +69,24 @@ export default function Act1Intro() {
           <div className="mx-auto w-full max-w-[1200px] px-6 pb-20 pt-16 md:px-10">
             <p className="font-mono text-[13px] text-muted">{profile.kicker}</p>
 
-            <h1 className="mt-5 max-w-[24ch] text-[clamp(2.4rem,6vw,4.8rem)] font-bold leading-[1.14] tracking-tight">
+            <h1 className="mt-5 max-w-[24ch] text-[clamp(2.4rem,6vw,4.8rem)] font-bold leading-[1.14] tracking-[-0.01em]">
               <SplitChars text="把工程问题做成" wrapperClassName="block" charClassName={GRAD} delay={0.15} />
-              <SplitChars
-                text="能看、能玩、能复现的东西"
-                wrapperClassName="block"
-                charClassName={GRAD}
-                delay={0.55}
-              />
+              {/* 逐字拆行在窄屏会把"复现"拆到两行;按词组分 nowrap,断行只发生在顿号后 */}
+              {(
+                [
+                  ['能看、', 0],
+                  ['能玩、', 3],
+                  ['能复现的东西', 6],
+                ] as const
+              ).map(([text, charsBefore]) => (
+                <SplitChars
+                  key={text}
+                  text={text}
+                  wrapperClassName="inline-block whitespace-nowrap"
+                  charClassName={GRAD}
+                  delay={0.55 + charsBefore * 0.035}
+                />
+              ))}
             </h1>
 
             <motion.p
@@ -139,11 +149,11 @@ export default function Act1Intro() {
             <h2 className="sr-only">关于</h2>
             <div className="panel max-w-[780px] p-8 md:p-11">
               <p className="text-xl font-medium leading-[1.8] md:text-2xl">{profile.aboutLine}</p>
-              <dl className="mt-10 flex flex-wrap gap-x-14 gap-y-8 border-t border-line pt-8">
+              <dl className="hairline mt-10 flex flex-wrap gap-x-14 gap-y-8 pt-8">
                 {stats.map((s) => (
                   <div key={s.label} className="flex flex-col">
                     <dt className="order-2 mt-1 font-mono text-[11px] tracking-wide text-muted">{s.label}</dt>
-                    <dd className="order-1 text-3xl font-bold tracking-tight text-accent md:text-4xl">
+                    <dd className="order-1 text-3xl font-bold tabular-nums tracking-tight text-accent md:text-4xl">
                       <CountUp value={s.value} />
                     </dd>
                   </div>

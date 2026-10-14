@@ -11,6 +11,7 @@ import {
   type MotionValue,
 } from 'motion/react';
 import SplitChars from '../SplitChars';
+import SpotlightCard from '../SpotlightCard';
 import { CoverGrade, Glyph, LiveBadge } from '../Projects';
 import { easeOutQuart, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
 import type { Project } from '@/data/site';
@@ -74,7 +75,7 @@ function RingCard({
         pointerEvents: pe,
       }}
     >
-      <div className="panel ring-card overflow-hidden">
+      <SpotlightCard className="panel ring-card overflow-hidden">
         <a
           href={p.demo ?? p.url}
           target={p.demo ? undefined : '_blank'}
@@ -104,7 +105,7 @@ function RingCard({
           </div>
           <div className="p-4 md:p-5">
             <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-base font-bold tracking-tight md:text-lg">{p.name}</h3>
+              <h3 className="text-base font-bold tracking-[-0.01em] md:text-lg">{p.name}</h3>
               <span className="font-mono text-[10px] text-muted">{p.language}</span>
             </div>
             <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted">
@@ -112,7 +113,7 @@ function RingCard({
             </p>
           </div>
         </a>
-      </div>
+      </SpotlightCard>
     </motion.div>
   );
 }
@@ -227,7 +228,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
           <header className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pt-20 md:px-10 md:pt-24">
             <div className="flex items-end justify-between gap-6">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">项目</h2>
+                <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
                 <p className="mt-2 hidden text-sm text-muted md:block">滚动旋转环岛 · 停住自动对齐整卡</p>
               </div>
               <p aria-hidden className="font-mono text-xs text-muted">
@@ -269,7 +270,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, ease: EASE_OUT }}
                 >
-                  <h3 className="text-xl font-bold tracking-tight md:text-2xl">
+                  <h3 className="text-xl font-bold tracking-[-0.01em] md:text-2xl">
                     <SplitChars text={p.name} stagger={0.028} />
                   </h3>
                   <p className="mt-2 text-sm leading-[1.8] text-ink/80">{p.summary}</p>
@@ -278,14 +279,14 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                       href={p.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm font-medium text-muted transition-colors hover:text-accent"
+                      className="link-line text-sm font-medium text-muted transition-colors hover:text-accent"
                     >
                       源码
                     </a>
                     {p.demo && (
                       <a
                         href={p.demo}
-                        className="text-sm font-medium text-ink transition-colors hover:text-accent"
+                        className="link-line text-sm font-medium text-ink transition-colors hover:text-accent"
                       >
                         在线体验
                       </a>

@@ -8,7 +8,7 @@ export default function Contact() {
   return (
     <section id="contact" className="relative mx-auto max-w-[1200px] px-6 pt-24 pb-10 md:px-10 md:pt-28">
       <Reveal>
-        <h2 className="text-3xl font-bold tracking-tight md:text-4xl">联系</h2>
+        <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">联系</h2>
         <p className="mt-4 max-w-[52ch] text-sm leading-[1.85] text-ink/75">
           合作、技术交流、复现论文时踩到坑,或者单纯打个招呼,邮件都会回。
         </p>
@@ -27,19 +27,29 @@ export default function Contact() {
         </div>
       </Reveal>
 
-      <footer className="mt-20 border-t border-line py-8">
+      <footer className="hairline mt-20 py-8">
         <div className="flex flex-col gap-3 font-mono text-[11px] text-muted md:flex-row md:items-center md:justify-between">
           <span>
             © {new Date().getFullYear()} {profile.fullName} {profile.latinName}
           </span>
           <span>
             本站源码{' '}
-            <a href={profile.source} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
+            <a
+              href={profile.source}
+              target="_blank"
+              rel="noreferrer"
+              className="link-line transition-colors hover:text-accent"
+            >
               Luz7818/luzzz.me
             </a>
             ,部署在 Vercel
           </span>
-          <a href={profile.github} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
+          <a
+            href={profile.github}
+            target="_blank"
+            rel="noreferrer"
+            className="link-line transition-colors hover:text-accent"
+          >
             GitHub @{profile.handle}
           </a>
         </div>

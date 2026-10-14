@@ -129,7 +129,7 @@ export default function Act3Badge() {
               </div>
 
               <div className="mt-6">
-                <p className="text-3xl font-bold tracking-tight">{profile.fullName}</p>
+                <p className="text-3xl font-bold tracking-[-0.01em]">{profile.fullName}</p>
                 <p className="mt-1 font-mono text-xs text-muted">
                   {profile.latinName} · @{profile.handle}
                 </p>
@@ -138,7 +138,7 @@ export default function Act3Badge() {
                 </p>
               </div>
 
-              <div className="mt-6 space-y-2.5 border-t border-line pt-5">
+              <div className="hairline mt-6 space-y-2.5 pt-5">
                 <a
                   href={`mailto:${profile.email}`}
                   data-cursor-label="写信"
@@ -152,7 +152,7 @@ export default function Act3Badge() {
                   target="_blank"
                   rel="noreferrer"
                   data-cursor-label="访问"
-                  className="flex items-center gap-2.5 font-mono text-[12px] text-ink transition-colors hover:text-accent"
+                  className="link-line flex items-center gap-2.5 font-mono text-[12px] text-ink transition-colors hover:text-accent"
                 >
                   <span className="text-accent">ƒ</span>
                   github.com/{profile.handle}
@@ -225,7 +225,7 @@ export default function Act3Badge() {
           </div>
 
           <footer className="mx-auto w-full max-w-[1200px] px-6 pb-8 md:px-10">
-            <div className="flex flex-col gap-3 border-t border-line pt-6 font-mono text-[11px] text-muted md:flex-row md:items-center md:justify-between">
+            <div className="hairline flex flex-col gap-3 pt-6 font-mono text-[11px] text-muted md:flex-row md:items-center md:justify-between">
               <span>
                 © {new Date().getFullYear()} {profile.fullName} {profile.latinName}
               </span>

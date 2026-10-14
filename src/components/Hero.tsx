@@ -91,10 +91,10 @@ export default function Hero() {
           {profile.kicker}
         </motion.p>
 
-        <h1 className="mt-5 max-w-[22ch] text-[clamp(2.4rem,6vw,4.8rem)] font-bold leading-[1.14] tracking-tight">
+        <h1 className="mt-5 max-w-[22ch] text-[clamp(2.4rem,6vw,4.8rem)] font-bold leading-[1.14] tracking-[-0.01em]">
           <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
             <motion.span
-              className="block bg-[linear-gradient(180deg,var(--color-ink),color-mix(in_srgb,var(--color-ink)_72%,transparent))] bg-clip-text text-transparent"
+              className="block bg-[linear-gradient(180deg,var(--color-ink),color-mix(in_srgb,var(--color-ink)_72%,transparent))] bg-clip-text text-transparent [word-break:keep-all] text-balance"
               {...reveal(0.15)}
             >
               把工程问题做成
@@ -102,7 +102,7 @@ export default function Hero() {
           </span>
           <span className="block overflow-hidden pb-[0.1em]">
             <motion.span
-              className="block bg-[linear-gradient(180deg,var(--color-ink),color-mix(in_srgb,var(--color-ink)_72%,transparent))] bg-clip-text text-transparent"
+              className="block bg-[linear-gradient(180deg,var(--color-ink),color-mix(in_srgb,var(--color-ink)_72%,transparent))] bg-clip-text text-transparent [word-break:keep-all] text-balance"
               {...reveal(0.27)}
             >
               能看、能玩、能复现的东西

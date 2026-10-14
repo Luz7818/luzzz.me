@@ -26,19 +26,19 @@ function TagLine({ p }: { p: Project }) {
 
 function Actions({ p }: { p: Project }) {
   return (
-    <div className="flex items-center gap-5 border-t border-line pt-4">
+    <div className="hairline flex items-center gap-5 pt-4">
       <a
         href={p.url}
         target="_blank"
         rel="noreferrer"
-        className="text-sm font-medium text-muted transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        className="link-line text-sm font-medium text-muted transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         源码
       </a>
       {p.demo && (
         <a
           href={p.demo}
-          className="text-sm font-medium text-ink transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="link-line text-sm font-medium text-ink transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           在线体验
         </a>
@@ -54,7 +54,7 @@ function Actions({ p }: { p: Project }) {
 export function LiveBadge() {
   return (
     <span className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full border border-line bg-bg/85 px-2.5 py-1 font-mono text-[10px] text-ink backdrop-blur">
-      <span className="h-1.5 w-1.5 rounded-full bg-live" aria-hidden />
+      <span className="live-dot h-1.5 w-1.5 rounded-full bg-live" aria-hidden />
       线上可玩
     </span>
   );
@@ -120,7 +120,7 @@ function ProjectCard({ p, preview, featured = false }: { p: Project; preview?: s
         {p.demo && <LiveBadge />}
       </a>
       <div className="flex flex-1 flex-col p-6 md:p-7">
-        <h3 className={`font-bold tracking-tight ${featured ? 'text-2xl' : 'text-xl'}`}>{p.name}</h3>
+        <h3 className={`font-bold tracking-[-0.01em] ${featured ? 'text-2xl' : 'text-xl'}`}>{p.name}</h3>
         <p className="mt-3 text-sm leading-[1.85] text-ink/80">{p.summary}</p>
         {featured && p.detail && <p className="mt-3 text-sm leading-[1.9] text-muted">{p.detail}</p>}
         <div className="mt-auto pt-5">
@@ -137,7 +137,7 @@ function ProjectCard({ p, preview, featured = false }: { p: Project; preview?: s
 function Header() {
   return (
     <div>
-      <h2 className="text-3xl font-bold tracking-tight md:text-4xl">项目</h2>
+      <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
       <p className="mt-4 max-w-[52ch] text-sm leading-[1.85] text-muted">
         五个开源项目。前两个就部署在本站,点「在线体验」直接玩,其余的进 GitHub 仓库。
       </p>

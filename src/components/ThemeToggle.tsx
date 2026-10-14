@@ -28,6 +28,14 @@ export default function ThemeToggle() {
     const root = document.documentElement;
     const next = root.dataset.theme === 'light' ? 'dark' : 'light';
     root.dataset.theme = next;
+    // 手机地址栏颜色跟手:更新无 media 的那枚 meta(boot 脚本已建,保险起见缺了就补)
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', next === 'light' ? '#eef2f7' : '#0a1016');
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
