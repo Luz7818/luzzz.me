@@ -32,7 +32,7 @@
 @property --color-surface {
   syntax: '<color>';
   inherits: true;
-  initial-value: rgba(15, 24, 35, 0.6);
+  initial-value: rgba(15, 24, 35, 0.4);
 }
 @property --color-raised {
   syntax: '<color>';
@@ -139,7 +139,7 @@
 
 @theme {
   --color-bg: #0a1016;
-  --color-surface: rgba(15, 24, 35, 0.6);
+  --color-surface: rgba(15, 24, 35, 0.4);
   --color-raised: rgba(24, 36, 50, 0.72);
   --color-ink: #e8eef4;
   --color-muted: #96a8bb;
@@ -156,7 +156,7 @@
 /* 亮色主题:同名覆盖,@property 过渡自动接管 */
 :root[data-theme='light'] {
   --color-bg: #eef2f7;
-  --color-surface: rgba(255, 255, 255, 0.66);
+  --color-surface: rgba(255, 255, 255, 0.46);
   --color-raised: rgba(255, 255, 255, 0.8);
   --color-ink: #14202c;
   --color-muted: #5a6b7d;
@@ -197,8 +197,7 @@
   --trail-blend: source-over;
   --trail-head: 34, 48, 66;
   --cursor-core: #14202c;
-  --water-shine: 150, 185, 225, 0.26; /* 水面波峰:浅色用冷蓝沉影 */
-  --panel-backdrop: blur(48px) saturate(190%) brightness(1.08);
+  --panel-backdrop: blur(26px) saturate(170%) brightness(1.03);
   --panel-sheen: rgba(255, 255, 255, 0.5);
   --nav-glass: rgba(255, 255, 255, 0.55);
   --stage-glow: rgba(250, 178, 90, 0.3);
@@ -237,8 +236,7 @@
   --trail-blend: lighter;
   --trail-head: 255, 255, 255;
   --cursor-core: #fff8ec;
-  --water-shine: 255, 240, 205, 0.32; /* 水面波峰:深色用暖白粼光 */
-  --panel-backdrop: blur(48px) saturate(200%) brightness(1.22);
+  --panel-backdrop: blur(26px) saturate(180%) brightness(1.12);
   --panel-sheen: rgba(255, 255, 255, 0.045);
   --nav-glass: rgba(12, 19, 28, 0.5);
   --stage-glow: rgba(245, 168, 60, 0.09);
@@ -309,10 +307,9 @@ html {
     var(--shadow-card),
     inset 0 1px 0 var(--panel-hi),
     inset 0 -1px 0 var(--panel-edge);
-  /* 毛玻璃配方走主题变量(深浅各一档),磨砂感更重:厚模糊 + 高饱和 + 亮度微抬 */
   /* 注意顺序:标准属性必须写在 -webkit- 之后,压缩器才不会把它并掉 */
-  -webkit-backdrop-filter: var(--panel-backdrop);
-  backdrop-filter: var(--panel-backdrop);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  backdrop-filter: blur(28px) saturate(165%);
 }
 
 /* 渐变发丝描边:1px,亮边默认在左上(155deg);聚光卡会用 --sheen-angle 让亮边追着指针转 */
@@ -783,6 +780,21 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
+/* 水滴透镜:完全隐形,只留 backdrop-filter 的 SVG 置换——底下元素划过时扭成水波
+   (Cursor.tsx 供 #luzzz-liquid)。注意顺序:标准属性必须写在 -webkit- 之后 */
+.cursor-lens {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 89;
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  pointer-events: none;
+  -webkit-backdrop-filter: url(#luzzz-liquid);
+  backdrop-filter: url(#luzzz-liquid);
+}
+
 .cursor-chip {
   position: fixed;
   top: 0;
@@ -791,8 +803,7 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
-/* 涟漪拖尾:press=按下炸开的一圈;wake=划动沿途密集落下的小涟漪。
-   动画全在 CSS(合成器驱动),元素随 animationend 除名(Cursor.tsx)。 */
+/* 点击涟漪:一圈琥珀涟漪自按下点扩散消散(与自定义光标同一体系) */
 .cursor-ripple {
   position: fixed;
   z-index: 90;
@@ -803,39 +814,6 @@ html[data-cursor='on'] * {
   border: 1.5px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent);
   pointer-events: none;
-  animation: cursor-ripple-press 0.55s var(--ease-out) forwards;
-}
-
-@keyframes cursor-ripple-press {
-  from {
-    transform: scale(0.25);
-    opacity: 0.55;
-  }
-  to {
-    transform: scale(1);
-    opacity: 0;
-  }
-}
-
-/* 尾迹小涟漪:小而密,连成划过水面的波纹链 */
-.cursor-ripple-wake {
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -17px;
-  border-width: 1.5px;
-  border-color: color-mix(in srgb, var(--color-accent) 65%, transparent);
-  animation: cursor-ripple-wake 0.6s var(--ease-out) forwards;
-}
-
-@keyframes cursor-ripple-wake {
-  from {
-    transform: scale(0.3);
-    opacity: 0.5;
-  }
-  to {
-    transform: scale(1.6);
-    opacity: 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
