@@ -34,9 +34,10 @@ export default function Act3Badge() {
   };
   useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
-  // 落场:从下方带透视递入;交棒段整块淡出
+  // 落场:从下方带透视递入(rotateX 26°→0);交棒段整块淡出并轻微回倾(0→+10°),
+  // 呼应递牌动作,让「递过来 → 化开」的轨迹闭环
   const dropY = useTransform(sp, [0, 0.14], ['46vh', '0vh']);
-  const dropRX = useTransform(sp, [0, 0.14], [26, 0]);
+  const dropRX = useTransform(sp, [0, 0.14, 0.42, 0.58], [26, 0, 0, 10]);
   const dropO = useTransform(sp, [0, 0.08, 0.46, 0.58], [0, 1, 1, 0]);
   // 微放大:轻轻放大 1.45× 即止,文字在 ~1.3× 前就随 chrome 淡出,全程不糊屏
   const zoomT = useTransform(sp, (v) => {
