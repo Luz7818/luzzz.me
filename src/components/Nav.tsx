@@ -40,7 +40,7 @@ export default function Nav() {
       <header className="fixed inset-x-0 top-4 z-40 flex justify-center px-4">
         <nav
           aria-label="站内导航"
-          className={`flex h-14 items-center gap-6 rounded-full border border-line px-5 backdrop-blur-xl transition-[background-color,box-shadow] duration-500 ${
+          className={`flex h-14 items-center gap-2.5 rounded-full border border-line px-4 backdrop-blur-xl transition-[background-color,box-shadow] duration-500 sm:gap-6 sm:px-5 ${
             scrolled ? 'bg-[var(--nav-glass)] shadow-[var(--shadow-card)]' : 'bg-[var(--nav-glass)]'
           }`}
         >
@@ -54,7 +54,8 @@ export default function Nav() {
           >
             luzzz.me
           </a>
-          <div className="hidden items-center gap-6 text-sm sm:flex">
+          {/* 区段链接窄屏也保留(两字标签放得下);GitHub 窄屏收敛——首屏 CTA/工牌/联系页都有入口 */}
+          <div className="flex items-center gap-2.5 text-sm sm:gap-6">
             {LINKS.map((l) => (
               <a
                 key={l.id}
@@ -73,7 +74,7 @@ export default function Nav() {
             href={profile.github}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-sm text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            className="hidden font-mono text-sm text-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:inline"
           >
             GitHub
           </a>
