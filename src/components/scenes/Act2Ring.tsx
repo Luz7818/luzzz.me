@@ -300,9 +300,11 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     dragOffset.set(0);
   };
 
-  /** 拖拽过后不触发卡片链接:位移超过 deadzone 的手势在捕获阶段拦掉 click */
+  /** 拖拽过后不触发卡片链接:仅当拖拽真实改变了滚动位置(>24px)才拦截 click;
+   *  手抖越过死区但环没动的"点击"照常放行——判定看位移,不看动作轨迹 */
   const onStageClickCapture = (e: React.MouseEvent) => {
-    if (dragRef.current.moved) {
+    const d = dragRef.current;
+    if (d.moved && Math.abs(window.scrollY - d.startScroll) > 24) {
       e.preventDefault();
       e.stopPropagation();
     }
