@@ -79,7 +79,9 @@ luzzz.me/
 11. **三幕锚点与吸附**：三幕锚点经 `registerSceneAnchors()` 注册（经典树已占用 4 个 id）；
     滚动吸附是全局的（`registerSnapAnchors()` 注册 9 个完整画面锚点，停滚 300ms 吸附，
     阈值 0.92×视口高；`wheel`/`touchmove` 立即取消让位给用户）。环形旋转窗口常量
-    `CORE = [0.06, 0.94]`——改幕高或卡宽时锚点与 `goTo()` 从同一常量推导，别单改一处。
+    `CORE = [0.10, 0.94]`——改幕高或卡宽时锚点与 `goTo()` 从同一常量推导，别单改一处。
+    幕高（340/480/340vh）与 `SeamVeil.tsx` 的缝位常量（`3.4*vh`/`8.2*vh`）硬编码成对，
+    改幕高必须同步缝位；第一幕 about 锚点比例（0.68）在 `Act1Intro` 的场景锚与吸附锚两处同改。
 12. **背景 = 纯 2D 光轨 + 遮罩；水波只在透镜上**：`TrailsBackdrop` 无 WebGL（早年 ogl 流体
     合成层因撕裂与逐帧全屏上传已整体移除——别再往背景加 WebGL 层）；「元素晕开」由
     `Cursor.tsx` 的 SVG backdrop-filter 水滴透镜承担（Chromium 生效，Firefox/Safari 自动

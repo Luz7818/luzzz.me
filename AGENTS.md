@@ -123,7 +123,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   之外，`upsertAgentRulesBlock` 只替换两个标记之间的内容，块外的东西不会被动。
 - **写死在组件里的文案**，改站点文字时最容易漏：`Hero.tsx` 的两行大标题与「看项目」按钮；
   `Act1Intro.tsx` 的两行大标题（与 Hero 各存一份，两棵树）；`Act2Ring.tsx` 的「滚动旋转环岛 · 停住自动对齐整卡」
-  提示行；`Act3Badge.tsx` 的工牌装饰行（`LUZ · STAFF PASS`、`luzzz.me · № 0001`、挂绳孔）；
+  提示行；`Act3Badge.tsx` 的工牌装饰行（`LUZ · STAFF PASS`、`OPEN TO · 合作 / 实习`、
+  数据行 `7 公开仓库…`、`luzzz.me · № 0001`、挂绳孔、全息箔带）；
   `Projects.tsx` 的字型水印 `ZSX`/`TF`/`TH`、横向卡宽（featured 720px / 其余 480px）与
   卷轴降级断点（≥1024px 且非 reduced 才钉屏平移）；`Nav.tsx` 的 `LINKS`（关于/项目/联系）；
   `Marquee.tsx` 消费 `site.ts` 的 `marquee`，但词条内容改数据即可。这些都不在 `site.ts`。
