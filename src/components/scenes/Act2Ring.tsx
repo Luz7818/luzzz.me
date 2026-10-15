@@ -14,7 +14,7 @@ import {
 import SplitChars from '../SplitChars';
 import SpotlightCard from '../SpotlightCard';
 import { CoverGrade, Glyph, LiveBadge } from '../Projects';
-import { easeOutQuart, glideScrollTo, registerPageBound, registerSceneAnchors, registerSnapAnchors } from '../SmoothScroll';
+import { easeOutQuart, glideScrollTo, registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
 import type { Project } from '@/data/site';
 
 const N = 5; // 与 site.ts 的 projects 数量一致
@@ -42,7 +42,8 @@ const FLICK_V = 0.35;
 const RUBBER = 0.3;
 const MAX_OVER_DEG = 12;
 
-/** 单张环卡:固定在环上的角度,亮度/透明度随正面角变化,背面不渲染 */
+/** 单张环卡:固定在环上的角度,亮度/透明度随正面角变化,背面不渲染。
+ *  悬停时回报自己的序号(侧卡预览:底部信息淡换成这张卡)。 */
 function RingCard({
   i,
   rotation,
@@ -50,6 +51,7 @@ function RingCard({
   project,
   preview,
   measureRef,
+  onHoverChange,
 }: {
   i: number;
   rotation: MotionValue<number>;
@@ -57,6 +59,7 @@ function RingCard({
   project: Project;
   preview?: string;
   measureRef?: (el: HTMLDivElement | null) => void;
+  onHoverChange?: (i: number | null) => void;
 }) {
   const angle = i * STEP;
   const front = useTransform(rotation, (rot) => {
@@ -82,6 +85,8 @@ function RingCard({
         filter,
         pointerEvents: pe,
       }}
+      onPointerEnter={() => onHoverChange?.(i)}
+      onPointerLeave={() => onHoverChange?.(null)}
     >
       <SpotlightCard className="panel ring-card overflow-hidden">
         <a
@@ -137,6 +142,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const measureRef = useRef<HTMLDivElement | null>(null);
   const [radius, setRadius] = useState(420);
   const [active, setActive] = useState(0);
+  // 侧卡悬停预览:悬停哪张,底部信息就淡换成哪张;移开回落到活动卡
+  const [preview, setPreview] = useState<number | null>(null);
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.5 });
@@ -347,7 +354,30 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     return () => window.removeEventListener('luzzz-project-jump', onJump);
   }, [projects, goTo]);
 
-  const p = projects[active];
+  // 键盘导航:环岛聚焦时,←/→ 转卡、数字键直达、Home/End 回顶/联系
+  // (只在舞台聚焦时接管按键,不全局劫持方向键,键盘滚页不受影响)
+  const onStageKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goTo(Math.max(0, active - 1));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goTo(Math.min(N - 1, active + 1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      smoothTo('top');
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      smoothTo('contact');
+    } else if (/^[1-9]$/.test(e.key) && Number(e.key) <= N) {
+      e.preventDefault();
+      goTo(Number(e.key) - 1);
+    }
+  };
+
+  // 底部信息跟随:悬停侧卡时预览那张卡,移开/无悬停时回到活动卡
+  const shown = preview ?? active;
+  const p = projects[shown];
 
   return (
     <div ref={wrapRef} className="relative h-[480vh]">
@@ -366,13 +396,18 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
           </header>
 
           <div
-            className="ring-stage relative flex-1 select-none touch-pan-y"
+            className="ring-stage relative flex-1 select-none touch-pan-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/40"
             data-cursor-label="拖转"
+            tabIndex={0}
+            role="group"
+            aria-roledescription="轮播"
+            aria-label="项目环岛:左右方向键转卡,数字键 1-5 直达,Home 回顶部,End 去联系"
             onPointerDown={onStagePointerDown}
             onPointerMove={onStagePointerMove}
             onPointerUp={onStagePointerEnd}
             onPointerCancel={onStagePointerEnd}
             onClickCapture={onStageClickCapture}
+            onKeyDown={onStageKeyDown}
           >
             <motion.div
               className="ring-3d absolute left-1/2 top-1/2 h-0 w-0 will-change-transform"
@@ -393,6 +428,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                         }
                       : undefined
                   }
+                  onHoverChange={setPreview}
                 />
               ))}
             </motion.div>
@@ -400,7 +436,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
 
           <footer className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-7 md:px-10">
             <div className="flex items-end justify-between gap-8">
-              <div key={active} className="min-h-[148px] max-w-[620px] md:min-h-[168px]">
+              <div key={shown} className="min-h-[148px] max-w-[620px] md:min-h-[168px]">
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -442,8 +478,12 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                     onClick={() => goTo(i)}
                     aria-label={`转到 ${proj.name}`}
                     aria-current={i === active}
-                    className="group flex items-center gap-2.5 focus-visible:outline-none"
+                    className="group relative flex items-center gap-2.5 focus-visible:outline-none"
                   >
+                    {/* hover 预览小签:扫一眼就知道这一格是哪个项目 */}
+                    <span className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 translate-x-2 whitespace-nowrap rounded-full border border-line bg-[var(--nav-glass)] px-3 py-1 font-mono text-[10px] text-ink opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+                      {proj.name}
+                    </span>
                     <span
                       className={`font-mono text-[10px] transition-colors ${
                         i === active ? 'text-accent' : 'text-muted/0 group-hover:text-muted'
