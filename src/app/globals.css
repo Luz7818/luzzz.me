@@ -197,6 +197,7 @@
   --trail-blend: source-over;
   --trail-head: 34, 48, 66;
   --cursor-core: #14202c;
+  --water-shine: 150, 185, 225, 0.26; /* 水面波峰:浅色用冷蓝沉影 */
   --panel-backdrop: blur(48px) saturate(190%) brightness(1.08);
   --panel-sheen: rgba(255, 255, 255, 0.5);
   --nav-glass: rgba(255, 255, 255, 0.55);
@@ -236,6 +237,7 @@
   --trail-blend: lighter;
   --trail-head: 255, 255, 255;
   --cursor-core: #fff8ec;
+  --water-shine: 255, 240, 205, 0.32; /* 水面波峰:深色用暖白粼光 */
   --panel-backdrop: blur(48px) saturate(200%) brightness(1.22);
   --panel-sheen: rgba(255, 255, 255, 0.045);
   --nav-glass: rgba(12, 19, 28, 0.5);
