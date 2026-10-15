@@ -781,23 +781,6 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
-/* 水面透镜:无形的折射水膜——没有可见轮廓,只有底下页面被轻微模糊/提饱和/提亮的光学扭曲;
-   划动时压入水面微涨(位移量由 Cursor.tsx 供给),「划开水流」的观感由尾迹涟漪承担 */
-.cursor-lens {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 89;
-  width: 88px;
-  height: 88px;
-  margin: -44px 0 0 -44px;
-  border-radius: 999px;
-  /* 注意顺序:标准属性必须写在 -webkit- 之后,压缩器才不会把它并掉 */
-  -webkit-backdrop-filter: blur(2.5px) saturate(170%) brightness(1.08);
-  backdrop-filter: blur(2.5px) saturate(170%) brightness(1.08);
-  pointer-events: none;
-}
-
 .cursor-chip {
   position: fixed;
   top: 0;
@@ -806,7 +789,7 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
-/* 涟漪:press=按下炸开的一圈;wake=划动沿途的尾迹波纹。
+/* 涟漪拖尾:press=按下炸开的一圈;wake=划动沿途密集落下的小涟漪。
    动画全在 CSS(合成器驱动),元素随 animationend 除名(Cursor.tsx)。 */
 .cursor-ripple {
   position: fixed;
@@ -832,24 +815,23 @@ html[data-cursor='on'] * {
   }
 }
 
-/* 尾迹波纹:划过水面留下的余纹,清晰可读的「划开水流」 */
+/* 尾迹小涟漪:小而密,连成划过水面的波纹链 */
 .cursor-ripple-wake {
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  border-width: 1px;
-  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 18%, transparent);
-  animation: cursor-ripple-wake 0.75s var(--ease-out) forwards;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, var(--color-accent) 65%, transparent);
+  animation: cursor-ripple-wake 0.6s var(--ease-out) forwards;
 }
 
 @keyframes cursor-ripple-wake {
   from {
     transform: scale(0.3);
-    opacity: 0.42;
+    opacity: 0.5;
   }
   to {
-    transform: scale(1.3);
+    transform: scale(1.6);
     opacity: 0;
   }
 }
