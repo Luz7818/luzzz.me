@@ -237,11 +237,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       d.maxS = wrapTop + CORE[1] * span;
     }
     dragOffset.set(0);
-    try {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    } catch {
-      /* 合成事件/已释放的 pointerId 无从捕获:拖拽仍可用,只是指针移出舞台后不再跟踪 */
-    }
+    // 此处不捕获指针:按下即捕获会把后续 click 重定向到舞台,卡片链接就再也点不到;
+    // 确认进入拖拽(越过死区)后再捕获,见 onStagePointerMove
   };
 
   const onStagePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -249,7 +246,15 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     if (!d.active || e.pointerId !== d.pointerId) return;
     const dx = e.clientX - d.startX;
     if (!d.moved && Math.abs(dx) < DRAG_DEADZONE) return;
-    d.moved = true;
+    if (!d.moved) {
+      // 越过死区,确系拖拽:此刻才捕获指针(移出舞台也能持续跟踪)
+      d.moved = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* 合成事件无从捕获:拖拽仍可用 */
+      }
+    }
     d.samples.push({ x: e.clientX, t: performance.now() });
     if (d.samples.length > 5) d.samples.shift();
     const wrap = wrapRef.current;
@@ -296,9 +301,11 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     dragOffset.set(0);
   };
 
-  /** 拖拽过后不触发卡片链接:位移超过 deadzone 的手势在捕获阶段拦掉 click */
+  /** 拖拽过后不触发卡片链接:仅当拖拽真实改变了滚动位置(>24px)才拦截 click;
+   *  手抖越过死区但环没动的"点击"照常放行——判定看位移,不看动作轨迹 */
   const onStageClickCapture = (e: React.MouseEvent) => {
-    if (dragRef.current.moved) {
+    const d = dragRef.current;
+    if (d.moved && Math.abs(window.scrollY - d.startScroll) > 24) {
       e.preventDefault();
       e.stopPropagation();
     }
