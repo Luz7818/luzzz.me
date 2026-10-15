@@ -25,9 +25,8 @@ function enabledSnapshot() {
   );
 }
 
-/** 尾迹涟漪:每划过 RIPPLE_GAP 距离落一圈;两次落圈至少间隔 RIPPLE_MIN_MS,慢拖不堆积 */
+/** 尾迹涟漪:每划过 RIPPLE_GAP 距离落一圈,连成波纹链;总量上限防堆积 */
 const RIPPLE_GAP = 40;
-const RIPPLE_MIN_MS = 50;
 const MAX_RIPPLES = 10;
 
 /**
@@ -44,7 +43,7 @@ export default function Cursor() {
   const [hover, setHover] = useState<Hover>({ kind: 'idle' });
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const rippleId = useRef(0);
-  const wakeAnchor = useRef({ x: -1, y: -1, t: 0 });
+  const wakeAnchor = useRef({ x: -1, y: -1 });
 
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
@@ -63,12 +62,11 @@ export default function Cursor() {
       x.set(e.clientX);
       y.set(e.clientY);
       setHidden(false);
-      // 涟漪拖尾:按划过距离落圈(慢拖有时间闸不堆积)
+      // 涟漪拖尾:按划过距离落圈,慢划也连续成链
       const a = wakeAnchor.current;
-      const now = performance.now();
       const dist = a.x < 0 ? Infinity : Math.hypot(e.clientX - a.x, e.clientY - a.y);
-      if (dist >= RIPPLE_GAP && now - a.t >= RIPPLE_MIN_MS) {
-        wakeAnchor.current = { x: e.clientX, y: e.clientY, t: now };
+      if (dist >= RIPPLE_GAP) {
+        wakeAnchor.current = { x: e.clientX, y: e.clientY };
         spawn(e.clientX, e.clientY, 'wake');
       }
     };
