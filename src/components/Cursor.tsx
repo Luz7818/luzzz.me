@@ -8,9 +8,11 @@ import {
   useMotionTemplate,
   useMotionValue,
   useSpring,
+  useTransform,
 } from 'motion/react';
 
 type Hover = { kind: 'idle' } | { kind: 'link' } | { kind: 'label'; text: string };
+type Ripple = { id: number; x: number; y: number; kind: 'press' | 'wake' };
 
 function subscribeMedia(cb: () => void) {
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -20,7 +22,7 @@ function subscribeMedia(cb: () => void) {
   reduced.addEventListener('change', handler);
   return () => {
     fine.removeEventListener('change', handler);
-    reduced.removeEventListener('change', handler);
+    reduced.addEventListener('change', handler);
   };
 }
 
@@ -31,59 +33,30 @@ function enabledSnapshot() {
   );
 }
 
-/**
- * 液态置换滤镜:feTurbulence 噪声做位移图,feDisplacementMap 的 scale 由光标速度驱动。
- * 挂在 .cursor-lens 的 backdrop-filter 上——透镜底下真实的 DOM 元素(文字/卡片/导航)被实时扭开水波。
- */
-function LiquidFilter({ dispRef }: { dispRef: React.RefObject<SVGFEDisplacementMapElement | null> }) {
-  return (
-    <svg aria-hidden focusable="false" width="0" height="0" className="absolute">
-      <filter
-        id="luzzz-liquid"
-        x="-35%"
-        y="-35%"
-        width="170%"
-        height="170%"
-        colorInterpolationFilters="sRGB"
-      >
-        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.013" numOctaves="2" seed="7" result="noise" />
-        <feGaussianBlur in="noise" stdDeviation="1.8" result="soft" />
-        <feDisplacementMap
-          ref={dispRef}
-          in="SourceGraphic"
-          in2="soft"
-          scale="0"
-          xChannelSelector="R"
-          yChannelSelector="G"
-          result="warped"
-        />
-        <feGaussianBlur in="warped" stdDeviation="0.35" />
-      </filter>
-    </svg>
-  );
-}
-
 /** 透镜缩放:静止/悬停/标签三态,弹簧过渡 */
 const LENS_SCALE = { idle: 1, link: 0.8, label: 0.62 } as const;
 
+/** 尾迹涟漪的间隔:每划过这段距离落一圈波纹 */
+const WAKE_GAP = 90;
+
 /**
- * 自定义鼠标 = 琥珀光点 + 水滴透镜 + 气泡标签:
- * - 光点即时跟随,琥珀色带辉光(不做 difference 反色,深浅主题与琥珀卡上都干净);
- * - 水滴透镜经 backdrop-filter: url(#luzzz-liquid) 把底下的真实页面元素扭成水波,
- *   置换强度随光标速度起落(动则晕开、停则平息),透镜本体带弹簧拖尾;
+ * 自定义鼠标 = 琥珀光点 + 水面透镜 + 尾迹涟漪 + 气泡标签:
+ * - 光点即时跟随,琥珀色带辉光;
+ * - 透镜是压在水面上的圆:backdrop 轻折射(模糊+提饱和+提亮),移动时轻微放大,
+ *   像压入水面;划动沿途每 90px 落一圈扩散消散的尾迹涟漪(纯 CSS 动画,合成器驱动),
+ *   按下则炸开一圈更大的——「划开水流的涟漪感」由此而来;
  * - data-cursor-label 的目标(环形项目卡)换成琥珀气泡标签。
  * 仅精确指针 + 未减弱动效时启用,并给 <html> 挂 data-cursor='on' 隐藏原生光标。
- * 不支持 SVG backdrop-filter 的浏览器(Firefox/Safari)自动退化为细环光点。
  */
 export default function Cursor() {
   const on = useSyncExternalStore(subscribeMedia, enabledSnapshot, () => false);
   const [hidden, setHidden] = useState(true);
   const [hover, setHover] = useState<Hover>({ kind: 'idle' });
-  // 点击涟漪:每次按下自按下点扩散一圈琥珀涟漪,动画结束即除名
-  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  // 涟漪:press=按下炸开的一圈,wake=划动沿途的尾迹波纹;动画走 CSS,结束即除名
+  const [ripples, setRipples] = useState<Ripple[]>([]);
   const rippleId = useRef(0);
+  const wakeAnchor = useRef({ x: -1, y: -1 });
 
-  const dispRef = useRef<SVGFEDisplacementMapElement | null>(null);
   const last = useRef({ x: -1, y: -1 });
 
   const x = useMotionValue(-100);
@@ -93,9 +66,11 @@ export default function Cursor() {
   const cx = useSpring(x, { stiffness: 260, damping: 26, mass: 0.5 });
   const cy = useSpring(y, { stiffness: 260, damping: 26, mass: 0.5 });
   const lensScale = useMotionValue<number>(LENS_SCALE.idle);
-  const lensT = useMotionTemplate`translate(${lensX}px, ${lensY}px) translate(-50%, -50%) scale(${lensScale})`;
+  // 划动速度 → 透镜压入水面的深浅:动则微涨,停则回落
+  const speedScale = useMotionValue(1);
+  const totalScale = useTransform([lensScale, speedScale] as const, ([l, s]: readonly number[]) => l * s);
+  const lensT = useMotionTemplate`translate(${lensX}px, ${lensY}px) translate(-50%, -50%) scale(${totalScale})`;
 
-  // 速度 → 置换强度:快攻慢放,像被搅动的水慢慢平静
   useAnimationFrame(() => {
     if (!on || document.hidden) return;
     const px = x.get();
@@ -106,22 +81,29 @@ export default function Cursor() {
     }
     const speed = Math.hypot(px - last.current.x, py - last.current.y);
     last.current = { x: px, y: py };
-    const disp = dispRef.current;
-    if (!disp) return;
-    const target = Math.min(64, speed * 3.0);
-    const cur = Number.parseFloat(disp.getAttribute('scale') || '0') || 0;
-    const next = cur + (target - cur) * (target > cur ? 0.42 : 0.035);
-    disp.setAttribute('scale', next.toFixed(2));
+    const target = 1 + Math.min(0.16, speed * 0.008);
+    const cur = speedScale.get();
+    speedScale.set(cur + (target - cur) * (target > cur ? 0.25 : 0.05));
   });
 
   useEffect(() => {
     if (!on) return;
     document.documentElement.dataset.cursor = 'on';
 
+    const spawn = (px: number, py: number, kind: Ripple['kind']) => {
+      const id = ++rippleId.current;
+      setRipples((rs) => [...rs.slice(-6), { id, x: px, y: py, kind }]);
+    };
     const move = (e: PointerEvent) => {
       x.set(e.clientX);
       y.set(e.clientY);
       setHidden(false);
+      // 尾迹:每划过 WAKE_GAP 落一圈波纹,像桨尖划开水面
+      const a = wakeAnchor.current;
+      if (a.x < 0 || Math.hypot(e.clientX - a.x, e.clientY - a.y) > WAKE_GAP) {
+        wakeAnchor.current = { x: e.clientX, y: e.clientY };
+        spawn(e.clientX, e.clientY, 'wake');
+      }
     };
     const over = (e: PointerEvent) => {
       const t = (e.target as Element | null)?.closest?.('a, button, [data-cursor]');
@@ -135,8 +117,7 @@ export default function Cursor() {
     const leave = () => setHidden(true);
     const down = (e: PointerEvent) => {
       if (document.hidden) return;
-      const id = ++rippleId.current;
-      setRipples((rs) => [...rs.slice(-4), { id, x: e.clientX, y: e.clientY }]);
+      spawn(e.clientX, e.clientY, 'press');
     };
 
     window.addEventListener('pointermove', move, { passive: true });
@@ -168,9 +149,18 @@ export default function Cursor() {
 
   return (
     <>
-      <LiquidFilter dispRef={dispRef} />
+      {/* 涟漪:press=按下炸开,wake=划动尾迹;动画全在 CSS(合成器),结束即除名 */}
+      {ripples.map((r) => (
+        <span
+          key={r.id}
+          aria-hidden
+          className={r.kind === 'wake' ? 'cursor-ripple cursor-ripple-wake' : 'cursor-ripple'}
+          style={{ left: r.x, top: r.y }}
+          onAnimationEnd={() => setRipples((rs) => rs.filter((x) => x.id !== r.id))}
+        />
+      ))}
 
-      {/* 水滴透镜:底下真实元素被扭成水波,速度驱动 */}
+      {/* 水面透镜:折射感 backdrop,划动时压入水面微微放大 */}
       <motion.div
         aria-hidden
         className="cursor-lens"
@@ -194,20 +184,6 @@ export default function Cursor() {
       >
         {label ?? ''}
       </motion.div>
-
-      {/* 点击涟漪:一圈琥珀涟漪自按下点扩散消散(scale+opacity,与光标同一体系) */}
-      {ripples.map((r) => (
-        <motion.span
-          key={r.id}
-          aria-hidden
-          className="cursor-ripple"
-          style={{ left: r.x, top: r.y }}
-          initial={{ scale: 0.25, opacity: 0.55 }}
-          animate={{ scale: 1, opacity: 0 }}
-          transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-          onAnimationComplete={() => setRipples((rs) => rs.filter((x) => x.id !== r.id))}
-        />
-      ))}
 
       {/* 琥珀光点:可点元素上放大发亮 */}
       <motion.div

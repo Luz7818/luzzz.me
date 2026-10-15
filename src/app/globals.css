@@ -32,7 +32,7 @@
 @property --color-surface {
   syntax: '<color>';
   inherits: true;
-  initial-value: rgba(15, 24, 35, 0.4);
+  initial-value: rgba(15, 24, 35, 0.52);
 }
 @property --color-raised {
   syntax: '<color>';
@@ -139,7 +139,7 @@
 
 @theme {
   --color-bg: #0a1016;
-  --color-surface: rgba(15, 24, 35, 0.4);
+  --color-surface: rgba(15, 24, 35, 0.52);
   --color-raised: rgba(24, 36, 50, 0.72);
   --color-ink: #e8eef4;
   --color-muted: #96a8bb;
@@ -156,7 +156,7 @@
 /* 亮色主题:同名覆盖,@property 过渡自动接管 */
 :root[data-theme='light'] {
   --color-bg: #eef2f7;
-  --color-surface: rgba(255, 255, 255, 0.46);
+  --color-surface: rgba(255, 255, 255, 0.58);
   --color-raised: rgba(255, 255, 255, 0.8);
   --color-ink: #14202c;
   --color-muted: #5a6b7d;
@@ -197,7 +197,7 @@
   --trail-blend: source-over;
   --trail-head: 34, 48, 66;
   --cursor-core: #14202c;
-  --panel-backdrop: blur(26px) saturate(170%) brightness(1.03);
+  --panel-backdrop: blur(38px) saturate(180%) brightness(1.05);
   --panel-sheen: rgba(255, 255, 255, 0.5);
   --nav-glass: rgba(255, 255, 255, 0.55);
   --stage-glow: rgba(250, 178, 90, 0.3);
@@ -236,7 +236,7 @@
   --trail-blend: lighter;
   --trail-head: 255, 255, 255;
   --cursor-core: #fff8ec;
-  --panel-backdrop: blur(26px) saturate(180%) brightness(1.12);
+  --panel-backdrop: blur(38px) saturate(190%) brightness(1.16);
   --panel-sheen: rgba(255, 255, 255, 0.045);
   --nav-glass: rgba(12, 19, 28, 0.5);
   --stage-glow: rgba(245, 168, 60, 0.09);
@@ -307,9 +307,10 @@ html {
     var(--shadow-card),
     inset 0 1px 0 var(--panel-hi),
     inset 0 -1px 0 var(--panel-edge);
+  /* 毛玻璃配方走主题变量(深浅各一档),磨砂感更重:厚模糊 + 高饱和 + 亮度微抬 */
   /* 注意顺序:标准属性必须写在 -webkit- 之后,压缩器才不会把它并掉 */
-  -webkit-backdrop-filter: blur(28px) saturate(165%);
-  backdrop-filter: blur(28px) saturate(165%);
+  -webkit-backdrop-filter: var(--panel-backdrop);
+  backdrop-filter: var(--panel-backdrop);
 }
 
 /* 渐变发丝描边:1px,亮边默认在左上(155deg);聚光卡会用 --sheen-angle 让亮边追着指针转 */
@@ -780,19 +781,26 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
-/* 水滴透镜:完全隐形,只留 backdrop-filter 的 SVG 置换——底下元素划过时扭成水波
-   (Cursor.tsx 供 #luzzz-liquid)。注意顺序:标准属性必须写在 -webkit- 之后 */
+/* 水滴透镜:backdrop 轻折射(模糊+提饱和+提亮)+ 亮边高光,速度驱动拉伸形变——
+   划过时是一颗被水流拽动的液滴,停下收圆平静(Cursor.tsx 供旋转/拉伸量) */
 .cursor-lens {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 89;
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
   border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  box-shadow:
+    inset 2px 3px 8px rgb(255 255 255 / 0.14),
+    inset -2px -2px 10px rgb(0 0 0 / 0.06),
+    0 0 26px color-mix(in srgb, var(--color-accent) 12%, transparent);
+  /* 注意顺序:标准属性必须写在 -webkit- 之后,压缩器才不会把它并掉 */
+  -webkit-backdrop-filter: blur(2px) saturate(165%) brightness(1.08);
+  backdrop-filter: blur(2px) saturate(165%) brightness(1.08);
   pointer-events: none;
-  -webkit-backdrop-filter: url(#luzzz-liquid);
-  backdrop-filter: url(#luzzz-liquid);
 }
 
 .cursor-chip {
@@ -803,7 +811,8 @@ html[data-cursor='on'] * {
   pointer-events: none;
 }
 
-/* 点击涟漪:一圈琥珀涟漪自按下点扩散消散(与自定义光标同一体系) */
+/* 涟漪:press=按下炸开的一圈;wake=划动沿途的尾迹波纹。
+   动画全在 CSS(合成器驱动),元素随 animationend 除名(Cursor.tsx)。 */
 .cursor-ripple {
   position: fixed;
   z-index: 90;
@@ -814,6 +823,40 @@ html[data-cursor='on'] * {
   border: 1.5px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
   box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent);
   pointer-events: none;
+  animation: cursor-ripple-press 0.55s var(--ease-out) forwards;
+}
+
+@keyframes cursor-ripple-press {
+  from {
+    transform: scale(0.25);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* 尾迹波纹:更小更淡,划过水面留下的余纹 */
+.cursor-ripple-wake {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  box-shadow: none;
+  animation: cursor-ripple-wake 0.7s var(--ease-out) forwards;
+}
+
+@keyframes cursor-ripple-wake {
+  from {
+    transform: scale(0.35);
+    opacity: 0.32;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
