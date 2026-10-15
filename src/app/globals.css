@@ -688,9 +688,10 @@ html {
   -webkit-backface-visibility: hidden;
 }
 
-/* 工牌:厚玻璃板(放大转场时不用 backdrop-filter,保持全屏缩放便宜) */
+/* 工牌:厚玻璃板(微放大转场,不用 backdrop-filter,保持缩放便宜;overflow 裁切装饰层) */
 .badge-slab {
   position: relative;
+  overflow: hidden;
   border-radius: 18px;
   background:
     linear-gradient(165deg, var(--color-raised) 0%, var(--color-surface) 52%, var(--color-raised) 100%);
@@ -736,6 +737,73 @@ html {
     transparent 2px 5px,
     color-mix(in srgb, var(--color-ink) 55%, transparent) 5px 6px,
     transparent 6px 11px
+  );
+}
+
+/* 全息箔带:牌顶虹彩细带,一道扫光周期性掠过(与 hover 无关,自动循环;
+ * reduced-motion 由全局 0.001ms 规则压成静止) */
+.badge-foil {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-accent) 30%, transparent),
+    color-mix(in srgb, var(--color-live) 24%, transparent),
+    color-mix(in srgb, var(--color-accent) 30%, transparent)
+  );
+  overflow: hidden;
+}
+
+.badge-foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-140%);
+  background: linear-gradient(
+    90deg,
+    transparent 15%,
+    var(--color-accent) 42%,
+    var(--color-live) 50%,
+    var(--color-accent) 58%,
+    transparent 85%
+  );
+  animation: badge-foil-sweep 6.5s ease-in-out infinite;
+}
+
+@keyframes badge-foil-sweep {
+  0% {
+    transform: translateX(-140%);
+  }
+  55%,
+  100% {
+    transform: translateX(140%);
+  }
+}
+
+/* 牌面角部极光晕:accent 辐射渐变,给厚玻璃一点内透光(位置由使用处 Tailwind 定) */
+.badge-blob {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-accent) 24%, transparent),
+    transparent 72%
+  );
+  filter: blur(22px);
+}
+
+/* 联系页底色:与工牌同源的厚玻璃渐变铺满全屏,转场时接住淡出的牌面 */
+.badge-cover {
+  background: linear-gradient(
+    165deg,
+    var(--color-raised) 0%,
+    var(--color-surface) 52%,
+    var(--color-raised) 100%
   );
 }
 
