@@ -19,8 +19,8 @@ import type { Project } from '@/data/site';
 
 const N = 5; // 与 site.ts 的 projects 数量一致
 const STEP = 360 / N;
-/** 环旋转占幕进度的窗口:头尾留出入场/交棒 */
-const CORE: [number, number] = [0.06, 0.94];
+/** 环旋转占幕进度的窗口:头部 10% 是入场跑道(整环飞入＋回正),尾部留交棒 */
+const CORE: [number, number] = [0.10, 0.94];
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 type LenisLike = { scrollTo: (t: number, o?: object) => void; limit: number; resize: () => void };
@@ -146,18 +146,24 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const [preview, setPreview] = useState<number | null>(null);
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
-  const sp = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.5 });
+  const sp = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
 
   const pNorm = useTransform(sp, CORE, [0, 1]);
   const rotation = useTransform(pNorm, (v) => -v * (N - 1) * STEP);
-  // 入场跑道须在对齐位(CORE[0])之前留出余量结束,否则停在那附近整环被透视推远、首卡显小;
-  // ease-out 减速落位:透视放大本身前慢后快,反着衬正好匀速长大
-  const enterZ = useTransform(sp, [0, 0.045], [-950, 0], { ease: easeOutQuart });
-  const enterO = useTransform(sp, [0.008, 0.04], [0, 1], { ease: easeOutQuart });
+  // 入场跑道(~45vh):整环从纵深飞入;跑道须在对齐位(CORE[0])之前结束,
+  // 否则停在那附近整环被透视推远、首卡显小;ease-out 减速落位:透视放大
+  // 本身前慢后快,反着衬正好匀速长大
+  const enterZ = useTransform(sp, [0, 0.095], [-950, 0], { ease: easeOutQuart });
+  const enterO = useTransform(sp, [0.015, 0.085], [0, 1], { ease: easeOutQuart });
+  // 回正:整环带 +16° 斜角飞来,随跑道减速精确对齐首卡(0.095 < CORE[0],锚点处零残差)
+  const settleRot = useTransform(sp, [0, 0.095], [16, 0], { ease: easeOutQuart });
   // 拖拽橡皮筋:拖出首末整卡时滚动钉在边界,超出量以阻尼折成视觉旋转(弹簧跟随,松手弹回)
   const dragOffset = useMotionValue(0);
   const dragOffsetSpring = useSpring(dragOffset, { stiffness: 320, damping: 32 });
-  const totalRot = useTransform([rotation, dragOffsetSpring] as const, ([r, d]: readonly number[]) => r + d);
+  const totalRot = useTransform(
+    [rotation, settleRot, dragOffsetSpring] as const,
+    ([r, s, d]: readonly number[]) => r + s + d,
+  );
   const ringT = useMotionTemplate`translateZ(${enterZ}px) rotateY(${totalRot}deg)`;
 
   // 半径由实测卡宽推出:相邻卡心弦长 = 2R·sin(π/N) ≥ 卡宽 + 间隙
