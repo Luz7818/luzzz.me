@@ -3,25 +3,19 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * 交互水面:经典高度场水波模拟——指针/手指划过时泛起真实传播的涟漪,
- * 波峰泛白光、波谷沉暗影(波光粼粼),约 1.5s 归于平静;空闲时偶有水滴落下保持活性,
- * 点击水面溅起更大的水花。模拟跑在 6px 粗网格上(两缓冲差分,固定 60Hz 步长),
- * 渲染成低分辨率 ImageData 再放大绘制,单次 drawImage,代价极低。
+ * 交互水痕:指针划过时沿轨迹留下一道渐隐的水痕(不发波、不外扩),静止时水面完全平静。
+ * 实现 = 低分辨率缓冲画布:划动沿轨迹盖半透明高光章,每帧整体淡出一点(约 1s 消散),
+ * 放大绘制一次成型,与光轨同一套「盖章 + 长曝光」的画法,代价极低。
  * 高光颜色走 --water-shine 主题变量(深色暖白 / 浅色冷蓝),随主题涟漪换色。
- * 仅三幕树挂载;prefers-reduced-motion 下不启动;页面隐藏时暂停。
+ * 点击在原地盖一枚更大的水印。仅三幕树挂载;prefers-reduced-motion 下不启动;页面隐藏时暂停。
  */
 
-const CELL = 6;
-const DAMPING = 0.975; // 每步能量衰减,涟漪约 1.2s 归于平静
-const SIM_STEP = 1 / 60;
-const MAX_STEPS = 3;
-const POINTER_R = 2; // 指针扰动半径(格)
-const POINTER_POWER = 1.5; // 划动扰动强度:含蓄的涟漪,不是浪
-const CLICK_POWER = 3.5; // 点击水花强度
-const CLICK_R = 3;
-const DROP_POWER = 1.5; // 空闲水滴
-const DROP_R = 2;
-const SLOPE_GAIN = 9; // 高度差 → 明暗的增益
+const CELL = 6; // 缓冲画布每格像素
+const FADE_PER_FRAME = 0.055; // 每帧淡出比例,水痕约 1s 消散
+const STROKE_W = 4; // 水痕线宽(格)
+const STROKE_ALPHA = 0.16;
+const CLICK_R = 6; // 点击水印半径(格)
+const CLICK_ALPHA = 0.22;
 
 export default function WaterSurface() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -38,19 +32,12 @@ export default function WaterSurface() {
     let cols = 0;
     let rows = 0;
     let dpr = 1;
-    let prev = new Float32Array(1);
-    let curr = new Float32Array(1);
-    let sim: HTMLCanvasElement | null = null;
-    let sctx: CanvasRenderingContext2D | null = null;
-    let img: ImageData | null = null;
+    let buf: HTMLCanvasElement | null = null;
+    let bctx: CanvasRenderingContext2D | null = null;
     let raf = 0;
-    let last = performance.now();
-    let acc = 0;
     let running = true;
-    let nextDrop = performance.now() + 1500;
-    let shine: [number, number, number, number] = [255, 244, 214, 0.3];
-    // 指针状态:划动时由事件更新,帧循环里注入扰动
-    const pointer = { x: 0, y: 0, moved: false };
+    let shine: [number, number, number, number] = [255, 240, 205, 0.3];
+    let lastPt: { x: number; y: number } | null = null;
 
     const readTheme = () => {
       const raw = getComputedStyle(document.documentElement).getPropertyValue('--water-shine').trim();
@@ -58,88 +45,55 @@ export default function WaterSurface() {
       if (p.length === 4 && p.every((n) => Number.isFinite(n))) shine = [p[0], p[1], p[2], p[3]];
     };
 
-    const disturb = (px: number, py: number, power: number, radius: number) => {
-      const cx = Math.round(px / CELL);
-      const cy = Math.round(py / CELL);
-      for (let y = cy - radius; y <= cy + radius; y++) {
-        for (let x = cx - radius; x <= cx + radius; x++) {
-          if (x < 1 || y < 1 || x >= cols - 1 || y >= rows - 1) continue;
-          const d = Math.hypot(x - cx, y - cy);
-          if (d > radius) continue;
-          curr[y * cols + x] -= power * (1 - d / radius);
-        }
+    const toCell = (px: number, py: number) => ({ x: px / CELL, y: py / CELL });
+
+    /** 沿上一位置到当前位置盖一段水痕章,保证快速划动轨迹连续 */
+    const stampSegment = (from: { x: number; y: number } | null, to: { x: number; y: number }) => {
+      if (!bctx) return;
+      const [sr, sg, sb] = shine;
+      bctx.strokeStyle = `rgba(${sr},${sg},${sb},${STROKE_ALPHA})`;
+      bctx.lineWidth = STROKE_W;
+      bctx.lineCap = 'round';
+      bctx.lineJoin = 'round';
+      bctx.beginPath();
+      if (from) {
+        bctx.moveTo(from.x, from.y);
+        bctx.lineTo(to.x, to.y);
+      } else {
+        bctx.arc(to.x, to.y, STROKE_W / 2, 0, Math.PI * 2);
       }
+      bctx.stroke();
     };
 
-    const simulate = () => {
-      const c = cols;
-      for (let y = 1; y < rows - 1; y++) {
-        const row = y * c;
-        for (let x = 1; x < c - 1; x++) {
-          const i = row + x;
-          curr[i] = (prev[i - 1] + prev[i + 1] + prev[i - c] + prev[i + c]) / 2 - curr[i];
-          curr[i] *= DAMPING;
-        }
-      }
-      const t = prev;
-      prev = curr;
-      curr = t;
+    /** 点击水印:原地一枚更大的章 */
+    const stampMark = (px: number, py: number) => {
+      if (!bctx) return;
+      const [sr, sg, sb] = shine;
+      const { x, y } = toCell(px, py);
+      const g = bctx.createRadialGradient(x, y, 0, x, y, CLICK_R);
+      g.addColorStop(0, `rgba(${sr},${sg},${sb},${CLICK_ALPHA})`);
+      g.addColorStop(1, `rgba(${sr},${sg},${sb},0)`);
+      bctx.fillStyle = g;
+      bctx.beginPath();
+      bctx.arc(x, y, CLICK_R, 0, Math.PI * 2);
+      bctx.fill();
     };
 
-    const render = () => {
-      if (!sim || !sctx || !img) return;
-      const data = img.data;
-      const c = cols;
-      const [sr, sg, sb, sa] = shine;
-      for (let y = 1; y < rows - 1; y++) {
-        const row = y * c;
-        for (let x = 1; x < c - 1; x++) {
-          const i = row + x;
-          const slope = curr[i + 1] - curr[i - 1] + (curr[i + c] - curr[i - c]);
-          const v = slope * SLOPE_GAIN;
-          const o = i * 4;
-          if (v > 0) {
-            // 波峰:主题高光色,浓度封顶——是波光,不是白环
-            data[o] = sr;
-            data[o + 1] = sg;
-            data[o + 2] = sb;
-            data[o + 3] = Math.min(110, v * 255) * sa;
-          } else {
-            // 波谷:沉一点的冷影
-            data[o] = 30;
-            data[o + 1] = 44;
-            data[o + 2] = 64;
-            data[o + 3] = Math.min(70, -v * 255) * sa;
-          }
-        }
-      }
-      sctx.clearRect(0, 0, cols, rows);
-      sctx.putImageData(img, 0, 0);
+    const paint = () => {
+      if (!bctx || !ctx) return;
+      // 整体淡出:按比例削减既有 alpha(水痕原地消散,不外扩)
+      bctx.globalCompositeOperation = 'destination-out';
+      bctx.fillStyle = `rgba(0,0,0,${FADE_PER_FRAME})`;
+      bctx.fillRect(0, 0, cols, rows);
+      bctx.globalCompositeOperation = 'source-over';
       ctx.clearRect(0, 0, w, h);
       ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(sim, 0, 0, cols, rows, 0, 0, w, h);
+      ctx.drawImage(buf!, 0, 0, cols, rows, 0, 0, w, h);
     };
 
-    const frame = (now: number) => {
+    const frame = () => {
       if (!running) return;
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      acc += dt;
-      let iter = 0;
-      while (acc >= SIM_STEP && iter < MAX_STEPS) {
-        if (pointer.moved) {
-          disturb(pointer.x, pointer.y, POINTER_POWER, POINTER_R);
-          pointer.moved = false;
-        }
-        simulate();
-        acc -= SIM_STEP;
-        iter++;
-      }
-      if (now > nextDrop) {
-        disturb(Math.random() * w, h * (0.35 + Math.random() * 0.55), DROP_POWER, DROP_R);
-        nextDrop = now + 1200 + Math.random() * 2400;
-      }
-      render();
+      paint();
       raf = requestAnimationFrame(frame);
     };
 
@@ -153,28 +107,29 @@ export default function WaterSurface() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cols = Math.ceil(w / CELL) + 1;
       rows = Math.ceil(h / CELL) + 1;
-      prev = new Float32Array(cols * rows);
-      curr = new Float32Array(cols * rows);
-      sim = document.createElement('canvas');
-      sim.width = cols;
-      sim.height = rows;
-      sctx = sim.getContext('2d');
-      if (sctx) img = sctx.createImageData(cols, rows);
+      buf = document.createElement('canvas');
+      buf.width = cols;
+      buf.height = rows;
+      bctx = buf.getContext('2d');
       readTheme();
     };
 
-    // 指针/手指:划动注入扰动,按下溅更大水花(画布自身 pointer-events 关闭,监听挂在窗口)
+    // 指针/手指:划动留水痕,点击盖水印(画布自身 pointer-events 关闭,监听挂在窗口)
     const onMove = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width < 50) return;
-      pointer.x = e.clientX - rect.left;
-      pointer.y = e.clientY - rect.top;
-      pointer.moved = true;
+      const pt = toCell(e.clientX - rect.left, e.clientY - rect.top);
+      stampSegment(lastPt, pt);
+      lastPt = pt;
     };
     const onDown = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       if (rect.width < 50) return;
-      disturb(e.clientX - rect.left, e.clientY - rect.top, CLICK_POWER, CLICK_R);
+      stampMark(e.clientX - rect.left, e.clientY - rect.top);
+      lastPt = null; // 点击后的划动重新起笔,避免拉出一条长直线
+    };
+    const onLeave = () => {
+      lastPt = null;
     };
     const onVisibility = () => {
       if (document.hidden) {
@@ -182,7 +137,6 @@ export default function WaterSurface() {
         cancelAnimationFrame(raf);
       } else {
         running = true;
-        last = performance.now();
         raf = requestAnimationFrame(frame);
       }
     };
@@ -193,6 +147,7 @@ export default function WaterSurface() {
     window.addEventListener('resize', resize);
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerdown', onDown, { passive: true });
+    document.documentElement.addEventListener('pointerleave', onLeave);
     window.addEventListener('luzzz-themechange', readTheme);
     document.addEventListener('visibilitychange', onVisibility);
     raf = requestAnimationFrame(frame);
@@ -204,6 +159,7 @@ export default function WaterSurface() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
+      document.documentElement.removeEventListener('pointerleave', onLeave);
       window.removeEventListener('luzzz-themechange', readTheme);
       document.removeEventListener('visibilitychange', onVisibility);
     };
