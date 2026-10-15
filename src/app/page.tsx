@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Aurora from '@/components/Aurora';
 import Cursor from '@/components/Cursor';
+import SeamVeil from '@/components/SeamVeil';
 import SmoothScroll from '@/components/SmoothScroll';
 import Nav from '@/components/Nav';
 import TrailsBackdrop from '@/components/TrailsBackdrop';
@@ -45,6 +46,7 @@ export default function Home() {
         <div className="hidden motion-safe:block">
           <TrailsBackdrop />
           <Aurora className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" />
+          <SeamVeil />
           <div className="relative z-10">
             <Act1Intro />
             <Act2Ring projects={projects} previews={previews} />
