@@ -77,9 +77,12 @@ luzzz.me/
     滚动丝滑来自 `SmoothScroll.tsx` 的 Lenis（实例挂 `window.__lenis`）。动画引擎只用
     `motion`，不要引入 GSAP 混用（同一棵树争帧）。`.vercel/**` 也要在 `globalIgnores` 里。
 11. **三幕锚点与吸附**：三幕锚点经 `registerSceneAnchors()` 注册（经典树已占用 4 个 id）；
-    滚动吸附是全局的（`registerSnapAnchors()` 注册 9 个完整画面锚点，停滚 300ms 吸附，
+    滚动吸附是全局的（`registerSnapAnchors()` 注册 10 个完整画面锚点，停滚 300ms 吸附，
     阈值 0.92×视口高；`wheel`/`touchmove` 立即取消让位给用户）。环形旋转窗口常量
-    `CORE = [0.10, 0.94]`——改幕高或卡宽时锚点与 `goTo()` 从同一常量推导，别单改一处。
+    `CORE = [0.10, 0.88]` 满程恰为一整圈（6 站 = 360°，站 0 与站 5 同 pose）——拖拽
+    目标越出窗口就按整圈回卷：滚动瞬移 + `sp.jump` 弹簧跳变，整圈周期保证回卷前后
+    姿态严格相同，拉到尽头自动循环（键盘 ←/→ 同样取模循环）。改幕高或卡宽时锚点与
+    `goTo()` 从同一常量推导，别单改一处。
     幕高（340/480/340vh）与 `SeamVeil.tsx` 的缝位常量（`3.4*vh`/`8.2*vh`）硬编码成对，
     改幕高必须同步缝位；第一幕 about 锚点比例（0.68）在 `Act1Intro` 的场景锚与吸附锚两处同改。
 12. **背景 = 纯 2D 光轨 + 遮罩；水波只在透镜上**：`TrailsBackdrop` 无 WebGL（早年 ogl 流体
