@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import {
   motion,
   useMotionTemplate,
-  useMotionValue,
   useMotionValueEvent,
   useScroll,
   useSpring,
@@ -19,8 +18,9 @@ import type { Project } from '@/data/site';
 
 const N = 5; // 与 site.ts 的 projects 数量一致
 const STEP = 360 / N;
-/** 环旋转占幕进度的窗口:头部 10% 是入场跑道(整环飞入＋回正),尾部留交棒 */
-const CORE: [number, number] = [0.10, 0.94];
+/** 环旋转窗口:满程恰为一整圈(N 站 = 360°,首末站同 pose)——这是循环的几何前提。
+ *  头部 10% 是入场跑道(整环飞入＋回正),尾部 12% 留交棒。 */
+const CORE: [number, number] = [0.10, 0.88];
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 type LenisLike = { scrollTo: (t: number, o?: object) => void; limit: number; resize: () => void };
@@ -35,12 +35,9 @@ function healLenis() {
   if (l && l.limit < 100) l.resize();
 }
 
-/** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms;
- *  橡皮筋:超出首末整卡的拖拽量按 RUBBER 阻尼折成视觉旋转,最多过冲 MAX_OVER_DEG */
+/** 拖拽转环的调参:deadzone 内放行点击;甩动速度阈值 px/ms */
 const DRAG_DEADZONE = 5;
 const FLICK_V = 0.35;
-const RUBBER = 0.3;
-const MAX_OVER_DEG = 12;
 
 /** 单张环卡:固定在环上的角度,亮度/透明度随正面角变化,背面不渲染。
  *  悬停时回报自己的序号(侧卡预览:底部信息淡换成这张卡)。 */
@@ -133,9 +130,10 @@ function RingCard({
 }
 
 /**
- * 第二幕 · 项目环形(480vh):五张作品卡架在 3D 环岛上,滚动驱动整环自右向左旋转;
- * 滚动停止 0.5s 后自动吸附到最近的整卡(lenis 四次缓动归位)。
- * 底部信息面板跟随活动卡逐字入场,右侧点阵可直接跳转。
+ * 第二幕 · 项目环形(480vh):五张作品卡架在 3D 环岛上,滚动驱动整环自右向左旋转,
+ * 旋转满程恰为一整圈(站 0 与站 5 同 pose);停滚 0.5s 吸附到最近的站。
+ * 拖拽转环无界:目标越出窗口就按整圈回卷——滚动瞬移＋弹簧跳变,姿态连续无感,
+ * 拉到尽头自动循环;松手甩动跨站(可跨过首末站)。底部信息面板跟随活动卡,点阵直达。
  */
 export default function Act2Ring({ projects, previews }: { projects: Project[]; previews: Record<string, string> }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -149,7 +147,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const sp = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
 
   const pNorm = useTransform(sp, CORE, [0, 1]);
-  const rotation = useTransform(pNorm, (v) => -v * (N - 1) * STEP);
+  // 整圈映射:满程 -360°(N 站),站 k 显示卡 k mod N——首末站姿态重合,可循环
+  const rotation = useTransform(pNorm, (v) => -v * N * STEP);
   // 入场跑道(~45vh):整环从纵深飞入;跑道须在对齐位(CORE[0])之前结束,
   // 否则停在那附近整环被透视推远、首卡显小;ease-out 减速落位:透视放大
   // 本身前慢后快,反着衬正好匀速长大
@@ -157,12 +156,9 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const enterO = useTransform(sp, [0.015, 0.085], [0, 1], { ease: easeOutQuart });
   // 回正:整环带 +16° 斜角飞来,随跑道减速精确对齐首卡(0.095 < CORE[0],锚点处零残差)
   const settleRot = useTransform(sp, [0, 0.095], [16, 0], { ease: easeOutQuart });
-  // 拖拽橡皮筋:拖出首末整卡时滚动钉在边界,超出量以阻尼折成视觉旋转(弹簧跟随,松手弹回)
-  const dragOffset = useMotionValue(0);
-  const dragOffsetSpring = useSpring(dragOffset, { stiffness: 320, damping: 32 });
   const totalRot = useTransform(
-    [rotation, settleRot, dragOffsetSpring] as const,
-    ([r, s, d]: readonly number[]) => r + s + d,
+    [rotation, settleRot] as const,
+    ([r, s]: readonly number[]) => r + s,
   );
   const ringT = useMotionTemplate`translateZ(${enterZ}px) rotateY(${totalRot}deg)`;
 
@@ -191,20 +187,22 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const stageT = useMotionTemplate`translateY(${stageY}px)`;
 
   useMotionValueEvent(pNorm, 'change', (v) => {
-    const k = Math.min(N - 1, Math.max(0, Math.round(v * (N - 1))));
+    // 站 0..N 共 N+1 站(末站与首站同为卡 0);活动卡取站号 mod N
+    const s = Math.round(v * N);
+    const k = ((s % N) + N) % N;
     setActive((prev) => (prev === k ? prev : k));
   });
 
-  // 吸附锚点交给全局控制器(SmoothScroll):五张卡的整卡位置
+  // 吸附锚点交给全局控制器(SmoothScroll):N+1 个站(首末站同为卡 0 pose)
   useEffect(() => {
-    const anchors = Array.from({ length: N }, (_, k) => () => {
+    const anchors = Array.from({ length: N + 1 }, (_, s) => () => {
       const wrap = wrapRef.current;
       if (!wrap) return 0;
       const total = wrap.offsetHeight - window.innerHeight;
       return (
         wrap.getBoundingClientRect().top +
         window.scrollY +
-        (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * total
+        (CORE[0] + (s / N) * (CORE[1] - CORE[0])) * total
       );
     });
     const unsnap = registerSnapAnchors(anchors);
@@ -217,8 +215,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     pointerId: -1,
     startX: 0,
     startScroll: 0,
-    minS: 0,
-    maxS: 0,
+    wrapLow: 0, // 回卷窗口下缘 = 站 0(上缘 = 下缘 + 一整圈)
+    turn: 1, // 一整圈的滚动距离
     moved: false,
     samples: [] as Array<{ x: number; t: number }>,
   });
@@ -233,16 +231,15 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     d.moved = false;
     d.samples = [{ x: e.clientX, t: performance.now() }];
     healLenis();
-    // 拖拽边界 = 首末整卡锚点:超出部分不滚页面,走橡皮筋
-    // (先算边界再捕获——capture 失败不应拖垮边界状态)
+    // 回卷窗口 = [站 0, 站 0 + 一整圈):拖拽目标越界即整圈回卷
+    // (先算窗口再捕获——capture 失败不应拖垮窗口状态)
     const wrap = wrapRef.current;
     if (wrap) {
       const span = wrap.offsetHeight - window.innerHeight;
       const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
-      d.minS = wrapTop + CORE[0] * span;
-      d.maxS = wrapTop + CORE[1] * span;
+      d.wrapLow = wrapTop + CORE[0] * span;
+      d.turn = span * (CORE[1] - CORE[0]);
     }
-    dragOffset.set(0);
     // 此处不捕获指针:按下即捕获会把后续 click 重定向到舞台,卡片链接就再也点不到;
     // 确认进入拖拽(越过死区)后再捕获,见 onStagePointerMove
   };
@@ -266,18 +263,25 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     const wrap = wrapRef.current;
     if (!wrap) return;
     const span = wrap.offsetHeight - window.innerHeight;
-    const scrollPerCard = (span * (CORE[1] - CORE[0])) / (N - 1);
+    const top = wrap.getBoundingClientRect().top + window.scrollY;
+    const scrollPerCard = (span * (CORE[1] - CORE[0])) / N;
     // 一整卡对应的拖拽距离:随视口宽缩放,窄屏更短更好甩
     const dragCardPx = Math.min(640, Math.max(260, window.innerWidth * 0.42));
-    const target = d.startScroll - dx * (scrollPerCard / dragCardPx);
-    // 钉在首末整卡之间;超出量按阻尼折成视觉旋转过冲,不再泄漏到相邻幕
-    const clamped = Math.min(d.maxS, Math.max(d.minS, target));
-    const over = target - clamped;
+    let raw = d.startScroll - dx * (scrollPerCard / dragCardPx);
+    // 入场走廊里向后拖:钉在站 0,不回卷——此时弹簧整圈跳变会把未落位的
+    // 入场变换(enterZ/enterO)瞬移到位,出现可见跳帧。阈值取 CORE[0]-0.005:
+    // 站 0 的浮点落点(≈0.0999)不算走廊,而 0.095 处入场变换恰好全部归零,瞬移无感
+    if ((window.scrollY - top) / span < CORE[0] - 0.005 && raw < d.wrapLow) raw = d.wrapLow;
+    // 拖拽无界:目标越出 [站 0, 站 0+整圈) 按整圈回卷——滚动瞬移＋弹簧跳变,
+    // 整圈周期保证回卷前后姿态严格相同,视觉连续
+    const wrapped = d.wrapLow + ((((raw - d.wrapLow) % d.turn) + d.turn) % d.turn);
     const l = lenis();
-    if (l) l.scrollTo(clamped, { immediate: true });
-    else window.scrollTo(0, clamped);
-    const degPerScroll = ((N - 1) * STEP) / span;
-    dragOffset.set(Math.max(-MAX_OVER_DEG, Math.min(MAX_OVER_DEG, -over * degPerScroll * RUBBER)));
+    if (l) l.scrollTo(wrapped, { immediate: true });
+    else window.scrollTo(0, wrapped);
+    if (wrapped !== raw) {
+      d.startScroll -= raw - wrapped; // 重定基:目标线随窗口平移,后续 dx 连续
+      sp.jump((wrapped - top) / span);
+    }
   };
 
   const onStagePointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -297,14 +301,25 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     // 当前进度按幕内位置算:scrollY 要先减掉第二幕的页顶偏移
     const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
     const v = ((window.scrollY - wrapTop) / span - CORE[0]) / (CORE[1] - CORE[0]);
-    let k = Math.round(v * (N - 1));
-    if (Math.abs(vx) > FLICK_V) k += vx < 0 ? 1 : -1;
-    k = Math.min(N - 1, Math.max(0, k));
-    const yk =
-      wrapTop + (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * span;
+    let st = Math.round(Math.min(1, Math.max(0, v)) * N);
+    if (Math.abs(vx) > FLICK_V) st += vx < 0 ? 1 : -1;
+    // 甩出窗口(站 -1 / 站 N+1):先整圈瞬移到窗内同姿态位(弹簧跳变),再滑向等价站;
+    // 还在入场走廊(留 0.005 浮点余量,见 pointermove)时不瞬移,直接滑回站 0
+    const turn = span * (CORE[1] - CORE[0]);
+    if (st < 0 || st > N) {
+      if (v < -0.005) {
+        st = 0;
+      } else {
+        const y = window.scrollY + (st < 0 ? turn : -turn);
+        const l = lenis();
+        if (l) l.scrollTo(y, { immediate: true });
+        else window.scrollTo(0, y);
+        sp.jump((y - wrapTop) / span);
+        st += st < 0 ? N : -N;
+      }
+    }
+    const yk = wrapTop + (CORE[0] + (st / N) * (CORE[1] - CORE[0])) * span;
     glideScrollTo(yk, 0.55);
-    // 橡皮筋回弹:过冲的视觉旋转弹簧归零(范围内本就是 0,无感)
-    dragOffset.set(0);
   };
 
   /** 拖拽过后不触发卡片链接:仅当拖拽真实改变了滚动位置(>24px)才拦截 click;
@@ -345,12 +360,11 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       const wrap = wrapRef.current;
       if (!wrap) return;
       const total = wrap.offsetHeight - window.innerHeight;
-      glideScrollTo(
-        wrap.getBoundingClientRect().top +
-          window.scrollY +
-          (CORE[0] + (k / (N - 1)) * (CORE[1] - CORE[0])) * total,
-        0.6,
-      );
+      const top = wrap.getBoundingClientRect().top + window.scrollY;
+      // 等价站:卡 k 停在站 k;卡 0 还多一个站 N——取离当前站更近的,循环里走最短路
+      const cur = (((window.scrollY - top) / total - CORE[0]) / (CORE[1] - CORE[0])) * N;
+      const s = k === 0 && Math.abs(N - cur) < Math.abs(k - cur) ? N : k;
+      glideScrollTo(top + (CORE[0] + (s / N) * (CORE[1] - CORE[0])) * total, 0.6);
     },
     [],
   );
@@ -367,15 +381,15 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     return () => window.removeEventListener('luzzz-project-jump', onJump);
   }, [projects, goTo]);
 
-  // 键盘导航:环岛聚焦时,←/→ 转卡、数字键直达、Home/End 回顶/联系
+  // 键盘导航:环岛聚焦时,←/→ 转卡(到尽头循环)、数字键直达、Home/End 回顶/联系
   // (只在舞台聚焦时接管按键,不全局劫持方向键,键盘滚页不受影响)
   const onStageKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      goTo(Math.max(0, active - 1));
+      goTo((active - 1 + N) % N);
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
-      goTo(Math.min(N - 1, active + 1));
+      goTo((active + 1) % N);
     } else if (e.key === 'Home') {
       e.preventDefault();
       smoothTo('top');
@@ -400,7 +414,9 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             <div className="flex items-end justify-between gap-6">
               <div>
                 <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
-                <p className="mt-2 hidden text-sm text-muted md:block">拖拽或滚动旋转环岛 · 松手自动对齐整卡</p>
+                <p className="mt-2 hidden text-sm text-muted md:block">
+                  拖拽或滚动旋转环岛 · 拉到尽头自动循环,松手对齐整卡
+                </p>
               </div>
               <p aria-hidden className="font-mono text-xs text-muted">
                 0{active + 1} / 0{N}
