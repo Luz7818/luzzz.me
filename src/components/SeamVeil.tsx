@@ -18,7 +18,7 @@ export default function SeamVeil() {
     const PEAK = 0.45; // 峰值浓度:隐约可辨即可,不能糊住内容
     const measure = () => {
       const vh = window.innerHeight;
-      return [2.6 * vh, 7.4 * vh]; // 两处幕界(260vh / 740vh)
+      return [3.4 * vh, 8.2 * vh]; // 两处幕界(340vh / 820vh),与三幕幕高成对改
     };
     const paint = () => {
       const el = ref.current;

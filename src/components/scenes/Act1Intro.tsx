@@ -19,7 +19,7 @@ function anchorY(el: HTMLElement | null, frac: number) {
 }
 
 /**
- * 第一幕 · 开场(260vh):原生滚动被钉屏舞台吃掉,内容在原地换场。
+ * 第一幕 · 开场(340vh):原生滚动被钉屏舞台吃掉,内容在原地换场。
  * 拍一:大标题逐字入场 + 简介 + CTA;拍二:关于玻璃卡 + 数字统计 + 跑马灯。
  * 两拍交叉淡切,内容永不竖向滚出视口——这就是「本地切换」。
  */
@@ -28,12 +28,12 @@ export default function Act1Intro() {
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.4 });
 
-  // 拍一:0.42 前稳稳停住,随后上浮淡出
-  const b1y = useTransform(sp, [0.4, 0.56], [0, -110]);
-  const b1o = useTransform(sp, [0.42, 0.54], [1, 0]);
-  // 拍二:从下方升入,0.62–0.88 停留,结尾交棒给项目环
-  const b2y = useTransform(sp, [0.5, 0.62, 0.88, 0.99], [90, 0, 0, -80]);
-  const b2o = useTransform(sp, [0.5, 0.6, 0.88, 0.98], [0, 1, 1, 0]);
+  // 拍一:0.34 前稳稳停住,随后上浮淡出
+  const b1y = useTransform(sp, [0.32, 0.46], [0, -110]);
+  const b1o = useTransform(sp, [0.34, 0.44], [1, 0]);
+  // 拍二:从下方升入,0.52–0.87 停留,结尾交棒给项目环
+  const b2y = useTransform(sp, [0.4, 0.52, 0.87, 0.98], [90, 0, 0, -80]);
+  const b2o = useTransform(sp, [0.4, 0.5, 0.87, 0.97], [0, 1, 1, 0]);
   const b1t = useMotionTemplate`translateY(${b1y}px)`;
   const b2t = useMotionTemplate`translateY(${b2y}px)`;
   const b1pe = useTransform(b1o, (o) => (o < 0.08 ? 'none' : 'auto'));
@@ -45,9 +45,9 @@ export default function Act1Intro() {
   useEffect(() => {
     const unscene = registerSceneAnchors({
       top: () => 0,
-      about: () => anchorY(wrapRef.current, 0.62),
+      about: () => anchorY(wrapRef.current, 0.68),
     });
-    const unsnap = registerSnapAnchors([() => 0, () => anchorY(wrapRef.current, 0.62)]);
+    const unsnap = registerSnapAnchors([() => 0, () => anchorY(wrapRef.current, 0.68)]);
     const unbound = registerPageBound(() => anchorY(wrapRef.current, 0));
     return () => {
       unscene();
@@ -57,7 +57,7 @@ export default function Act1Intro() {
   }, []);
 
   return (
-    <div ref={wrapRef} className="relative h-[260vh]">
+    <div ref={wrapRef} className="relative h-[340vh]">
       <div className="sticky top-0 flex h-dvh flex-col overflow-hidden">
         {/* 首屏暖光:浅色下也有一团呼吸,视线落在标题 */}
         <div className="hero-glow" aria-hidden />
