@@ -79,7 +79,8 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2,
  * 暗房用 lighter 叠加发光,浅底日间改 source-over 正常合成(叠加在近白背景上会被钳成纯白);
  * 颜料、车头与合成模式全部来自当前主题的 CSS 变量,换主题时颜色在 0.6s 内逐帧插值,
  * 与 CSS @property 的颜色涟漪同步换天,而不是瞬间跳变(reduced-motion 仍直接落位);
- * 指针移动时整幅光轨轻微视差;单击非交互处,一辆高速长尾车从点击点即兴驶过(彩蛋);
+ * 指针移动时整幅光轨轻微视差;滚动越快车流越快、尾迹越长——你是开车的那个人;
+ * 单击非交互处,一辆高速长尾车从点击点即兴驶过(彩蛋);
  * prefers-reduced-motion 时只画一帧带尾迹的静态光轨。
  */
 export default function LightTrails() {
@@ -100,6 +101,9 @@ export default function LightTrails() {
     let raf = 0;
     let last = performance.now();
     let running = true;
+    // 滚动耦合:上一帧的 scrollY 与平滑后的加速系数(0..1)——滚得越快,车速/尾长加成越大
+    let lastScrollY = window.scrollY;
+    let boost = 0;
     // 调色板三态:from/to 是插值端点,cur(pal)是绘制用的混合值;themeT=1 表示已落位
     let pal = readPalette();
     let palFrom = pal;
@@ -219,11 +223,11 @@ export default function LightTrails() {
       if (reduced) drawTrails(true);
     };
 
-    const drawTrails = (longTail: boolean) => {
+    const drawTrails = (longTail: boolean, lenScale = 1) => {
       ctx.globalCompositeOperation = pal.blend;
       for (const car of cars) {
         const y = car.y ?? laneY[car.lane];
-        const len = longTail ? car.tail * 3.2 : car.tail;
+        const len = (longTail ? car.tail * 3.2 : car.tail) * lenScale;
         const x2 = car.x - car.dir * len;
         const rgbStr = car.warm ? rgb(pal.primary) : rgb(pal.secondary);
         const a = car.alpha * pal.alphaScale;
@@ -258,6 +262,11 @@ export default function LightTrails() {
         applyPalette(easeInOut(themeT));
         buildBackdrop();
       }
+      // 滚动耦合:滚动差值折成 px/s,1400px/s 拉满,平滑成加速系数——松手后随滚动衰减回落
+      const sy = window.scrollY;
+      const vPx = Math.abs(sy - lastScrollY) / dt;
+      lastScrollY = sy;
+      boost += (Math.min(1, vPx / 1400) - boost) * Math.min(1, dt * 3.5);
       // 视差插值
       offset.x += (offset.tx - offset.x) * 0.06;
       offset.y += (offset.ty - offset.y) * 0.06;
@@ -268,7 +277,7 @@ export default function LightTrails() {
       ctx.translate(offset.x, offset.y);
       ctx.globalCompositeOperation = pal.blend;
       for (const car of cars) {
-        car.x += car.speed * car.dir * dt;
+        car.x += car.speed * car.dir * dt * (1 + boost * 2.6);
         wrap(car);
       }
       // 即兴车完全驶出画布后除名
@@ -277,7 +286,7 @@ export default function LightTrails() {
           (c) => !c.ephemeral || (c.dir === 1 ? c.x - c.tail < w + 60 : c.x + c.tail > -60),
         );
       }
-      drawTrails(false);
+      drawTrails(false, 1 + boost * 1.6);
       ctx.restore();
       raf = requestAnimationFrame(frame);
     };
