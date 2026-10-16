@@ -6,6 +6,7 @@ import SplitChars from '../SplitChars';
 import MagneticButton from '../MagneticButton';
 import CountUp from '../CountUp';
 import Marquee from '../Marquee';
+import SpotlightCard from '../SpotlightCard';
 import { registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
 import { profile, stats } from '@/data/site';
 
@@ -147,7 +148,7 @@ export default function Act1Intro() {
         >
           <div className="mx-auto w-full max-w-[1200px] px-6 pb-16 md:px-10">
             <h2 className="sr-only">关于</h2>
-            <div className="panel max-w-[780px] p-8 md:p-11">
+            <SpotlightCard tilt className="panel group max-w-[780px] p-8 md:p-11">
               <p className="text-xl font-medium leading-[1.8] md:text-2xl">{profile.aboutLine}</p>
               <dl className="hairline mt-10 flex flex-wrap gap-x-14 gap-y-8 pt-8">
                 {stats.map((s) => (
@@ -159,7 +160,7 @@ export default function Act1Intro() {
                   </div>
                 ))}
               </dl>
-            </div>
+            </SpotlightCard>
           </div>
           <div className="absolute inset-x-0 bottom-0">
             <Marquee />
