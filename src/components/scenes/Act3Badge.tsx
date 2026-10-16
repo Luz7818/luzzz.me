@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'motion/react';
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValueEvent,
+  useScroll,
+  useSpring,
+  useTransform,
+} from 'motion/react';
 import SplitChars from '../SplitChars';
 import MagneticButton from '../MagneticButton';
 import { registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
@@ -18,6 +25,20 @@ export default function Act3Badge() {
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 110, damping: 30, mass: 0.5 });
+
+  // 联系页入场闩:整层浮现由滚动(contactO)驱动,卡内元素的一次性 stagger 编排由
+  // 进度越过 0.52(contactO 起点)触发——此前 animate 挂载即播,滚到联系页时早已播完
+  const [contactIn, setContactIn] = useState(false);
+  useMotionValueEvent(sp, 'change', (v) => {
+    setContactIn((prev) => prev || v >= 0.52);
+  });
+  // 刷新落在联系区(浏览器恢复滚动位)时 sp 不会再发 change 事件,挂载后下一帧对一次表
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(() => {
+      setContactIn((prev) => prev || sp.get() >= 0.52);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [sp]);
 
   // 邮箱一键复制:点击大标题即复制,字符就地翻成「已复制 ✓」,1.2s 后翻回(无 toast)
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
@@ -208,6 +229,7 @@ export default function Act3Badge() {
               >
                 {copied === 'idle' ? (
                   <SplitChars
+                    key={contactIn ? 'live' : 'idle'}
                     text={profile.email}
                     wrapperClassName="block"
                     charClassName="text-accent"
@@ -228,42 +250,58 @@ export default function Act3Badge() {
             </h2>
             <motion.p
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
+              animate={contactIn ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ delay: contactIn ? 0.45 : 0, duration: 0.6 }}
               className="mt-5 max-w-[46ch] text-sm leading-[1.9] text-ink/75 md:text-base"
             >
               合作、技术交流、复现论文时踩到坑,或者单纯打个招呼,邮件都会回。
             </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.75, duration: 0.55, ease: EASE_OUT }}
-              className="mt-9 flex flex-wrap items-center gap-4"
-            >
-              <MagneticButton
-                href={`mailto:${profile.email}`}
-                className="btn-primary inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={contactIn ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+                transition={{ delay: contactIn ? 0.55 : 0, duration: 0.5, ease: EASE_OUT }}
+                className="inline-flex"
               >
-                发邮件
-              </MagneticButton>
-              <MagneticButton
-                href={profile.github}
-                external
-                className="btn-ghost inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent"
+                <MagneticButton
+                  href={`mailto:${profile.email}`}
+                  className="btn-primary inline-flex rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-accent-contrast shadow-[var(--shadow-pop)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                >
+                  发邮件
+                </MagneticButton>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={contactIn ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+                transition={{ delay: contactIn ? 0.67 : 0, duration: 0.5, ease: EASE_OUT }}
+                className="inline-flex"
               >
-                GitHub @{profile.handle}
-                <span className="arrow ml-1.5" aria-hidden>
-                  ↗
-                </span>
-              </MagneticButton>
-              <button
-                type="button"
-                onClick={() => smoothTo('top')}
-                className="ml-auto font-mono text-xs text-muted transition-colors hover:text-accent"
+                <MagneticButton
+                  href={profile.github}
+                  external
+                  className="btn-ghost inline-flex rounded-full border border-line px-7 py-3.5 text-sm font-medium text-ink transition-colors hover:border-muted hover:text-accent"
+                >
+                  GitHub @{profile.handle}
+                  <span className="arrow ml-1.5" aria-hidden>
+                    ↗
+                  </span>
+                </MagneticButton>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={contactIn ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+                transition={{ delay: contactIn ? 0.79 : 0, duration: 0.5, ease: EASE_OUT }}
+                className="ml-auto inline-flex"
               >
-                回到开始 ↑
-              </button>
-            </motion.div>
+                <button
+                  type="button"
+                  onClick={() => smoothTo('top')}
+                  className="font-mono text-xs text-muted transition-colors hover:text-accent"
+                >
+                  回到开始 ↑
+                </button>
+              </motion.div>
+            </div>
           </div>
 
           <footer className="mx-auto w-full max-w-[1200px] px-6 pb-8 md:px-10">
