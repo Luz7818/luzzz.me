@@ -10,7 +10,7 @@
 Next.js 16（App Router）+ React 19 + Tailwind v4 + Motion + Lenis，`output: "export"` 全静态导出，
 产物不需要 Node 运行时。站点数据手工维护在 `src/data/site.ts`，页面不请求任何接口，也没有运行时服务。
 
-**规模**：29 个源文件 · 27 个 TS/TSX · 23 个组件（22 客户端，含 `scenes/` 三幕）· 5 张项目卡（2 张真截图 + 3 张风格化封面）
+**规模**：30 个源文件 · 28 个 TS/TSX · 24 个组件（23 客户端，含 `scenes/` 三幕）· 5 张项目卡（2 张真截图 + 3 张风格化封面）
 （复核：`git ls-files src | grep -v README | wc -l`，`git ls-files src | grep -c '\.tsx\?$'`，`grep -c "url: 'https" src/data/site.ts`）
 
 ## 30 秒跑通

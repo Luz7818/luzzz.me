@@ -115,3 +115,18 @@
 - 修走查抓到的真 bug:钳位单位写错(s∈0..1 却按 1.5–98.5 钳再 ×100,弹簧到 1 时芯片飞到 150%)。
 - **验证**:三门禁全 0;走查同步采样——芯片与线头 gap 全程 ±0.05%(亚像素),文本 K0+000→K5+300→
   K10+607 与里程公式精确吻合,页顶/中段芯片均完整在视口内。
+
+## 2026-10-17 · 关于卡换装与首屏解码
+
+- **关于卡换装 SpotlightCard**(与项目卡同语言):`Act1Intro` 拍二的 `.panel` 换成
+  `<SpotlightCard tilt className="panel group …">`——光斑跟随指针、边框亮边转向、3D 倾斜
+  (桌面鼠标);卡根带 `group` 使光斑经 `group-hover` 显形。
+- **首屏 kicker 解码入场**:新增 `ScrambleText`(字符池 `01<>/#$%&+=×·→←↑↓` 乱跳→自左向右
+  错峰锁定,共约 0.7s;直改内层 `textContent`,SSR 渲染真文、不经 React 状态,无 hydration
+  风险;`aria-label` 供读屏、内层 `aria-hidden` 挡乱码;reduced 直接落真文)。
+  `::selection` 琥珀高亮已存在(globals.css:268,30% accent 底),未改动。
+- **验证**：三门禁全 0；走查——关于卡 `:hover` 命中（真实鼠标）且截图可见光标处琥珀辉光，
+  选区 `::selection` 读值 `rgb(0.706,0.325,0.035)/0.3` 与规则精确一致且截图可见；
+  解码 effect 执行经 dataset 标记证实（到达解码分支、rAF 已排程），**乱码视觉播放留人工**：
+  走查环境 rAF 持续冻结（polls 323 / rafFrames 0），tick 为普通 JS 逐帧写 textContent，
+  与 LightTrails 同类。
