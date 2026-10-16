@@ -7,6 +7,7 @@ import MagneticButton from '../MagneticButton';
 import CountUp from '../CountUp';
 import Marquee from '../Marquee';
 import SpotlightCard from '../SpotlightCard';
+import ScrambleText from '../ScrambleText';
 import { registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
 import { profile, stats } from '@/data/site';
 
@@ -68,7 +69,9 @@ export default function Act1Intro() {
           className="absolute inset-0 flex items-center"
         >
           <div className="mx-auto w-full max-w-[1200px] px-6 pb-20 pt-16 md:px-10">
-            <p className="font-mono text-[13px] text-muted">{profile.kicker}</p>
+            <p className="font-mono text-[13px] text-muted">
+              <ScrambleText text={profile.kicker} delay={0.3} />
+            </p>
 
             <h1 className="mt-5 max-w-[24ch] text-[clamp(2.4rem,6vw,4.8rem)] font-bold leading-[1.14] tracking-[-0.01em]">
               <SplitChars text="把工程问题做成" wrapperClassName="block" charClassName={GRAD} delay={0.15} />
