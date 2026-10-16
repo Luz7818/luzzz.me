@@ -6,7 +6,6 @@ import SeamVeil from '@/components/SeamVeil';
 import SmoothScroll from '@/components/SmoothScroll';
 import Nav from '@/components/Nav';
 import TrailsBackdrop from '@/components/TrailsBackdrop';
-import Chainage from '@/components/Chainage';
 import EasterEggs from '@/components/EasterEggs';
 import Act1Intro from '@/components/scenes/Act1Intro';
 import Act2Ring from '@/components/scenes/Act2Ring';
@@ -50,7 +49,6 @@ export default function Home() {
           <TrailsBackdrop />
           <Aurora className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" />
           <SeamVeil />
-          <Chainage />
           <div className="relative z-10">
             <Act1Intro />
             <Act2Ring projects={projects} previews={previews} />

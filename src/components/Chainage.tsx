@@ -1,16 +1,30 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import type { MotionValue } from 'motion/react';
 
 /**
- * 里程桩号:左上角一枚 mono 读数,把滚动路程折成铁路桩号(K 数+米,一屏一公里)——
- * 整页是一条路,读数就是你开过的里程。滚动事件直写 textContent,不经 motion/rAF 管线
- * (同 SeamVeil;内嵌面板可能吞 scroll 事件,300ms 轮询幂等兜底)。
- * 只挂在三幕树(motion-safe),经典竖排与 404 不渲染。
+ * 里程桩号:骑在顶部琥珀进度线前端的一枚迷你芯片,随滚动自左向右驶过整屏——
+ * 进度即公路位置,读数即里程(K数+米,一屏一公里,页顶 K0+000)。
+ * 位置订阅 Nav 的进度弹簧直写 left(CSS clamp 以 28px 绝对值保底芯片半宽,不越出视口);
+ * 文本沿用 scroll 直写 textContent(SeamVeil 同模式,300ms 轮询兜底)。
+ * Nav 双树共用,经典竖排与移动端照常工作。
  */
-export default function Chainage() {
+export default function Chainage({ scaleX }: { scaleX: MotionValue<number> }) {
   const ref = useRef<HTMLSpanElement>(null);
 
+  // 位置:跟随进度弹簧(不进 React 状态,不走 style MotionValue——直写 left)。
+  // CSS clamp 用绝对像素保底芯片自身半宽,页顶/页底都不越出视口
+  useEffect(() => {
+    const apply = (s: number) => {
+      const el = ref.current;
+      if (el) el.style.left = `clamp(28px, ${(s * 100).toFixed(2)}%, calc(100% - 28px))`;
+    };
+    apply(scaleX.get());
+    return scaleX.on('change', apply);
+  }, [scaleX]);
+
+  // 文本:滚动里程折算(一屏一公里)
   useEffect(() => {
     const paint = () => {
       const el = ref.current;
@@ -34,7 +48,8 @@ export default function Chainage() {
     <span
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed left-6 top-[26px] z-30 hidden font-mono text-[11px] tabular-nums tracking-wide text-muted sm:block"
+      style={{ left: '1.5%' }}
+      className="fixed top-[2px] z-50 -translate-x-1/2 rounded-full border border-line bg-[var(--nav-glass)] px-1.5 py-[2px] font-mono text-[9px] leading-none tabular-nums tracking-wide text-muted backdrop-blur"
     >
       K0+000
     </span>

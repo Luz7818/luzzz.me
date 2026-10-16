@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react';
 import ThemeToggle from './ThemeToggle';
+import Chainage from './Chainage';
 import { navSectionAt, smoothTo } from './SmoothScroll';
 import { profile } from '@/data/site';
 
@@ -30,12 +31,13 @@ export default function Nav() {
 
   return (
     <>
-      {/* 滚动进度:视口顶一条琥珀辉光细线 */}
+      {/* 滚动进度:视口顶一条琥珀辉光细线,前端骑一枚里程桩号(Chainage) */}
       <motion.div
         aria-hidden
         style={{ scaleX }}
         className="fixed inset-x-0 top-0 z-50 h-[2px] origin-left bg-gradient-to-r from-accent via-accent/80 to-accent/25"
       />
+      <Chainage scaleX={scaleX} />
       {/* 悬浮玻璃胶囊导航(主题切换独立在右上角,见下方 ThemeToggle) */}
       <header className="fixed inset-x-0 top-4 z-40 flex justify-center px-4">
         <nav
