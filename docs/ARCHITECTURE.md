@@ -86,7 +86,8 @@ luzzz.me/
     幕高（340/480/340vh）与 `SeamVeil.tsx` 的缝位常量（`3.4*vh`/`8.2*vh`）硬编码成对，
     改幕高必须同步缝位；第一幕 about 锚点比例（0.68）在 `Act1Intro` 的场景锚与吸附锚两处同改。
 12. **背景 = 纯 2D 光轨 + 遮罩；水波只在透镜上**：`TrailsBackdrop` 无 WebGL（早年 ogl 流体
-    合成层因撕裂与逐帧全屏上传已整体移除——别再往背景加 WebGL 层）；「元素晕开」由
+    合成层因撕裂与逐帧全屏上传已整体移除——别再往背景加 WebGL 层）；光轨速度/尾长与滚动
+    速率耦合（`frame` 内读 scrollY 差值,平滑成 0..1 系数,纯数值路径不碰渲染管线）；「元素晕开」由
     `Cursor.tsx` 的 SVG backdrop-filter 水滴透镜承担（Chromium 生效，Firefox/Safari 自动
     退化为纯小点，不可修、别为此引库）。透镜用 Motion transform 模板定位时 x/y 必须写进模板。
 

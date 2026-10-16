@@ -110,8 +110,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 站内子页面 | `public/marx-cloud/` 9,709,985 字节、171 个文件（2026-10-02 起包含 `avatars/`+`portraits/` 共 163 张图，此前副本缺这两目录，换装与侧栏头像在线上是 404）；`public/corpus/` 394,641 字节、4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `www.luzzz.me` **已生效**：HTTPS 200，返回真实站点（不是 Vercel 登录页），`/marx-cloud/` 与 `/corpus/` 两个子页面同样 200 且页内本地引用 0 断链。apex `luzzz.me` **仍未生效**：DoH 查 A 是空答复，直连表现为 `SSL: UNEXPECTED_EOF_WHILE_READING`。两个域名都在项目 Aliases 里但 `domains` 的 `verificationRecord` 为 `null`。**不要把任何具体接入 IP 写进 DNS 说明**：`www` 走任播，实测同一天两次解析结果就不同；apex 要填的值以 `npx vercel domains inspect luzzz.me` 当场打印的为准（本文早先写的 `76.76.21.21` 是 Vercel 旧共用 IP，已作废） | DoH 免登录复核（apex 那行应为 `[]`）：`python -c "import json,urllib.request as u; [print(n,t,[a['data'] for a in json.load(u.urlopen(f'https://dns.google/resolve?name={n}&type={t}',timeout=20)).get('Answer',[])]) for n,t in [('luzzz.me','A'),('www.luzzz.me','A')]]"`；线上确实返回站点而非登录墙：`python -c "import urllib.request as u;b=u.urlopen(u.Request('https://www.luzzz.me/marx-cloud/',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read();print('思想云' in b.decode('utf-8'))"` 应为 `True`（探测页面标题里的「思想云」，不钉死会随部署变掉的资源哈希；被登录墙挡时页面标题是 `Login – Vercel`） |
-| 源文件 | `src/` 下 26 个文件，其中 24 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
-| 组件 | 20 个（`src/components/` 17 + `src/components/scenes/` 3），其中 18 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 20）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 18） |
+| 源文件 | `src/` 下 29 个文件，其中 27 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
+| 组件 | 23 个（`src/components/` 20 + `src/components/scenes/` 3），其中 22 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 23）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 22） |
 | 运行时依赖 | 5 个：`next` `react` `react-dom` `motion` `lenis` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
 | Node / pnpm | `v24.19.0` / `10.33.0`（`packageManager` 声明 `pnpm@10.33.0`） | `node -v && pnpm -v` |
 | `next start` | 不可用：先打印 `✓ Ready`，紧接着抛错，退出码 1 | `npx next start` |
@@ -124,8 +124,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **写死在组件里的文案**，改站点文字时最容易漏：`Hero.tsx` 的两行大标题与「看项目」按钮；
   `Act1Intro.tsx` 的两行大标题（与 Hero 各存一份，两棵树）；`Act2Ring.tsx` 的「拖拽或滚动旋转环岛 ·
   拉到尽头自动循环,松手对齐整卡」提示行与舞台 aria-label；`Act3Badge.tsx` 的工牌装饰行（`LUZ · STAFF PASS`、
-  `OPEN TO · 合作 / 实习`、数据行 `7 公开仓库…`、`luzzz.me · № 0001`、挂绳孔、全息箔带）；
-  `not-found.tsx` 的「这条路上没有站」文案；
+  `OPEN TO · 合作 / 实习`、数据行 `7 公开仓库…`、`luzzz.me · № 0001`、挂绳孔、全息箔带、
+  手写签名 SVG 路径）；`not-found.tsx` 的「这条路上没有站」文案；
+  `Chainage.tsx` 的桩号格式（K数+米,一屏一公里）；
+  `EasterEggs.tsx` 的靠站标题（`🚏 车已靠站 · 等你回来`）与控制台招手文案；
   `Projects.tsx` 的字型水印 `ZSX`/`TF`/`TH`、横向卡宽（featured 720px / 其余 480px）与
   卷轴降级断点（≥1024px 且非 reduced 才钉屏平移）；`Nav.tsx` 的 `LINKS`（关于/项目/联系）；
   `Marquee.tsx` 消费 `site.ts` 的 `marquee`，但词条内容改数据即可。这些都不在 `site.ts`。
