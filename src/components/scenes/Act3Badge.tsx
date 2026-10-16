@@ -40,6 +40,18 @@ export default function Act3Badge() {
     return () => window.cancelAnimationFrame(raf);
   }, [sp]);
 
+  // 工牌落定闩(sp 越过 0.135 ≈ 落定锚点 0.14):签名在牌递稳之后才落笔
+  const [landed, setLanded] = useState(false);
+  useMotionValueEvent(sp, 'change', (v) => {
+    setLanded((prev) => prev || v >= 0.135);
+  });
+  useEffect(() => {
+    const raf = window.requestAnimationFrame(() => {
+      setLanded((prev) => prev || sp.get() >= 0.135);
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [sp]);
+
   // 邮箱一键复制:点击大标题即复制,字符就地翻成「已复制 ✓」,1.2s 后翻回(无 toast)
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
   const copyTimer = useRef(0);
@@ -159,7 +171,34 @@ export default function Act3Badge() {
               </div>
 
               <div className="mt-6">
-                <p className="text-3xl font-bold tracking-[-0.01em]">{profile.fullName}</p>
+                <div className="flex items-end justify-between gap-2">
+                  <p className="text-3xl font-bold tracking-[-0.01em]">{profile.fullName}</p>
+                  {/* 手写签名:落牌后沿笔画自绘(Luz 连笔 + 划线),证件该有签名 */}
+                  <svg
+                    viewBox="0 0 128 52"
+                    aria-hidden
+                    className="-rotate-2 h-10 w-24 translate-y-1 fill-none text-ink/75"
+                  >
+                    <motion.path
+                      d="M 10 10 C 7 18, 5 32, 9 40 C 11 44, 17 43, 20 37 M 24 26 C 22 32, 21 39, 24 40 C 28 41, 30 34, 31 28 C 31 33, 31 39, 34 40 C 37 41, 39 34, 40 29 M 45 23 C 52 19, 60 19, 57 24 C 54 29, 45 33, 47 38 C 49 42, 60 39, 70 32"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0 }}
+                      animate={landed ? { pathLength: 1 } : { pathLength: 0 }}
+                      transition={{ delay: landed ? 0.35 : 0, duration: 1.05, ease: EASE_OUT }}
+                    />
+                    <motion.path
+                      d="M 30 47 C 50 51, 84 48, 122 36"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      initial={{ pathLength: 0 }}
+                      animate={landed ? { pathLength: 1 } : { pathLength: 0 }}
+                      transition={{ delay: landed ? 1.3 : 0, duration: 0.45, ease: EASE_OUT }}
+                    />
+                  </svg>
+                </div>
                 <p className="mt-1 font-mono text-xs text-muted">
                   {profile.latinName} · @{profile.handle}
                 </p>
