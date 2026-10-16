@@ -7,6 +7,7 @@ import SmoothScroll from '@/components/SmoothScroll';
 import Nav from '@/components/Nav';
 import TrailsBackdrop from '@/components/TrailsBackdrop';
 import Chainage from '@/components/Chainage';
+import EasterEggs from '@/components/EasterEggs';
 import Act1Intro from '@/components/scenes/Act1Intro';
 import Act2Ring from '@/components/scenes/Act2Ring';
 import Act3Badge from '@/components/scenes/Act3Badge';
@@ -42,6 +43,7 @@ export default function Home() {
       <SmoothScroll />
       <Cursor />
       <Nav />
+      <EasterEggs />
       <main className="relative">
         {/* 三幕场景:开场 → 项目环形 → 工牌联系。滚动驱动本地切换,reduced-motion 由 CSS 切走。 */}
         <div className="hidden motion-safe:block">
