@@ -126,7 +126,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   拉到尽头自动循环,松手对齐整卡」提示行与舞台 aria-label；`Act3Badge.tsx` 的工牌装饰行（`LUZ · STAFF PASS`、
   `OPEN TO · 合作 / 实习`、数据行 `7 公开仓库…`、`luzzz.me · № 0001`、挂绳孔、全息箔带、
   手写签名 SVG 路径）；`not-found.tsx` 的「这条路上没有站」文案；
-  `Chainage.tsx` 的桩号格式（K数+米,一屏一公里）；
+  `Chainage.tsx` 的桩号格式（K数+米,一屏一公里,芯片骑于 Nav 进度线前端）；
   `EasterEggs.tsx` 的靠站标题（`🚏 车已靠站 · 等你回来`）与控制台招手文案；
   `Projects.tsx` 的字型水印 `ZSX`/`TF`/`TH`、横向卡宽（featured 720px / 其余 480px）与
   卷轴降级断点（≥1024px 且非 reduced 才钉屏平移）；`Nav.tsx` 的 `LINKS`（关于/项目/联系）；
