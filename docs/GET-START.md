@@ -145,10 +145,11 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 4. 换项目预览图
 
-`public/projects/` 现有 5 张图（复核：`ls public/projects`）：2 张真截图（2026-10-03 实拍）——
-`marx-cloud.png` 与 `traffic-terminology.png`，分别在 featured 卡和图片卡上；3 张风格化封面
-`zhishuxing.webp` / `testforge.webp` / `transportation-harness.webp`（源文件在 `tools/covers/`，
-重渲染方法见该目录 README）。要换图：
+`public/projects/` 现有 8 张图（复核：`ls public/projects`），全部是真实首图 webp：
+`marx-cloud.webp` / `traffic-terminology.webp`（本站托管子页面实拍转档）、
+`transportation-harness.webp`（仓库 `docs/images/dashboard.png`）、`testforge.webp`（仓库实验结果图）、
+`zhishuxing.webp` / `flowdeck.webp` / `keyvault.webp`（本地运行实拍）、`rr-studio.webp`（线上站截屏）。
+已退役的 3 张风格化封面的源文件还在 `tools/covers/`。要换图：
 
 ```bash
 mkdir -p public/projects
@@ -157,12 +158,12 @@ cp 你的截图.png public/projects/zhishuxing.png
 pnpm build
 ```
 
-当前五个可用的 `slug` 由 `site.ts` 决定（复核：`grep -o "slug: '[^']*'" src/data/site.ts`，
-输出 `zhishuxing`、`marx-cloud`、`testforge`、`transportation-harness`、`traffic-terminology`）。
+当前八个可用的 `slug` 由 `site.ts` 决定（复核：`grep -o "slug: '[^']*'" src/data/site.ts`，
+输出 `marx-cloud`、`traffic-terminology`、`zhishuxing`、`testforge`、`transportation-harness`、`rr-studio`、`flowdeck`、`keyvault`）。
 同一个 slug 支持的后缀与优先级是 `png` → `webp` → `jpg` → `jpeg`，只取第一个命中的。
 
 验证换图成功：`out/index.html` 里 `<img` 的出现次数 = 有配图的卡片数 × 2（双树各渲染一份，
-复核：`grep -o "<img" out/index.html | wc -l`，当前 5 张图全就位 → 10）。
+复核：`grep -o "<img" out/index.html | wc -l`，当前 8 张图全就位 → 16）。
 
 换图只在构建期生效：扫描 `public/projects/` 的动作发生在预渲染时，构建完再放图不会自动替换。
 `pnpm dev` 下则不同，它是每次请求现算，放完图刷新就能看到。

@@ -8,7 +8,7 @@
 | 层 | 管什么 | 怎么做 |
 |---|---|---|
 | 类型检查 | TS 全量 | `npx tsc --noEmit`，退出码 0 无输出 |
-| ESLint | 27 个文件（src 23 + 根配置 3 + sync-showcases） | `npm run lint`，0 error 0 warning |
+| ESLint | 28 个文件（src 24 + 根配置 3 + sync-showcases） | `npm run lint`，0 error 0 warning |
 | 构建 | 静态导出成功、路由与产物 | `pnpm build`，两条路由均 Static |
 | 浏览器走查 | 三幕交互、主题切换、子页面 | `pnpm dev` / `pnpm build` 后按 `docs/TESTING.md` 各项目测 |
 
@@ -31,7 +31,7 @@ npx tsc --noEmit && npm run lint && pnpm build
 | 你动了 | 必须跑 | 通过标准 |
 |---|---|---|
 | `src/` 下任何 TS/TSX | `npx tsc --noEmit && npm run lint && pnpm build` | 三条退出码全 0 |
-| `src/data/site.ts` 的 `projects` | `pnpm build` 后 `grep -o "<img" out/index.html \| wc -l` | = 有图卡片数 × 2（双树，当前 5 张全有图 → 10）；无图卡渲染字型水印兜底 |
+| `src/data/site.ts` 的 `projects` | `pnpm build` 后 `grep -o "<img" out/index.html \| wc -l` | = 有图卡片数 × 2（双树，当前 8 张全有图 → 16）；无图卡渲染字型水印兜底 |
 | `src/app/globals.css` 的 `@theme` | `pnpm dev` 刷新 | 文字与强调色变化；`--color-accent` 同时驱动光轨颜色 |
 | 主题切换链路 | 点 `ThemeToggle`，查 `<html data-theme>` 与 localStorage；再刷一次确认无白闪 | 两主题正常，光轨跟随重绘；reduced 下切换瞬时 |
 | `LightTrails.tsx` 车道常量 | `pnpm dev` 缩窗过 640px | 车道下移不穿正文 |

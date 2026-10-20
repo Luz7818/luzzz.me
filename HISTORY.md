@@ -130,3 +130,33 @@
   解码 effect 执行经 dataset 标记证实（到达解码分支、rAF 已排程），**乱码视觉播放留人工**：
   走查环境 rAF 持续冻结（polls 323 / rafFrames 0），tick 为普通 JS 逐帧写 textContent，
   与 LightTrails 同类。
+
+## 2026-10-21 · 收录三项目 / 全员真实首图 / 「查看」弹窗 / 回卷闪动修复
+
+- **收录 R&R Studio / FlowDeck / KeyVault**（5→8 项目）：`site.ts` 增三条（`rr-studio` 带线上 demo
+  `https://rr-studio-xi.vercel.app`，浏览器实测公开可访问）；`stats` 7/5/2→10/8/3（与 GitHub 实况核对）；
+  `marquee` 增三词条。`Act2Ring` 站数参数化（N=`projects.length`，STEP/半径/锚点/点阵/键盘全派生），
+  幕高 480→600vh 保每站约 49vh 的滚动节奏；硬编码文案同步（`Projects` 头句、舞台 aria-label、
+  `GLYPHS` 补 RS/FD/KV 兜底水印）。
+- **全员真实首图**：8 张全为真实首图 webp（合计 292KB）——TH 取仓库 `docs/images/dashboard.png`、
+  TF 取仓库 uplift 实验图（contain 补白防标题被 16/10 裁掉）、ZSX/FD/KV 本地跑起来实拍
+  （ZSX `zhishuxing serve` 控制台、FD `FLOWDECK_NO_OPEN=1` 起画布、KV 临时 `KV_VAULT_DIR` 演示库 + GUI
+  经 PrintWindow 截窗——IAB/CUA 对该窗口拿不到像素）、RS 截线上站；marx-cloud/traffic-terminology
+  的大 PNG（669/411KB）转 webp（40/30KB）并删原 PNG。踩坑记录：`findPreviews()` png 优先于 webp，
+  换 webp 必须删同 slug 的 png（已写进 AGENTS 已知坑）。
+- **「查看」弹窗**：新增 `ProjectModal`（两树共用实例各自持有一份）——封面/名称/标签/summary/detail/meta，
+  有 demo 主按钮「在线体验」（站内同页、外链新标签），无 demo 主按钮「查看仓库」，「源码」恒备；
+  打开 `lenis.stop()` + 根 overflow 锁滚动，Esc/遮罩关闭、焦点还原 + Tab 圈回绕；环卡与经典卡封面
+  `<a>`→`<button>`，拖拽误触拦截仍靠舞台 capture 段 `stopPropagation`（对 button 成立，实测通过）。
+  走查：环岛 8 站、点阵直达、弹窗开启内容正确、Esc 关闭且滚动解锁还原。
+- **回卷闪动修复**：根因＝拖拽整圈回卷时 `sp.jump(理论值)` 把弹簧钉到新目标，拖拽中弹簧对滚动的
+  滞后量 δ 被瞬间抹掉→回卷帧姿态跳 δ 度（甩动跨站的瞬移同病）；改为**值平移**
+  `sp.jump(sp.get() + (wrapped - prevY)/span)`——值与目标同移整数圈（恰 360° 整数倍，姿态等价），
+  δ 保留自然收敛；另把拖拽几何（wrapTop/span）缓存进 pointerdown，消除每帧
+  `getBoundingClientRect` 强制重排。验证：三门禁全 0；Node 仿真对比新旧公式（同帧旧比新多跳
+  δ≈5°，新公式「环角-滚动」残差跨回卷连续）；合成指针事件机械回卷测试（滚动回收恰一整圈 3510px、
+  `startScroll` 重定基、零异常）；**人工项**：真机肉眼验回卷顺滑（走查环境 IAB rAF 持续冻结，
+  姿态连续性无法录证）。
+- **文档**：README/AGENTS/TESTING/GET-START/ARCHITECTURE 约定 11/src-README 的规模数字与口径同步
+  （31 源文件 / 25 组件 / 28 lint 文件 / out 215 / img 基线 16；src-README 顺带修正了早前失真的
+  Act1 幕高与 Act2Ring CORE 旧值）。

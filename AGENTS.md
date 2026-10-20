@@ -103,15 +103,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 项 | 值 | 复核命令 |
 |---|---|---|
 | 类型检查 | 退出码 0，无任何输出 | `npx tsc --noEmit` |
-| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 27 个文件（`src/` 下 23 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
+| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 28 个文件（`src/` 下 24 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
 | 构建 | 退出码 0，两条路由 `/` 与 `/_not-found`，均标为 Static | `pnpm build` |
-| 导出产物 | `out/` 共 212 个文件（`_next` 16 + `marx-cloud` 171 + `_not-found` 5 + `corpus` 4 + `404/` 1 + 根下 8（含自定义 `404.html`）+ `projects/` 5 张图（2 真截图 + 3 风格化封面 webp）+ `fonts/` 2 个字体），含被原样拷进去的 `out/README.md`；`marx-cloud` 的文件数随其 `portraits/`+`avatars/` 图像数浮动，别拿总数当判据 | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
+| 导出产物 | `out/` 共 215 个文件（`_next` 16 + `marx-cloud` 171 + `_not-found` 5 + `corpus` 4 + `404/` 1 + 根下 8（含自定义 `404.html`）+ `projects/` 8 张图（8 张全为真实首图 webp：2 张站外真截图/实验图 + 4 张本地运行实拍 + 1 张线上站截屏 + 2 张原真截图转档）+ `fonts/` 2 个字体），含被原样拷进去的 `out/README.md`；`marx-cloud` 的文件数随其 `portraits/`+`avatars/` 图像数浮动，别拿总数当判据 | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里有两行：`output: "export"` 与 `trailingSlash: true`（后者为子页面的相对路径所需，见 `docs/ARCHITECTURE.md` 关键约定 9） | `grep -n "output\|trailingSlash" next.config.ts` |
 | 站内子页面 | `public/marx-cloud/` 9,709,985 字节、171 个文件（2026-10-02 起包含 `avatars/`+`portraits/` 共 163 张图，此前副本缺这两目录，换装与侧栏头像在线上是 404）；`public/corpus/` 394,641 字节、4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `www.luzzz.me` **已生效**：HTTPS 200，返回真实站点（不是 Vercel 登录页），`/marx-cloud/` 与 `/corpus/` 两个子页面同样 200 且页内本地引用 0 断链。apex `luzzz.me` **仍未生效**：DoH 查 A 是空答复，直连表现为 `SSL: UNEXPECTED_EOF_WHILE_READING`。两个域名都在项目 Aliases 里但 `domains` 的 `verificationRecord` 为 `null`。**不要把任何具体接入 IP 写进 DNS 说明**：`www` 走任播，实测同一天两次解析结果就不同；apex 要填的值以 `npx vercel domains inspect luzzz.me` 当场打印的为准（本文早先写的 `76.76.21.21` 是 Vercel 旧共用 IP，已作废） | DoH 免登录复核（apex 那行应为 `[]`）：`python -c "import json,urllib.request as u; [print(n,t,[a['data'] for a in json.load(u.urlopen(f'https://dns.google/resolve?name={n}&type={t}',timeout=20)).get('Answer',[])]) for n,t in [('luzzz.me','A'),('www.luzzz.me','A')]]"`；线上确实返回站点而非登录墙：`python -c "import urllib.request as u;b=u.urlopen(u.Request('https://www.luzzz.me/marx-cloud/',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read();print('思想云' in b.decode('utf-8'))"` 应为 `True`（探测页面标题里的「思想云」，不钉死会随部署变掉的资源哈希；被登录墙挡时页面标题是 `Login – Vercel`） |
-| 源文件 | `src/` 下 30 个文件，其中 28 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
-| 组件 | 24 个（`src/components/` 21 + `src/components/scenes/` 3），其中 23 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 24）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 23） |
+| 源文件 | `src/` 下 31 个文件，其中 29 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
+| 组件 | 25 个（`src/components/` 22 + `src/components/scenes/` 3），其中 24 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 25）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 24） |
 | 运行时依赖 | 5 个：`next` `react` `react-dom` `motion` `lenis` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
 | Node / pnpm | `v24.19.0` / `10.33.0`（`packageManager` 声明 `pnpm@10.33.0`） | `node -v && pnpm -v` |
 | `next start` | 不可用：先打印 `✓ Ready`，紧接着抛错，退出码 1 | `npx next start` |
@@ -143,6 +143,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **压缩器会吃掉 `.panel` 的标准 `backdrop-filter`**：标准属性必须写在 `-webkit-` 之后，
   否则 Chromium computed 值变 `none`，玻璃模糊静默失效。
 - **`public/` 下任何文件都原样进产物，包括文档本身**（`public/README.md` → `out/README.md`）。
+- **换项目封面必须删同 slug 的旧 PNG**：`findPreviews()` 按 `png → webp → jpg → jpeg` 优先级取第一个命中的，
+  留着旧 PNG 会让新 webp 永远不被选中。
+- **环卡与项目卡封面是 `button`（弹「查看」弹窗）不是 `a`**，别当 bug「修」回去；拖拽误触的点击拦截
+  靠 `Act2Ring` 舞台 capture 段的 `stopPropagation`，对 button 同样成立。弹窗打开时锁滚动靠
+  `lenis.stop()` + 根 overflow，两者都要还原。
 - **`next-env.d.ts`、`.next/types/`、`out/` 被 gitignore 但被 `tsconfig.json` include**：
   新克隆先跑一次 `pnpm build` 再 `tsc --noEmit`。
 - **Windows 上 `out/` 被静态服务器占用时 `pnpm build` 报 EBUSY**：结束服务再重跑；

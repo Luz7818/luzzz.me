@@ -3,14 +3,14 @@
 > 用途：给第一次打开这个仓库的人。看完知道它是什么、怎么在本地跑起来、想改内容该动哪个文件。
 
 一屏到底的单页作品集：双主题（暗色「夜间路网」为默认，亮色「雾蓝玻璃」一键丝滑切换，`@property` token 全页涟漪渐变）。
-桌面与移动端走**三幕滚动驱动场景**——开场页（大标题逐字入场 + 关于玻璃卡）→ 项目环形（五张作品卡架在 3D 环岛上，
+桌面与移动端走**三幕滚动驱动场景**——开场页（大标题逐字入场 + 关于玻璃卡）→ 项目环形（八张作品卡架在 3D 环岛上，
 滚轮驱动从右往左旋转，整环从纵深缓入并回正落位，停住自动吸附整卡，拖到尽头自动循环）→ 玻璃工牌递到面前随滚动微放大后整块淡出，同源玻璃渐变铺满全屏化开成联系页。背景是长曝光光轨（车流随滚动加速——你就是开车的那个人）+ 双主题色场，顶部进度线前端骑着一枚里程桩号、随滚动驶过整屏（一屏一公里），自定义鼠标带水滴透镜——
 鼠标划过时底下的真实页面元素（文字/卡片）像水一样晕开；厚玻璃面板、Lenis 惯性滚动。
 `prefers-reduced-motion` 用户由 CSS 切到经典竖排（Hero / About / Projects / Contact），动效降级照旧。
 Next.js 16（App Router）+ React 19 + Tailwind v4 + Motion + Lenis，`output: "export"` 全静态导出，
 产物不需要 Node 运行时。站点数据手工维护在 `src/data/site.ts`，页面不请求任何接口，也没有运行时服务。
 
-**规模**：30 个源文件 · 28 个 TS/TSX · 24 个组件（23 客户端，含 `scenes/` 三幕）· 5 张项目卡（2 张真截图 + 3 张风格化封面）
+**规模**：31 个源文件 · 29 个 TS/TSX · 25 个组件（24 客户端，含 `scenes/` 三幕）· 8 张项目卡（8 张全为真实首图）
 （复核：`git ls-files src | grep -v README | wc -l`，`git ls-files src | grep -c '\.tsx\?$'`，`grep -c "url: 'https" src/data/site.ts`）
 
 ## 30 秒跑通
@@ -60,7 +60,7 @@ Route (app)
 ○  (Static)  prerendered as static content
 ```
 
-产物落在 `out/`，共 212 个文件，其中 `marx-cloud/` 的 171 个是随其图像资源数浮动的（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
+产物落在 `out/`，共 215 个文件，其中 `marx-cloud/` 的 171 个是随其图像资源数浮动的（复核：`find out -type f | wc -l`）——其中 `out/README.md` 是
 `public/README.md` 被原样拷过去的，`public/` 下任何文件都会进产物。想在本地看它：
 
 ```bash
@@ -91,7 +91,7 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 | 背景光轨的车道、车速与配色 | `src/components/LightTrails.tsx` 常量与 `globals.css` 的 `--trail-*` | 同上 |
 | 两套主题的配色令牌 | `src/app/globals.css` 的 `@theme`（暗）与 `[data-theme='light']`（亮） | 同上 |
 | 某个板块的结构或交互 | `src/components/` 下对应组件 | 同上 |
-| 项目配图 | 替换 `public/projects/<slug>.<ext>`（2 真截图 + 3 封面已就位；封面源文件在 `tools/covers/`，改后用无头 Edge 重渲染，换图后重跑 `pnpm build`） | [public/README.md](public/README.md) |
+| 项目配图 | 替换 `public/projects/<slug>.<ext>`（8 张全为真实首图 webp：仓库自带截图/实验图直接取用，无图项目本地跑起来实拍或截线上站；`tools/covers/` 是已退役的风格化封面源，不再上站。换图后重跑 `pnpm build`） | [public/README.md](public/README.md) |
 
 一个提醒：**不是所有文案都在 `site.ts` 里**。`About` 的四个数字、`Hero` 的 `EST 2022`、各板块
 标题下的说明句都写死在组件里，完整清单见 [AGENTS.md](AGENTS.md) 的「已知坑」。
@@ -103,10 +103,10 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 | 目录 | 负责 |
 |---|---|
 | `src/app/` | App Router 入口：`layout.tsx` 出 metadata，`page.tsx` 装配双树（三幕 + 经典竖排）并扫预览图，`globals.css` 放主题色 |
-| `src/components/` | 17 个组件（15 客户端），一个文件一个板块或一段动效；`scenes/` 下是三幕组件 |
+| `src/components/` | 22 个组件（21 客户端），一个文件一个板块或一段动效；`scenes/` 下是三幕组件 |
 | `src/data/` | `site.ts`，全站唯一的手工数据源 |
-| `public/` | 原样拷进产物的静态资源：`fonts/` 字体、`projects/` 配图目录（2 真截图 + 3 风格化封面）、`marx-cloud/` 与 `corpus/` 两个子页面 |
-| `tools/` | 本地辅助脚本，不参与 Vercel 构建：`sync-showcases.mjs` 同步两个子页面产物，`covers/*.html` 是 3 张风格化封面的可再生成源文件 |
+| `public/` | 原样拷进产物的静态资源：`fonts/` 字体、`projects/` 配图目录（8 张真实首图）、`marx-cloud/` 与 `corpus/` 两个子页面 |
+| `tools/` | 本地辅助脚本，不参与 Vercel 构建：`sync-showcases.mjs` 同步两个子页面产物，`covers/*.html` 是已退役风格化封面的再生成源文件（现役 8 张全为真实首图，不再由它生成） |
 | `out/` | `pnpm build` 产物，已被 `.gitignore` 忽略 |
 | `docs/` | 上手手册 |
 
@@ -118,12 +118,13 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 已知做不到什么
 
-1. 项目数据不会自动跟随 GitHub。`stars` 与 `updated` 是手填的，当前 5 张卡合计 4 star
+1. 项目数据不会自动跟随 GitHub。`stars` 与 `updated` 是手填的，当前 8 张卡合计 7 star
    （复核：`grep -o "stars: [0-9]*" src/data/site.ts | awk '{s+=$2} END {print s}'`）。
    源仓库真有变化时页面不更新，也不报错，只能手工同步。
-2. 5 张项目卡里 2 张是真截图（2026-10-03 从本站托管的两个子页面实拍：`public/projects/marx-cloud.png`
-   与 `traffic-terminology.png`），其余 3 张是程序化生成的风格化封面（`tools/covers/*.html` 里的 SVG 场景经无头 Edge 光栅化为 WebP：`zhishuxing` / `testforge` / `transportation-harness`），不是假截图冒充实拍
-   （复核：`pnpm build` 后 `grep -o "<img" out/index.html | wc -l` 得 10，= 5 图 × 双树）。
+2. 8 张项目卡全为真实首图（webp）：`marx-cloud` / `traffic-terminology` 是本站托管子页面实拍转档，
+   `transportation-harness` 取自其仓库 `docs/images/dashboard.png`，`testforge` 取自仓库实验结果图，
+   `zhishuxing` / `flowdeck` / `keyvault` 为本地运行实拍，`rr-studio` 截自线上站
+   （复核：`pnpm build` 后 `grep -o "<img" out/index.html | wc -l` 得 16，= 8 图 × 双树）。
 3. 环形吸附与工牌转场在桌面浏览器与移动端模拟器里走查过，但没有在真机上验证过
    触屏滚动手感与动画帧率（背景已是纯 2D 光轨，无 WebGL）。
 4. apex 域名还没生效。`https://www.luzzz.me/` 已经公开可访问（含 `/marx-cloud/` 与 `/corpus/` 两个子页面），
@@ -151,7 +152,7 @@ curl -s -o /dev/null -w '%{http_code}\n' "http://127.0.0.1:8099$(grep -o '/_next
 
 ## 许可与引用
 
-仓库根没有 `LICENSE` 文件，按默认规则保留所有权利。卡片链出去的 5 个项目各有自己的仓库和许可，
+仓库根没有 `LICENSE` 文件，按默认规则保留所有权利。卡片链出去的 8 个项目各有自己的仓库和许可，
 不受本仓库约束。若要以某个许可证开源，需要先新增 `LICENSE` 文件再在此处说明。
 
 ---

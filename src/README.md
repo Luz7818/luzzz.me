@@ -3,8 +3,8 @@
 > 用途：说明 `src/` 三个子目录各管什么、每个文件干什么、`site.ts` 的哪个字段被谁读。
 > 想改内容先从这里查归属；命令口径与门禁以仓库根的 [AGENTS.md](../AGENTS.md) 为准。
 
-`src/` 是站点的全部实现：25 个文件（复核：`git ls-files src | grep -v README | wc -l`），
-其中 23 个 TS/TSX。`app/` 提供路由与主题，`components/`（含 `scenes/` 三幕）提供 20 个板块与动效组件，
+`src/` 是站点的全部实现：31 个文件（复核：`git ls-files src | grep -v README | wc -l`），
+其中 29 个 TS/TSX。`app/` 提供路由与主题，`components/`（含 `scenes/` 三幕）提供 22 个板块与动效组件，
 `data/` 提供唯一的手工数据源。产物 `out/` 完全由这三块加上 `public/` 生成，没有运行时代码从外部取数据。
 
 视觉语言是「夜间路网 × 雾蓝玻璃」双主题：由 `<html data-theme>` 驱动，暗色为默认，强调色唯一
@@ -14,8 +14,8 @@
 ## 文件清单
 
 `src/` 根下不直接放代码文件，只有本 `README.md` 一份（复核：`find src -maxdepth 1 -type f`，
-输出只有 `src/README.md`）。其余 25 个入库文件全在下一节的三个二级目录里
-（复核：`git ls-files src | grep -v README | wc -l`），其中 23 个是 TS/TSX
+输出只有 `src/README.md`）。其余 31 个入库文件全在下一节的三个二级目录里
+（复核：`git ls-files src | grep -v README | wc -l`），其中 29 个是 TS/TSX
 （复核：`git ls-files 'src/*.ts' 'src/*.tsx' | wc -l`）。这张表只做索引，逐文件的说明在下面三节。
 
 | 文件 | 干什么 | 备注 |
@@ -23,7 +23,7 @@
 | `README.md` | 本文件，`src/` 的目录说明 | 不是站点资源：只有 `public/` 下的东西会被原样拷进 `out/`，这里不会 |
 | `app/page.tsx` | 唯一路由 `/` 的页面，装配双树：三幕场景（motion-safe）+ 经典竖排（reduced 兜底） | 索引 → 下文「src/app —— App Router 根」；预览图扫描函数 `findPreviews()` 也在这个文件里 |
 | `app/layout.tsx`、`app/globals.css`、`app/favicon.ico` | 根布局与 metadata（含主题预水合脚本）、双主题令牌与工具类、站点图标 | 文件名由 Next 的 App Router 约定固定，不是本仓库自定的命名 |
-| `components/*.tsx` | 17 个组件：板块、顶栏、主题切换、背景画布、流体层、自定义鼠标、逐字入场、氛围层、跑马灯、平滑滚动与动效壳 | 索引 → 下文「src/components —— 17 个组件」。其中 15 个是客户端组件，`Aurora`/`Marquee` 是服务端组件（复核：`grep -l "^'use client'" src/components/*.tsx \| wc -l` 得 15） |
+| `components/*.tsx` | 22 个组件：板块、顶栏、主题切换、背景画布、流体层、自定义鼠标、逐字入场、氛围层、跑马灯、项目简介弹窗、平滑滚动与动效壳 | 索引 → 下文「src/components —— 22 个组件」。其中 21 个是客户端组件，`Aurora`/`Marquee` 是服务端组件（复核：`grep -l "^'use client'" src/components/*.tsx \| wc -l` 得 21） |
 | `components/scenes/*.tsx` | 三幕组件：`Act1Intro` 开场、`Act2Ring` 项目环形、`Act3Badge` 工牌联系 | 索引 → 下文「src/components/scenes —— 三幕」。全部客户端组件 |
 | `data/site.ts` | 全站唯一手工数据源，导出 `profile`、`stats`、`marquee`、`projects` 与类型 `Project` | 索引 → 下文「src/data —— 唯一手工数据源」与其后的「各字段被谁消费」 |
 
@@ -32,7 +32,7 @@
 | 子目录 | 负责 |
 |---|---|
 | `app/` | App Router 根：路由 `/`、根布局与 metadata、双主题令牌与工具类、站点图标，4 个文件（复核：`git ls-files src/app \| wc -l`）。逐文件说明见下文「src/app —— App Router 根」 |
-| `components/` | 17 个组件，其中 15 个以 `'use client'` 开头（复核：`git ls-files src/components \| wc -l`、`grep -l "^'use client'" src/components/*.tsx \| wc -l`）。逐文件说明见下文「src/components —— 17 个组件」 |
+| `components/` | 22 个组件，其中 21 个以 `'use client'` 开头（复核：`git ls-files src/components \| wc -l`、`grep -l "^'use client'" src/components/*.tsx \| wc -l`）。逐文件说明见下文「src/components —— 22 个组件」 |
 | `components/scenes/` | 3 幕组件，全部客户端（复核：`git ls-files src/components/scenes \| wc -l`） |
 | `data/` | 唯一手工数据源 `site.ts`，1 个文件（复核：`git ls-files src/data`）。哪个字段被哪个组件读，见下文「各字段被谁消费」 |
 
@@ -48,9 +48,9 @@
 | `globals.css` | Tailwind 入口 + 双主题令牌 + 工具类 | `@theme` 里暗色 9 个 `--color-*`（默认），`[data-theme='light']` 同名覆盖 9 个，共 18 行（复核：`grep -c "^  --color-" src/app/globals.css`）；两条 `@font-face` 指向 `/fonts/overpass-var.woff2` 与 `/fonts/jetbrains-mono-var.woff2`；`.panel` 面板（14px 圆角规则，backdrop 配方在 `--panel-backdrop` 变量里分主题定义，::after 内顶光）、`.hairline-grid` 底纹、`.aurora`+`.grain` 氛围层、`.marquee-track` 跑马灯、`.shine` 卡片划光、`::view-transition-*` 主题圆形揭幕、`html.theme-fade` 回退过渡；末尾整段响应 `prefers-reduced-motion` |
 | `favicon.ico` | Next 约定的站点图标 | 构建后出现在 `out/favicon.ico`；`out/_next/static/media/` 下另有一份带哈希的副本 |
 
-## src/components —— 17 个组件
+## src/components —— 22 个组件
 
-15 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是纯静态的服务端组件。
+21 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是纯静态的服务端组件。
 每个板块自己 `import { profile } from '@/data/site'`，没有 context 也没有状态管理层。
 
 | 文件 | 渲染哪一块 | 值得知道的实现点 |
@@ -62,7 +62,7 @@
 | `Aurora.tsx` | 全页氛围层 | 服务端组件。三团 `radial-gradient` 极光（CSS `drift` 动画，transform-only）+ 一层 SVG 颗粒，`fixed -z-10` + `pointer-events-none`，颜色与透明度随主题变量变化 |
 | `Marquee.tsx` | 关键词带 | 服务端组件。消费 `site.ts` 的 `marquee`，内容复制一份做 `translateX(-50%)` 无限循环，悬停暂停，两端渐隐遮罩；全页唯一一条跑马灯 |
 | `About.tsx` | `#about` | 客户端组件。一段自述 + `stats` 数据带；数字用 `CountUp`（`useInView` + `animate` 弹簧计数），无 JS 时保持服务端渲染的终值 |
-| `Projects.tsx` | `#projects` | 客户端组件，双形态：**≥1024px 且未减弱动效**时是钉屏横向卷轴（区块高度 `100vh + 实测平移距离`，内层 sticky 视口，`useScroll` 纵向进度映射轨道 `x` 弹簧平移，底部琥珀进度线）；**<1024px 或 reduced** 降级为竖向单列堆叠（Reveal 弹簧进场）。卡为竖版大卡（featured 720px 宽，其余 480px），卡体是 `SpotlightCard`（featured 加 `tilt`）；有 `demo` 的卡挂 `LiveBadge`（绿色语义点）；无图卡用 `.hairline-grid` 底纹加 `ZSX`/`TF`/`TH` 字型水印；原生 `<img>` 配一行 `eslint-disable @next/next/no-img-element` |
+| `Projects.tsx` | `#projects` | 客户端组件，双形态：**≥1024px 且未减弱动效**时是钉屏横向卷轴（区块高度 `100vh + 实测平移距离`，内层 sticky 视口，`useScroll` 纵向进度映射轨道 `x` 弹簧平移，底部琥珀进度线）；**<1024px 或 reduced** 降级为竖向单列堆叠（Reveal 弹簧进场）。卡为竖版大卡（featured 720px 宽，其余 480px），卡体是 `SpotlightCard`（featured 加 `tilt`）；封面是 `button`，点击打开 `ProjectModal`（源码/在线体验直链在卡底 Actions 行保留）；有 `demo` 的卡挂 `LiveBadge`（绿色语义点）；无图卡用 `.hairline-grid` 底纹加 `GLYPHS` 字型水印；原生 `<img>` 配一行 `eslint-disable @next/next/no-img-element`；导出 `LiveBadge`/`CoverGrade`/`Glyph` 供环卡与弹窗复用 |
 | `SpotlightCard.tsx` | 卡片动效壳 | 客户端组件。指针位置写入 motion values，`useMotionTemplate` 径向渐变做聚光边框；`tilt` 时整卡随指针 3D 倾斜（±7° 弹簧，`transformPerspective`）；触屏与 reduced 下自动关闭 |
 | `MagneticButton.tsx` | 磁性链接壳 | 客户端组件。指针靠近时向光标吸附（`useSpring` 回弹），离开复位；`strength` 可调；触屏与 reduced 下不动 |
 | `Contact.tsx` | `#contact` 与页脚（经典树） | 客户端组件。全页唯一的邮件 CTA（`MagneticButton` + 琥珀胶囊 + `.shine` 划光），文案就是邮箱地址；页脚三段：署名、本站源码链接（`profile.source`）、GitHub。三幕树里对应物是 `Act3Badge` 的联系页（页脚同构） |
@@ -72,6 +72,7 @@
 | `TrailsBackdrop.tsx` | 背景幕（仅三幕树） | 客户端组件。`LightTrails` 2D 画布直出 + 两层半透压暗遮罩（顶部/底部 72%、中央 24%——保文字可读又不糊死色彩）。**没有 WebGL**：早年的 ogl 流体合成层因刷新撕裂与滚动负担已移除，「元素晕开」在 `Cursor.tsx` 的透镜上 |
 | `CountUp.tsx` | 数字滚动（自 About 抽出） | 客户端组件。`useInView` + `animate` 弹簧计数，无 JS 保持 SSR 终值；被经典树 `About` 与三幕树 `Act1Intro` 共用 |
 | `Reveal.tsx` | 进场包壳 | 客户端组件。`motion.div` 的 `whileInView` 弹簧上浮，只演一次；参数 `y`（默认 22px）与 `delay`；被 About/Projects/Contact 使用，Hero 与 Nav 不用它 |
+| `ProjectModal.tsx` | 项目简介弹窗（两棵树共用） | 客户端组件。`AnimatePresence` 进出场：封面、名称、标签、summary、detail（如有）、meta 行；**有 demo 主按钮「在线体验」**（站内路径同页跳、外链新标签），**无 demo 主按钮「查看仓库」**，次要「源码」恒备。打开时 `lenis.stop()` + 根 `overflow: hidden` 锁滚动，Esc/遮罩点击关闭，焦点落关闭钮、关闭后还焦，Tab 焦点圈在弹窗内回绕；`role="dialog"` + `aria-modal`。实例由 `Act2Ring` 与 `Projects` 各持一份（互斥显示，状态 `modalProject` 在各自树内） |
 
 ## src/components/scenes —— 三幕
 
@@ -80,15 +81,15 @@
 
 | 文件 | 渲染哪一幕 | 值得知道的实现点 |
 |---|---|---|
-| `Act1Intro.tsx` | 开场（260vh） | 两拍本地切换：拍一 kicker + 两行大标题（`SplitChars` 逐字）+ 简介 + CTA；拍二 `panel` 玻璃卡（`aboutLine` + `stats` CountUp）+ 底部跑马灯。节拍窗口 `useTransform(sp, [0.42, 0.56] …)` 等常量在文件顶部区域，透明度低于 0.08 时 `pointerEvents` 同步关掉防「看不见却可点」 |
-| `Act2Ring.tsx` | 项目环形（480vh） | 3D 环岛：舞台 `perspective 1500px` + `preserve-3d` 环，5 卡 `rotateY(i·72°) translateZ(R)`，R 由实测卡宽推出（`(w+gap)/(2·sin(π/5))`，ResizeObserver 跟随）；每卡 transform 自带 `perspective(1500px)` 前缀（stage 级透视传不到卡片、内嵌面板 0 尺寸挂载后会失效——平面化 bug 的根因）；旋转窗口 `CORE=[0.06,0.94]`，滚轮驱动从右往左；每卡亮度/透明度按正面角余弦衰减（入场淡出乘在卡自身 opacity 上，容器 opacity<1 会拍平 3D），背面不渲染；吸附由全局控制器承担（SmoothScroll，本组件只注册锚点）；底部信息面板 `key={active}` 重挂载让 `SplitChars` 重演，右侧点阵可跳转 |
+| `Act1Intro.tsx` | 开场（340vh） | 两拍本地切换：拍一 kicker + 两行大标题（`SplitChars` 逐字）+ 简介 + CTA；拍二 `panel` 玻璃卡（`aboutLine` + `stats` CountUp）+ 底部跑马灯。节拍窗口 `useTransform(sp, [0.42, 0.56] …)` 等常量在文件顶部区域，透明度低于 0.08 时 `pointerEvents` 同步关掉防「看不见却可点」 |
+| `Act2Ring.tsx` | 项目环形（600vh） | 3D 环岛：舞台 `perspective 1500px` + `preserve-3d` 环，N=projects.length 张卡 `rotateY(i·360°/N) translateZ(R)`，R 由实测卡宽推出（`(w+gap)/(2·sin(π/N))`，ResizeObserver 跟随）；每卡 transform 自带 `perspective(1500px)` 前缀（stage 级透视传不到卡片、内嵌面板 0 尺寸挂载后会失效——平面化 bug 的根因）；旋转窗口 `CORE=[0.10,0.88]` 满程恰一整圈（站 0 与站 N 同 pose），滚轮/拖拽驱动从右往左；拖拽越界整圈回卷——滚动瞬移＋弹簧**值平移**（`sp.jump(sp.get()+Δtarget)`,滞后量保留,回卷帧姿态连续），甩动跨站同法；拖拽几何在 pointerdown 缓存（全程零 `getBoundingClientRect` 重排）；每卡亮度/透明度按正面角余弦衰减（入场淡出乘在卡自身 opacity 上，容器 opacity<1 会拍平 3D），背面不渲染；吸附由全局控制器承担（SmoothScroll，本组件只注册锚点）；环卡是 `button` 打开 `ProjectModal`；底部信息面板 `key={shown}`（活动卡或悬停预览卡）重挂载让 `SplitChars` 重演，右侧点阵可跳转 |
 | `Act3Badge.tsx` | 工牌 → 联系（340vh） | 玻璃工牌先从下方带透视递入（0–0.14），0.2–0.66 按实测 `cover` 缩放（`max(vw/w, vh/h)×1.1`）放大充满屏幕，高光同步扫过；0.6–0.78 牌面内容淡出、联系层淡入——工牌表面即联系页底色。牌面：挂绳孔、LZ 徽标、姓名/职位、邮箱/GitHub、条码装饰。联系页：邮箱 `SplitChars` 大字、发邮件/GitHub、回到开始、页脚（与经典树 `Contact` 页脚同构） |
 
 ## src/data —— 唯一手工数据源
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
-| `site.ts` | 导出 `profile`、`stats`(4 条)、`marquee`(8 条)、`projects`(5 条)，以及类型 `Project` | 条数复核：`grep -c "url: 'https" src/data/site.ts` 得 5。`stars` 与 `updated` 是手工值，与 GitHub 不同步 |
+| `site.ts` | 导出 `profile`、`stats`(4 条)、`marquee`(11 条)、`projects`(8 条)，以及类型 `Project` | 条数复核：`grep -c "url: 'https" src/data/site.ts` 得 8。`stars` 与 `updated` 是手工值，与 GitHub 不同步 |
 
 ### 各字段被谁消费
 
@@ -111,8 +112,8 @@
 | `projects[].summary` | `Projects.tsx` 卡片正文 |
 | `projects[].detail` | 仅 featured 卡展示的长文案，缺省则不渲染该段 |
 | `projects[].tags` | `Projects.tsx` 卡片的 mono 标签行（` / ` 连接） |
-| `projects[].url` | `Projects.tsx` 的「源码」链接与无 demo 卡的主链接 |
-| `projects[].demo` | 有则渲染「在线体验」链接与 `LiveBadge`；图片主链接优先走 demo |
+| `projects[].url` | `ProjectModal` 的「查看仓库/源码」按钮与 `Projects.tsx`/环卡底部面板的「源码」直链 |
+| `projects[].demo` | 有则渲染 `LiveBadge` 与弹窗主按钮「在线体验」（站内同页跳、外链新标签）、`Projects.tsx` Actions 行与环卡底部面板的「在线体验」直链 |
 | `projects[].stars` / `.language` / `.updated` | `Projects.tsx` 卡片底行 `语言, ★ n, 年-月`，纯手工值 |
 
 ## 和谁打交道
