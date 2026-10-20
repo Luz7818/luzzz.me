@@ -72,7 +72,7 @@
 | `TrailsBackdrop.tsx` | 背景幕（仅三幕树） | 客户端组件。`LightTrails` 2D 画布直出 + 两层半透压暗遮罩（顶部/底部 72%、中央 24%——保文字可读又不糊死色彩）。**没有 WebGL**：早年的 ogl 流体合成层因刷新撕裂与滚动负担已移除，「元素晕开」在 `Cursor.tsx` 的透镜上 |
 | `CountUp.tsx` | 数字滚动（自 About 抽出） | 客户端组件。`useInView` + `animate` 弹簧计数，无 JS 保持 SSR 终值；被经典树 `About` 与三幕树 `Act1Intro` 共用 |
 | `Reveal.tsx` | 进场包壳 | 客户端组件。`motion.div` 的 `whileInView` 弹簧上浮，只演一次；参数 `y`（默认 22px）与 `delay`；被 About/Projects/Contact 使用，Hero 与 Nav 不用它 |
-| `ProjectModal.tsx` | 项目简介弹窗（两棵树共用） | 客户端组件。`AnimatePresence` 进出场：封面、名称、标签、summary、detail（如有）、meta 行；**有 demo 主按钮「在线体验」**（站内路径同页跳、外链新标签），**无 demo 主按钮「查看仓库」**，次要「源码」恒备。打开时 `lenis.stop()` + 根 `overflow: hidden` 锁滚动，Esc/遮罩点击关闭，焦点落关闭钮、关闭后还焦，Tab 焦点圈在弹窗内回绕；`role="dialog"` + `aria-modal`。实例由 `Act2Ring` 与 `Projects` 各持一份（互斥显示，状态 `modalProject` 在各自树内） |
+| `ProjectModal.tsx` | 项目简介弹窗（两棵树共用） | 客户端组件。`AnimatePresence` 进出场，桌面双栏大卡（`min(94vw,920px)`:左封面栏 | 右详情栏,移动端上下堆叠）;封面栏底部控制簇 ←/〔计数〕/→ 可切换项目（键盘 ←/→ 同效,取模循环）,内容按 slug 换场淡入;**有 demo 主按钮「在线体验」**（站内路径同页跳、外链新标签）,**无 demo 主按钮「查看仓库」**,次要「源码」恒备。打开时 `lenis.stop()` + 根 `overflow: hidden` 锁滚动,Esc/遮罩点击关闭,焦点落关闭钮、关闭后还焦,Tab 焦点圈在弹窗内回绕;`role="dialog"` + `aria-modal`。实例由 `Act2Ring` 与 `Projects` 各持一份（互斥显示,状态 `modalProject` 在各自树内） |
 
 ## src/components/scenes —— 三幕
 

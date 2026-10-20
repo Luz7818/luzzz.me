@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'motion/react';
 import Reveal from './Reveal';
 import SpotlightCard from './SpotlightCard';
@@ -171,6 +171,18 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
   const trackRef = useRef<HTMLDivElement>(null);
   // 「查看」弹窗:封面点击弹项目简介,demo/仓库链接在弹窗内给出
   const [modalProject, setModalProject] = useState<Project | null>(null);
+  // 弹窗内 ←/→ 切换项目:取模循环
+  const navigateModal = useCallback(
+    (delta: 1 | -1) => {
+      setModalProject((cur) => {
+        if (!cur) return cur;
+        const i = projects.findIndex((p) => p.slug === cur.slug);
+        return projects[(((i + delta) % projects.length) + projects.length) % projects.length];
+      });
+    },
+    [projects],
+  );
+  const modalIndex = modalProject ? projects.findIndex((p) => p.slug === modalProject.slug) : 0;
   // 视口宽度作为 x 变换的第二输入:resize/旋转时强制重算,跨断点后轨道立刻归位,不会停在旧位移
   const vw = useMotionValue(0);
 
@@ -253,6 +265,9 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
       <ProjectModal
         project={modalProject}
         preview={modalProject ? previews[modalProject.slug] : undefined}
+        index={modalIndex}
+        total={projects.length}
+        onNavigate={navigateModal}
         onClose={() => setModalProject(null)}
       />
     </div>

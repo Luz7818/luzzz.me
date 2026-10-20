@@ -78,7 +78,7 @@ function RingCard({
   return (
     <motion.div
       ref={measureRef}
-      className="ring-3d absolute left-1/2 top-1/2 w-[min(64vw,280px)] md:w-[min(25vw,300px)]"
+      className="ring-3d absolute left-1/2 top-1/2 w-[min(70vw,320px)] md:w-[min(27vw,340px)]"
       style={{
         transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`,
         opacity,
@@ -148,6 +148,18 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const [preview, setPreview] = useState<number | null>(null);
   // 「查看」弹窗:卡片点击弹项目简介,demo/仓库链接在弹窗内给出
   const [modalProject, setModalProject] = useState<Project | null>(null);
+  // 弹窗内 ←/→ 切换项目:取模循环
+  const navigateModal = useCallback(
+    (delta: 1 | -1) => {
+      setModalProject((cur) => {
+        if (!cur) return cur;
+        const i = projects.findIndex((p) => p.slug === cur.slug);
+        return projects[(((i + delta) % projects.length) + projects.length) % projects.length];
+      });
+    },
+    [projects],
+  );
+  const modalIndex = modalProject ? projects.findIndex((p) => p.slug === modalProject.slug) : 0;
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
@@ -175,7 +187,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       if (!el) return;
       const w = el.offsetWidth;
       // 间距随卡数收紧:8 卡时弦长约束 R=(w+gap)/(2·sin(π/N)) 才不会把环撑过大
-      const gap = window.innerWidth < 768 ? 16 : window.innerWidth < 1280 ? 24 : 32;
+      const gap = window.innerWidth < 768 ? 20 : window.innerWidth < 1280 ? 28 : 32;
       setRadius((w + gap) / (2 * Math.sin(Math.PI / N)));
     };
     measure();
@@ -545,6 +557,9 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       <ProjectModal
         project={modalProject}
         preview={modalProject ? previews[modalProject.slug] : undefined}
+        index={modalIndex}
+        total={projects.length}
+        onNavigate={navigateModal}
         onClose={() => setModalProject(null)}
       />
     </div>

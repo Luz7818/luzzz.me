@@ -16,24 +16,34 @@ function lenis() {
 /** demo 是否站内路径(同页跳转);外链 demo 与仓库一律新标签 */
 const isInternal = (demo: string) => demo.startsWith('/');
 
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
 /**
  * 项目简介弹窗:两棵树(项目环岛 / 经典竖排)共用。点击卡片「查看」打开;
+ * 桌面双栏大卡(封面 | 详情),底部控制簇 ←/→ 可切换项目(键盘方向键同效),
  * 有 demo 主按钮跳在线体验(站内同页、外链新标签),无 demo 主按钮跳仓库,「源码」恒备。
  * 打开时锁滚动(Lenis stop + 根 overflow),Esc/遮罩关闭,焦点圈限制在弹窗内。
  */
 export default function ProjectModal({
   project,
   preview,
+  index = 0,
+  total = 1,
+  onNavigate,
   onClose,
 }: {
   project: Project | null;
   preview?: string;
+  index?: number;
+  total?: number;
+  onNavigate?: (delta: 1 | -1) => void;
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
   const open = project !== null;
+  const canNavigate = !!onNavigate && total > 1;
 
   useEffect(() => {
     if (!open) return;
@@ -45,6 +55,8 @@ export default function ProjectModal({
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      else if (canNavigate && e.key === 'ArrowLeft') onNavigate(-1);
+      else if (canNavigate && e.key === 'ArrowRight') onNavigate(1);
     };
     window.addEventListener('keydown', onKey);
     return () => {
@@ -53,7 +65,7 @@ export default function ProjectModal({
       window.removeEventListener('keydown', onKey);
       lastFocus.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open, onClose, canNavigate, onNavigate]);
 
   // 简单焦点圈:Tab 在弹窗内首个/末个可聚焦元素处回绕(弹窗本身是全部内容的容器)
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -94,7 +106,7 @@ export default function ProjectModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.28, ease: EASE_OUT }}
-            className="panel relative max-h-[86dvh] w-[min(94vw,560px)] overflow-y-auto overscroll-contain"
+            className="panel relative grid max-h-[88dvh] w-[min(94vw,920px)] overflow-y-auto overscroll-contain md:grid-cols-[1.05fr_1fr]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -108,7 +120,10 @@ export default function ProjectModal({
               ✕
             </button>
 
-            <div className={`relative aspect-[16/10] overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}>
+            {/* 封面栏:桌面占左列整高,移动端 16/10 横幅 */}
+            <div
+              className={`relative min-h-[240px] overflow-hidden border-b border-line md:aspect-auto md:min-h-[480px] md:border-b-0 md:border-r ${preview ? 'cover' : ''}`}
+            >
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -124,9 +139,42 @@ export default function ProjectModal({
               )}
               {preview && <CoverGrade />}
               {project.demo && <LiveBadge />}
+
+              {canNavigate && (
+                <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(-1)}
+                    aria-label="上一个项目"
+                    data-cursor-label="上一个"
+                    className="grid h-9 w-9 place-items-center rounded-full border border-line bg-bg/85 font-mono text-sm text-ink backdrop-blur transition-colors hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    ←
+                  </button>
+                  <span className="rounded-full border border-line bg-bg/85 px-2.5 py-1 font-mono text-[10px] text-ink backdrop-blur">
+                    {pad2(index + 1)} / {pad2(total)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate(1)}
+                    aria-label="下一个项目"
+                    data-cursor-label="下一个"
+                    className="grid h-9 w-9 place-items-center rounded-full border border-line bg-bg/85 font-mono text-sm text-ink backdrop-blur transition-colors hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div className="p-6 md:p-7">
+            {/* 详情栏 */}
+            <motion.div
+              key={project.slug}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: EASE_OUT }}
+              className="flex min-w-0 flex-col p-6 md:p-8"
+            >
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-xl font-bold tracking-[-0.01em] md:text-2xl">{project.name}</h3>
                 <span className="font-mono text-[10px] text-muted">{project.language}</span>
@@ -139,7 +187,7 @@ export default function ProjectModal({
                 <p className="mt-3 text-sm leading-[1.9] text-muted">{project.detail}</p>
               )}
 
-              <div className="hairline mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 pt-5">
+              <div className="hairline mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 pt-5 md:mt-auto">
                 {project.demo ? (
                   <a
                     href={project.demo}
@@ -176,7 +224,7 @@ export default function ProjectModal({
                   ★ {project.stars} · {project.updated.slice(0, 7)}
                 </span>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       )}
