@@ -59,7 +59,7 @@ function RingCard({
   preview?: string;
   measureRef?: (el: HTMLDivElement | null) => void;
   onHoverChange?: (i: number | null) => void;
-  onOpen: (p: Project, origin: { x: number; y: number }) => void;
+  onOpen: (p: Project, origin: { x: number; y: number; w: number; h: number }) => void;
 }) {
   const angle = i * step;
   const front = useTransform(rotation, (rot) => {
@@ -93,7 +93,7 @@ function RingCard({
           type="button"
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
-            onOpen(p, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+            onOpen(p, { x: r.left, y: r.top, w: r.width, h: r.height });
           }}
           data-cursor-label="查看"
           aria-label={`查看 ${p.name} 简介`}
@@ -149,9 +149,14 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const [active, setActive] = useState(0);
   // 侧卡悬停预览:悬停哪张,底部信息就淡换成哪张;移开回落到活动卡
   const [preview, setPreview] = useState<number | null>(null);
-  // 「查看」弹窗:卡片点击弹项目简介,弹窗从源卡中心方位生长;demo/仓库链接在弹窗内给出
+  // 「查看」弹窗:卡片点击弹项目简介,面板从源卡矩形 FLIP 飞抵;demo/仓库链接在弹窗内给出
   const [modalProject, setModalProject] = useState<Project | null>(null);
-  const [modalOrigin, setModalOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [modalOrigin, setModalOrigin] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
   // 弹窗内 ←/→ 切换项目:取模循环
   const navigateModal = useCallback(
     (delta: 1 | -1) => {

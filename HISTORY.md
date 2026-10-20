@@ -193,3 +193,12 @@
   降级:MotionConfig reducedMotion + useReducedMotion 关停擦除/里程表。验证:三门禁全 0;
   transform-origin 内联值 49.8%/39.8% 经原子读取证实（此前误读系选择器错误）;里程表滚动与各
   变体初值就位;动态过程留人工确认（走查环境 rAF 冻结）。
+- **开/关动效再升级:真 FLIP 共享矩形飞行**(同日追加,回应用户「打开/关闭仍应改进」):研究了
+  shared-element 模式(Smashing/Motion.dev/Material Motion)后落地——点击卡片时捕获其视口矩形,
+  面板以精确增量(translate+scale,origin 0 0)从源卡矩形 FLIP 飞抵展开,飞行阶段内容隐藏避免
+  非等比拉伸,落位后内容才显现;关闭面板沿原矩形原路飞回(出入同路)。实现:探针 div(与面板
+  同构、visibility hidden)在 ref 回调中测量并换算增量(提交阶段、绘制前,规避
+  react-hooks/set-state-in-effect),面板挂载即带增量初值,spring duration 0.55 bounce 0.12;
+  onExitComplete 复位增量供下次打开重算;桌面固定 540px 高的 sheet 使探针/面板矩形完全一致,
+  也顺带消除了切换项目时的高度脉冲;窄屏/reduced 退化为原地上升。验证:三门禁全 0;增量换算
+  与源卡矩形逐像素吻合(478/149/0.17/0.35);动态播放留人工(环境 rAF 冻结)。
