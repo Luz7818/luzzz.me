@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CoverGrade, Glyph, LiveBadge } from './Projects';
+import { Glyph, LiveBadge } from './Projects';
 import type { Project } from '@/data/site';
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
@@ -106,7 +106,7 @@ export default function ProjectModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.28, ease: EASE_OUT }}
-            className="panel relative grid max-h-[88dvh] w-[min(94vw,920px)] overflow-y-auto overscroll-contain md:grid-cols-[1.05fr_1fr]"
+            className="panel relative grid max-h-[88dvh] w-[min(94vw,1160px)] overflow-y-auto overscroll-contain md:grid-cols-[1.3fr_1fr]"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -120,16 +120,20 @@ export default function ProjectModal({
               ✕
             </button>
 
-            {/* 封面栏:桌面占左列整高,移动端 16/10 横幅 */}
+            {/* 封面栏:细纹底上完整装裱首图(object-contain 不裁切),桌面占左列整高 */}
             <div
-              className={`relative min-h-[240px] overflow-hidden border-b border-line md:aspect-auto md:min-h-[480px] md:border-b-0 md:border-r ${preview ? 'cover' : ''}`}
+              className={`relative aspect-[16/10] overflow-hidden border-b border-line md:aspect-auto md:min-h-[520px] md:border-b-0 md:border-r ${preview ? 'cover' : ''}`}
             >
+              <div className="hairline-grid absolute inset-0 opacity-70" aria-hidden />
               {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <motion.img
+                  key={project.slug}
                   src={preview}
                   alt={`${project.name} 封面`}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.25, ease: EASE_OUT }}
+                  className="absolute inset-0 h-full w-full object-contain p-4 md:p-6"
                   decoding="async"
                 />
               ) : (
@@ -137,33 +141,32 @@ export default function ProjectModal({
                   <Glyph text={project.slug.slice(0, 2).toUpperCase()} className="right-4 top-3 text-[64px]" />
                 </div>
               )}
-              {preview && <CoverGrade />}
               {project.demo && <LiveBadge />}
 
               {canNavigate && (
-                <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+                <>
                   <button
                     type="button"
                     onClick={() => onNavigate(-1)}
                     aria-label="上一个项目"
                     data-cursor-label="上一个"
-                    className="grid h-9 w-9 place-items-center rounded-full border border-line bg-bg/85 font-mono text-sm text-ink backdrop-blur transition-colors hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    className="absolute left-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line bg-bg/85 font-mono text-base text-ink shadow-[var(--shadow-card)] backdrop-blur transition-all hover:scale-105 hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95"
                   >
                     ←
                   </button>
-                  <span className="rounded-full border border-line bg-bg/85 px-2.5 py-1 font-mono text-[10px] text-ink backdrop-blur">
-                    {pad2(index + 1)} / {pad2(total)}
-                  </span>
                   <button
                     type="button"
                     onClick={() => onNavigate(1)}
                     aria-label="下一个项目"
                     data-cursor-label="下一个"
-                    className="grid h-9 w-9 place-items-center rounded-full border border-line bg-bg/85 font-mono text-sm text-ink backdrop-blur transition-colors hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    className="absolute right-4 top-1/2 z-20 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-line bg-bg/85 font-mono text-base text-ink shadow-[var(--shadow-card)] backdrop-blur transition-all hover:scale-105 hover:border-muted hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95"
                   >
                     →
                   </button>
-                </div>
+                  <span className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full border border-line bg-bg/85 px-3 py-1 font-mono text-[10px] tracking-wide text-ink backdrop-blur">
+                    {pad2(index + 1)} / {pad2(total)}
+                  </span>
+                </>
               )}
             </div>
 
