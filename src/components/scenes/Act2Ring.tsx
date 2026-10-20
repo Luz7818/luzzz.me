@@ -134,7 +134,7 @@ function RingCard({
 /**
  * 第二幕 · 项目环形(600vh):N 张作品卡架在 3D 环岛上(站数随 projects 数量增减),
  * 滚动驱动整环自右向左旋转,旋转满程恰为一整圈(站 0 与站 N 同 pose);停滚 0.5s 吸附到最近的站。
- * 拖拽转环无界:目标越出窗口就按整圈回卷——滚动瞬移＋弹簧跳变,姿态连续无感,
+ * 拖拽转环无界:目标越出窗口就按整圈回卷——滚动瞬移＋弹簧值平移(滞后量保留,姿态严格连续),
  * 拉到尽头自动循环;松手甩动跨站(可跨过首末站)。底部信息面板跟随活动卡,点阵直达。
  */
 export default function Act2Ring({ projects, previews }: { projects: Project[]; previews: Record<string, string> }) {
@@ -221,6 +221,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     pointerId: -1,
     startX: 0,
     startScroll: 0,
+    wrapTop: 0, // 幕顶绝对滚动位:pointerdown 实测缓存,拖拽全程零 getBoundingClientRect 重排
+    span: 1, // wrap 高度 - 视口高(与 wrapTop 同批缓存)
     wrapLow: 0, // 回卷窗口下缘 = 站 0(上缘 = 下缘 + 一整圈)
     turn: 1, // 一整圈的滚动距离
     moved: false,
@@ -243,6 +245,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     if (wrap) {
       const span = wrap.offsetHeight - window.innerHeight;
       const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
+      d.wrapTop = wrapTop;
+      d.span = span;
       d.wrapLow = wrapTop + CORE[0] * span;
       d.turn = span * (CORE[1] - CORE[0]);
     }
@@ -266,10 +270,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     }
     d.samples.push({ x: e.clientX, t: performance.now() });
     if (d.samples.length > 5) d.samples.shift();
-    const wrap = wrapRef.current;
-    if (!wrap) return;
-    const span = wrap.offsetHeight - window.innerHeight;
-    const top = wrap.getBoundingClientRect().top + window.scrollY;
+    const { span, wrapTop: top } = d; // 缓存几何:拖拽全程不再强制重排
     const scrollPerCard = (span * (CORE[1] - CORE[0])) / N;
     // 一整卡对应的拖拽距离:随视口宽缩放,窄屏更短更好甩
     const dragCardPx = Math.min(640, Math.max(260, window.innerWidth * 0.42));
@@ -278,15 +279,17 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     // 入场变换(enterZ/enterO)瞬移到位,出现可见跳帧。阈值取 CORE[0]-0.005:
     // 站 0 的浮点落点(≈0.0999)不算走廊,而 0.095 处入场变换恰好全部归零,瞬移无感
     if ((window.scrollY - top) / span < CORE[0] - 0.005 && raw < d.wrapLow) raw = d.wrapLow;
-    // 拖拽无界:目标越出 [站 0, 站 0+整圈) 按整圈回卷——滚动瞬移＋弹簧跳变,
-    // 整圈周期保证回卷前后姿态严格相同,视觉连续
+    // 拖拽无界:目标越出 [站 0, 站 0+整圈) 按整圈回卷。回卷帧滚动瞬移 k·turn(k≥1),
+    // 弹簧值同加 k·turn/span——值与目标同移整数圈(恰 360° 的整数倍,姿态等价),
+    // 拖拽中弹簧对滚动的滞后量原样保留,回卷前后姿态严格连续(整圈回卷的几何前提)
     const wrapped = d.wrapLow + ((((raw - d.wrapLow) % d.turn) + d.turn) % d.turn);
+    const prevY = window.scrollY;
     const l = lenis();
     if (l) l.scrollTo(wrapped, { immediate: true });
     else window.scrollTo(0, wrapped);
     if (wrapped !== raw) {
       d.startScroll -= raw - wrapped; // 重定基:目标线随窗口平移,后续 dx 连续
-      sp.jump((wrapped - top) / span);
+      sp.jump(sp.get() + (wrapped - prevY) / span);
     }
   };
 
@@ -295,32 +298,29 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     if (!d.active || e.pointerId !== d.pointerId) return;
     d.active = false;
     if (!d.moved) return;
-    const wrap = wrapRef.current;
-    if (!wrap) return;
     healLenis();
     // 最近 100ms 的横向速度决定是否甩到下一张/上一张
     const s = d.samples;
     const last = s[s.length - 1];
     const first = s.find((p) => last.t - p.t < 100) ?? s[0];
     const vx = (last.x - first.x) / Math.max(1, last.t - first.t);
-    const span = wrap.offsetHeight - window.innerHeight;
+    const { span, wrapTop } = d;
     // 当前进度按幕内位置算:scrollY 要先减掉第二幕的页顶偏移
-    const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
     const v = ((window.scrollY - wrapTop) / span - CORE[0]) / (CORE[1] - CORE[0]);
     let st = Math.round(Math.min(1, Math.max(0, v)) * N);
     if (Math.abs(vx) > FLICK_V) st += vx < 0 ? 1 : -1;
-    // 甩出窗口(站 -1 / 站 N+1):先整圈瞬移到窗内同姿态位(弹簧跳变),再滑向等价站;
-    // 还在入场走廊(留 0.005 浮点余量,见 pointermove)时不瞬移,直接滑回站 0
-    const turn = span * (CORE[1] - CORE[0]);
+    // 甩出窗口(站 -1 / 站 N+1):先整圈瞬移到窗内同姿态位(弹簧值平移,滞后量保留),
+    // 再滑向等价站;还在入场走廊(留 0.005 浮点余量,见 pointermove)时不瞬移,直接滑回站 0
     if (st < 0 || st > N) {
       if (v < -0.005) {
         st = 0;
       } else {
-        const y = window.scrollY + (st < 0 ? turn : -turn);
+        const prevY = window.scrollY;
+        const y = prevY + (st < 0 ? d.turn : -d.turn);
         const l = lenis();
         if (l) l.scrollTo(y, { immediate: true });
         else window.scrollTo(0, y);
-        sp.jump((y - wrapTop) / span);
+        sp.jump(sp.get() + (y - prevY) / span);
         st += st < 0 ? N : -N;
       }
     }
