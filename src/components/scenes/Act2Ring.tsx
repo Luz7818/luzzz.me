@@ -78,7 +78,7 @@ function RingCard({
   return (
     <motion.div
       ref={measureRef}
-      className="ring-3d absolute left-1/2 top-1/2 w-[min(70vw,320px)] md:w-[min(30vw,380px)]"
+      className="ring-3d absolute left-1/2 top-1/2 w-[min(64vw,280px)] md:w-[min(25vw,300px)]"
       style={{
         transform: `translate(-50%, -50%) rotateY(${angle}deg) translateZ(${radius}px)`,
         opacity,
@@ -174,7 +174,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       const el = measureRef.current;
       if (!el) return;
       const w = el.offsetWidth;
-      const gap = window.innerWidth < 768 ? 20 : window.innerWidth < 1280 ? 44 : 64;
+      // 间距随卡数收紧:8 卡时弦长约束 R=(w+gap)/(2·sin(π/N)) 才不会把环撑过大
+      const gap = window.innerWidth < 768 ? 16 : window.innerWidth < 1280 ? 24 : 32;
       setRadius((w + gap) / (2 * Math.sin(Math.PI / N)));
     };
     measure();
