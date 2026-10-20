@@ -12,6 +12,7 @@ import {
 } from 'motion/react';
 import SplitChars from '../SplitChars';
 import SpotlightCard from '../SpotlightCard';
+import ProjectModal from '../ProjectModal';
 import { CoverGrade, Glyph, LiveBadge } from '../Projects';
 import { easeOutQuart, glideScrollTo, registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
 import type { Project } from '@/data/site';
@@ -48,6 +49,7 @@ function RingCard({
   preview,
   measureRef,
   onHoverChange,
+  onOpen,
 }: {
   i: number;
   step: number;
@@ -57,6 +59,7 @@ function RingCard({
   preview?: string;
   measureRef?: (el: HTMLDivElement | null) => void;
   onHoverChange?: (i: number | null) => void;
+  onOpen: (p: Project) => void;
 }) {
   const angle = i * step;
   const front = useTransform(rotation, (rot) => {
@@ -86,13 +89,12 @@ function RingCard({
       onPointerLeave={() => onHoverChange?.(null)}
     >
       <SpotlightCard className="panel ring-card overflow-hidden">
-        <a
-          href={p.demo ?? p.url}
-          target={p.demo ? undefined : '_blank'}
-          rel="noreferrer"
+        <button
+          type="button"
+          onClick={() => onOpen(p)}
           data-cursor-label="查看"
-          aria-label={`${p.name}${p.demo ? ' 在线演示' : ' 仓库'}`}
-          className="group block"
+          aria-label={`查看 ${p.name} 简介`}
+          className="group block w-full text-left"
         >
           <div className={`relative aspect-[16/10] overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}>
             {preview ? (
@@ -123,7 +125,7 @@ function RingCard({
               {p.tags.slice(0, 3).join(' / ')}
             </p>
           </div>
-        </a>
+        </button>
       </SpotlightCard>
     </motion.div>
   );
@@ -144,6 +146,8 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const [active, setActive] = useState(0);
   // 侧卡悬停预览:悬停哪张,底部信息就淡换成哪张;移开回落到活动卡
   const [preview, setPreview] = useState<number | null>(null);
+  // 「查看」弹窗:卡片点击弹项目简介,demo/仓库链接在弹窗内给出
+  const [modalProject, setModalProject] = useState<Project | null>(null);
 
   const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] });
   const sp = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
@@ -461,6 +465,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                       : undefined
                   }
                   onHoverChange={setPreview}
+                  onOpen={setModalProject}
                 />
               ))}
             </motion.div>
@@ -535,6 +540,12 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
           </footer>
         </motion.div>
       </div>
+
+      <ProjectModal
+        project={modalProject}
+        preview={modalProject ? previews[modalProject.slug] : undefined}
+        onClose={() => setModalProject(null)}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'motion/react';
 import Reveal from './Reveal';
 import SpotlightCard from './SpotlightCard';
+import ProjectModal from './ProjectModal';
 import type { Project } from '@/data/site';
 
 const GLYPHS: Record<string, string> = {
@@ -108,20 +109,30 @@ function Shot({ p, preview, eager = false }: { p: Project; preview?: string; eag
   );
 }
 
-/** 竖版大卡:横向卷轴与移动端堆叠共用 */
-function ProjectCard({ p, preview, featured = false }: { p: Project; preview?: string; featured?: boolean }) {
+/** 竖版大卡:横向卷轴与移动端堆叠共用。封面点击弹项目简介(链接在弹窗内)。 */
+function ProjectCard({
+  p,
+  preview,
+  featured = false,
+  onOpen,
+}: {
+  p: Project;
+  preview?: string;
+  featured?: boolean;
+  onOpen: (p: Project) => void;
+}) {
   return (
     <SpotlightCard tilt={featured} className="panel group flex h-full flex-col overflow-hidden">
-      <a
-        href={p.demo ?? p.url}
-        target={p.demo ? undefined : '_blank'}
-        rel="noreferrer"
-        aria-label={`${p.name}${p.demo ? ' 在线演示' : ' 仓库'}`}
-        className={`relative block aspect-[16/10] overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}
+      <button
+        type="button"
+        onClick={() => onOpen(p)}
+        data-cursor-label="查看"
+        aria-label={`查看 ${p.name} 简介`}
+        className={`relative block aspect-[16/10] w-full overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}
       >
         <Shot p={p} preview={preview} eager={featured} />
         {p.demo && <LiveBadge />}
-      </a>
+      </button>
       <div className="flex flex-1 flex-col p-6 md:p-7">
         <h3 className={`font-bold tracking-[-0.01em] ${featured ? 'text-2xl' : 'text-xl'}`}>{p.name}</h3>
         <p className="mt-3 text-sm leading-[1.85] text-ink/80">{p.summary}</p>
@@ -158,6 +169,8 @@ function Header() {
 export default function Projects({ projects, previews }: { projects: Project[]; previews: Record<string, string> }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  // 「查看」弹窗:封面点击弹项目简介,demo/仓库链接在弹窗内给出
+  const [modalProject, setModalProject] = useState<Project | null>(null);
   // 视口宽度作为 x 变换的第二输入:resize/旋转时强制重算,跨断点后轨道立刻归位,不会停在旧位移
   const vw = useMotionValue(0);
 
@@ -223,7 +236,7 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
                 i === 0 ? 'motion-safe:lg:w-[720px]' : ''
               }`}
             >
-              <ProjectCard p={p} preview={previews[p.slug]} featured={i === 0} />
+              <ProjectCard p={p} preview={previews[p.slug]} featured={i === 0} onOpen={setModalProject} />
             </div>
           ))}
           <div aria-hidden className="hidden motion-safe:lg:block motion-safe:lg:w-2 shrink-0" />
@@ -236,6 +249,12 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
           </div>
         </div>
       </div>
+
+      <ProjectModal
+        project={modalProject}
+        preview={modalProject ? previews[modalProject.slug] : undefined}
+        onClose={() => setModalProject(null)}
+      />
     </div>
   );
 }
