@@ -175,3 +175,10 @@
   不再裁切（hairline-grid 垫底、去 CoverGrade 罩层）;切换钮升级为两侧居中的实体圆钮
   （h-11 玻璃底 + hover 缩放,计数 chip 移至封面底缘居中）,图片按 slug 淡入换场。
   走查：弹窗 1125×504@1440、contain 生效、双钮与计数就位。
+- **弹窗动效编排**（同日追加,回应用户「打开/切换动画要丝滑炫酷」）：卡片改弹簧落位（y44/scale0.96→
+  spring 320/30）;详情栏方向感知换场——按切换方向滑动 + blur 模糊过渡,popLayout 双节点交叠,
+  子元素（标签/简介/详情/操作行）staggerChildren 0.055 错峰升起,标题复用 SplitChars 逐字入场;
+  封面图变焦沉降（scale 1.045→1）交叠淡切,计数 chip 随索引微升;切换钮 whileHover/whileTap 压按
+  手感,CTA hover 上浮;`MotionConfig reducedMotion="user"` 对 reduced 用户自动降级 transform 类
+  动画。验证：三门禁全 0;走查环境 rAF 冻结致 AnimatePresence 退场无法完成（离场节点滞留为环境
+  假象,真实浏览器 0.2s 即卸载）,打开/切换/居中等终态经 DOM 断言核实,动效观感留人工确认。
