@@ -119,13 +119,16 @@ function ProjectCard({
   p: Project;
   preview?: string;
   featured?: boolean;
-  onOpen: (p: Project) => void;
+  onOpen: (p: Project, origin: { x: number; y: number }) => void;
 }) {
   return (
     <SpotlightCard tilt={featured} className="panel group flex h-full flex-col overflow-hidden">
       <button
         type="button"
-        onClick={() => onOpen(p)}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          onOpen(p, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        }}
         data-cursor-label="查看"
         aria-label={`查看 ${p.name} 简介`}
         className={`relative block aspect-[16/10] w-full overflow-hidden border-b border-line ${preview ? 'cover' : ''}`}
@@ -169,8 +172,9 @@ function Header() {
 export default function Projects({ projects, previews }: { projects: Project[]; previews: Record<string, string> }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  // 「查看」弹窗:封面点击弹项目简介,demo/仓库链接在弹窗内给出
+  // 「查看」弹窗:封面点击弹项目简介,弹窗从源卡中心方位生长;demo/仓库链接在弹窗内给出
   const [modalProject, setModalProject] = useState<Project | null>(null);
+  const [modalOrigin, setModalOrigin] = useState<{ x: number; y: number } | null>(null);
   // 弹窗内 ←/→ 切换项目:取模循环
   const navigateModal = useCallback(
     (delta: 1 | -1) => {
@@ -248,7 +252,15 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
                 i === 0 ? 'motion-safe:lg:w-[720px]' : ''
               }`}
             >
-              <ProjectCard p={p} preview={previews[p.slug]} featured={i === 0} onOpen={setModalProject} />
+              <ProjectCard
+                p={p}
+                preview={previews[p.slug]}
+                featured={i === 0}
+                onOpen={(p2, origin) => {
+                  setModalOrigin(origin);
+                  setModalProject(p2);
+                }}
+              />
             </div>
           ))}
           <div aria-hidden className="hidden motion-safe:lg:block motion-safe:lg:w-2 shrink-0" />
@@ -267,6 +279,7 @@ export default function Projects({ projects, previews }: { projects: Project[]; 
         preview={modalProject ? previews[modalProject.slug] : undefined}
         index={modalIndex}
         total={projects.length}
+        origin={modalOrigin}
         onNavigate={navigateModal}
         onClose={() => setModalProject(null)}
       />

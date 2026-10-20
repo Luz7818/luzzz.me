@@ -182,3 +182,14 @@
   手感,CTA hover 上浮;`MotionConfig reducedMotion="user"` 对 reduced 用户自动降级 transform 类
   动画。验证：三门禁全 0;走查环境 rAF 冻结致 AnimatePresence 退场无法完成（离场节点滞留为环境
   假象,真实浏览器 0.2s 即卸载）,打开/切换/居中等终态经 DOM 断言核实,动效观感留人工确认。
+- **动效重构:对齐埃米尔准则 + 高级转场模式**(同日追加,回应用户「不够酷炫没特色,先研究再改」):
+  研究了 Emil Kowalski 动效工艺(animate skill:模态 200-500ms 档、强 ease-out、clip-path 为许可
+  属性、stagger 30-80ms、Apple 风格 spring duration+bounce)与 shared-element/modal 转场模式
+  (Smashing/Motion.dev/Material Motion)。落地的动效语言:①卡片从点击源卡中心方位弹簧生长
+  （useLayoutEffect 把 transform-origin 锚到源卡 rect,裁剪 ±30%,出入同路）;②封面 clip-path
+  定向擦除揭幕+1.14→1 变焦沉降（ease-drawer 曲线,切换随方向反转擦除边）;③开盖高光扫过
+  （站点 --shine 签名,仅打开一次）;④里程表数字滚动计数（逐位列 spring）;⑤详情行遮罩式升起
+  （overflow-hidden 内 y 112%→0,操作行因焦点环改普通上升）;⑥关闭模糊沉降对称退场。
+  降级:MotionConfig reducedMotion + useReducedMotion 关停擦除/里程表。验证:三门禁全 0;
+  transform-origin 内联值 49.8%/39.8% 经原子读取证实（此前误读系选择器错误）;里程表滚动与各
+  变体初值就位;动态过程留人工确认（走查环境 rAF 冻结）。
