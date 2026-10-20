@@ -16,10 +16,8 @@ import { CoverGrade, Glyph, LiveBadge } from '../Projects';
 import { easeOutQuart, glideScrollTo, registerPageBound, registerSceneAnchors, registerSnapAnchors, smoothTo } from '../SmoothScroll';
 import type { Project } from '@/data/site';
 
-const N = 5; // 与 site.ts 的 projects 数量一致
-const STEP = 360 / N;
 /** 环旋转窗口:满程恰为一整圈(N 站 = 360°,首末站同 pose)——这是循环的几何前提。
- *  头部 10% 是入场跑道(整环飞入＋回正),尾部 12% 留交棒。 */
+ *  头部 10% 是入场跑道(整环飞入＋回正),尾部 12% 留交棒。站数 N 由 projects 长度派生。 */
 const CORE: [number, number] = [0.10, 0.88];
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
@@ -43,6 +41,7 @@ const FLICK_V = 0.35;
  *  悬停时回报自己的序号(侧卡预览:底部信息淡换成这张卡)。 */
 function RingCard({
   i,
+  step,
   rotation,
   radius,
   project,
@@ -51,6 +50,7 @@ function RingCard({
   onHoverChange,
 }: {
   i: number;
+  step: number;
   rotation: MotionValue<number>;
   radius: number;
   project: Project;
@@ -58,7 +58,7 @@ function RingCard({
   measureRef?: (el: HTMLDivElement | null) => void;
   onHoverChange?: (i: number | null) => void;
 }) {
-  const angle = i * STEP;
+  const angle = i * step;
   const front = useTransform(rotation, (rot) => {
     const a = (((angle + rot) % 360) + 360) % 360;
     const d = Math.min(a, 360 - a);
@@ -130,12 +130,14 @@ function RingCard({
 }
 
 /**
- * 第二幕 · 项目环形(480vh):五张作品卡架在 3D 环岛上,滚动驱动整环自右向左旋转,
- * 旋转满程恰为一整圈(站 0 与站 5 同 pose);停滚 0.5s 吸附到最近的站。
+ * 第二幕 · 项目环形(600vh):N 张作品卡架在 3D 环岛上(站数随 projects 数量增减),
+ * 滚动驱动整环自右向左旋转,旋转满程恰为一整圈(站 0 与站 N 同 pose);停滚 0.5s 吸附到最近的站。
  * 拖拽转环无界:目标越出窗口就按整圈回卷——滚动瞬移＋弹簧跳变,姿态连续无感,
  * 拉到尽头自动循环;松手甩动跨站(可跨过首末站)。底部信息面板跟随活动卡,点阵直达。
  */
 export default function Act2Ring({ projects, previews }: { projects: Project[]; previews: Record<string, string> }) {
+  const N = projects.length; // 站数 = 卡数,满程恰一整圈(循环的几何前提)
+  const STEP = 360 / N;
   const wrapRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
   const [radius, setRadius] = useState(420);
@@ -179,7 +181,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, []);
+  }, [N]);
 
   // 交棒给第三幕:整体轻微上移淡出
   const stageO = useTransform(sp, [0.93, 1], [1, 0.2]);
@@ -207,7 +209,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     });
     const unsnap = registerSnapAnchors(anchors);
     return () => unsnap();
-  }, []);
+  }, [N]);
 
   // ---- 拖拽转环:横向位移实时折算成滚动(复用 scroll→rotation 管线,面板/点阵/吸附零改动) ----
   const dragRef = useRef({
@@ -366,7 +368,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
       const s = k === 0 && Math.abs(N - cur) < Math.abs(k - cur) ? N : k;
       glideScrollTo(top + (CORE[0] + (s / N) * (CORE[1] - CORE[0])) * total, 0.6);
     },
-    [],
+    [N],
   );
 
   // 跑马灯词条直达:按 slug 吸附到对应整卡(经典竖排树由 Projects 接管)
@@ -407,7 +409,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
   const p = projects[shown];
 
   return (
-    <div ref={wrapRef} className="relative h-[480vh]">
+    <div ref={wrapRef} className="relative h-[600vh]">
       <div className="sticky top-0 h-dvh overflow-hidden">
         <motion.div style={{ opacity: stageO, transform: stageT }} className="flex h-full flex-col">
           <header className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pt-20 md:px-10 md:pt-24">
@@ -430,7 +432,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             tabIndex={0}
             role="group"
             aria-roledescription="轮播"
-            aria-label="项目环岛:左右方向键转卡,数字键 1-5 直达,Home 回顶部,End 去联系"
+            aria-label={`项目环岛:左右方向键转卡,数字键 1-${N} 直达,Home 回顶部,End 去联系`}
             onPointerDown={onStagePointerDown}
             onPointerMove={onStagePointerMove}
             onPointerUp={onStagePointerEnd}
@@ -446,6 +448,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
                 <RingCard
                   key={proj.slug}
                   i={i}
+                  step={STEP}
                   rotation={rotation}
                   radius={radius}
                   project={proj}

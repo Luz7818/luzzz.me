@@ -29,9 +29,9 @@ export const profile = {
 
 /** 首屏之下的数据带。数字与 GitHub / 两个子页面核对,不是装饰。 */
 export const stats = [
-  { value: '7', label: '公开仓库' },
-  { value: '5', label: '主力项目' },
-  { value: '2', label: '线上 Demo' },
+  { value: '10', label: '公开仓库' },
+  { value: '8', label: '主力项目' },
+  { value: '3', label: '线上 Demo' },
   { value: '866', label: '交通术语' },
 ];
 
@@ -45,6 +45,9 @@ export const marquee: Array<{ text: string; slug: string }> = [
   { text: '评测闭环', slug: 'transportation-harness' },
   { text: '数据可视化', slug: 'marx-cloud' },
   { text: 'PWA 双端', slug: 'zhishuxing' },
+  { text: 'MCP 计划画布', slug: 'flowdeck' },
+  { text: '投稿加速流水线', slug: 'rr-studio' },
+  { text: 'DPAPI 密钥保管', slug: 'keyvault' },
 ];
 
 export const projects: Project[] = [
@@ -106,5 +109,39 @@ export const projects: Project[] = [
     stars: 1,
     language: 'Python',
     updated: '2026-10-01',
+  },
+  {
+    slug: 'rr-studio',
+    name: 'R&R Studio',
+    summary:
+      '毕业投稿加速流水线:英文草稿上传后自动脱敏分节,逐段 Critique、基于真实文献的模拟审稿、rebuttal 润色,导出 Word 报告与组会 PPT。',
+    tags: ['Next.js', 'LLM', 'OpenAlex', 'Supabase'],
+    url: 'https://github.com/Luz7818/rr-studio',
+    demo: 'https://rr-studio-xi.vercel.app',
+    stars: 1,
+    language: 'TypeScript',
+    updated: '2026-10-16',
+  },
+  {
+    slug: 'flowdeck',
+    name: 'FlowDeck',
+    summary:
+      'AI IDE 的计划确认画布(MCP 服务器):把「确认计划」从纯文本变成可交互的框线图——拖节点、连线、点选,结果以 JSON + Markdown 流回对话,零复制粘贴。',
+    tags: ['TypeScript', 'MCP', 'React', 'npm 包'],
+    url: 'https://github.com/Luz7818/flowdeck',
+    stars: 1,
+    language: 'TypeScript',
+    updated: '2026-10-19',
+  },
+  {
+    slug: 'keyvault',
+    name: 'KeyVault',
+    summary:
+      '本地密钥保管箱:Windows DPAPI 加密 + SQLite 存储,零外部依赖的 Python CLI/GUI。API Key 存取、泄露检测、剪贴板捕获与审计,数据不出本机。',
+    tags: ['Python', 'DPAPI', 'SQLite', 'GUI'],
+    url: 'https://github.com/Luz7818/KeyVault',
+    stars: 1,
+    language: 'Python',
+    updated: '2026-10-20',
   },
 ];

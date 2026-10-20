@@ -10,6 +10,9 @@ const GLYPHS: Record<string, string> = {
   zhishuxing: 'ZSX',
   testforge: 'TF',
   'transportation-harness': 'TH',
+  'rr-studio': 'RS',
+  flowdeck: 'FD',
+  keyvault: 'KV',
 };
 
 function Meta({ p }: { p: Project }) {
@@ -139,7 +142,7 @@ function Header() {
     <div>
       <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
       <p className="mt-4 max-w-[52ch] text-sm leading-[1.85] text-muted">
-        五个开源项目。前两个就部署在本站,点「在线体验」直接玩,其余的进 GitHub 仓库。
+        八个开源项目。前两个部署在本站,R&R Studio 有独立线上站,点「在线体验」直接玩,其余的进 GitHub 仓库。
       </p>
     </div>
   );
