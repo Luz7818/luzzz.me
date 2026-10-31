@@ -9,13 +9,14 @@ Next.js 16 单页作品集，`output: "export"` 全静态导出（`trailingSlash
 跑起来的前提，不是风格选项）。没有服务端、没有接口、没有数据库，内容全部来自 `src/data/site.ts`
 与组件里的硬编码文案。桌面与移动端走「三幕滚动驱动场景」（开场 → 项目环形 → 工牌联系），
 `prefers-reduced-motion` 用户由 CSS 切到经典竖排布局（Hero/About/Projects/Contact）。
-背景是纯 2D 光轨 + 遮罩（无 WebGL）；水波只在光标透镜上。
+背景是双形态的纯 2D canvas + 遮罩（无 WebGL）：长曝光光轨（毛玻璃形态）与像素点阵交通场，
+由 `<html data-bgmode>` 切换；水波只在光标透镜上。
 
 ## 目录结构与各文件职责
 
 ```
 luzzz.me/
-├── src/                      入库：app/（路由与主题）、components/（17+3 幕）、data/（site.ts）
+├── src/                      入库：app/（路由与主题）、components/（含 pixel/ 引擎）、lib/（bgmode）、data/（site.ts）
 ├── public/                   原样进产物的静态资源（含两个外仓子页面副本）
 ├── tools/                    sync-showcases.mjs 子页面同步 + covers/ 封面源文件
 ├── docs/                     手册与专项规范
@@ -27,7 +28,9 @@ luzzz.me/
 | `src/app/layout.tsx` | 根布局与 metadata | `metadata.description` 取的就是 `profile.lead`，改文案会同时改 SEO 描述；body 首行有内联主题脚本，首屏渲染前定 `<html data-theme>`，删了会白闪 |
 | `src/app/page.tsx` | 唯一的页面，装配双树：三幕场景（`motion-safe` 才显示）+ 经典竖排（reduced 兜底） | `findPreviews()` 在预渲染时读 `public/projects/`；两棵树共享同一份 `previews` |
 | `src/app/globals.css` | Tailwind 入口 + `@theme` 主题令牌 + `@font-face` | UI 配色在这里，不在 `site.ts`；暗/亮各 9 个 `--color-*` 共 18 行；强调色唯一（琥珀家族），`--color-live` 是语义色 |
-| `src/components/` | 17 个组件（15 客户端 + 2 服务端） | 逐文件说明与字段消费表见 `src/README.md` |
+| `src/components/` | 24 个组件（23 客户端 + Aurora 1 服务端） | 逐文件说明与字段消费表见 `src/README.md` |
+| `src/components/pixel/` | 像素背板引擎四件（纯 TS 非组件）：`sprites.ts` 交通像素图、`traffic.ts` 三带交通模拟、`renderer.ts` 点阵场/尾流扩散/位移物理/分桶渲染、`engine.ts` 循环接线 | 由 `PixelBackdrop.tsx` 挂载；架构借鉴 stackedlol/ascii-sharks，自研重写 |
+| `src/lib/` | `bgmode.ts`：背景形态状态库（`<html data-bgmode>` + localStorage + 事件） | 与 ThemeToggle 的主题契约同构 |
 | `src/components/scenes/` | 三幕组件：`Act1Intro` / `Act2Ring` / `Act3Badge` | 每幕 = 高 wrapper + `sticky top-0 h-dvh` 舞台；锚点经 `registerSceneAnchors()` 注册，不占元素 id |
 | `src/data/site.ts` | 全站手工数据 | 导出 `profile` / `stats` / `marquee` / `projects` 与类型 `Project` |
 | `public/` | 原样进产物的静态资源 | `fonts/` 两个自托管字体；`projects/` 两张真截图 + 三张风格化封面；`marx-cloud/` 与 `corpus/` 是外仓产物副本；本目录 `README.md` 也会被拷进 `out/` |
@@ -76,6 +79,8 @@ luzzz.me/
     `:root` transition；**不要改回 View Transitions 整页快照**（持续动画画布下会卡）。
     滚动丝滑来自 `SmoothScroll.tsx` 的 Lenis（实例挂 `window.__lenis`）。动画引擎只用
     `motion`，不要引入 GSAP 混用（同一棵树争帧）。`.vercel/**` 也要在 `globalIgnores` 里。
+    背景形态链路与它平行同构：boot 脚本 → `BgToggle` 写 `localStorage['luzzz-bgmode']` 并分发
+    `luzzz-bgmodechange` → 两层背板按 `<html data-bgmode>` 显隐、两颗引擎自暂停/恢复。
 11. **三幕锚点与吸附**：三幕锚点经 `registerSceneAnchors()` 注册（经典树已占用 4 个 id）；
     滚动吸附是全局的（`registerSnapAnchors()` 注册 10 个完整画面锚点，停滚 300ms 吸附，
     阈值 0.92×视口高；`wheel`/`touchmove` 立即取消让位给用户）。环形旋转窗口常量
@@ -88,11 +93,18 @@ luzzz.me/
     改幕高必须同步缝位；第一幕 about 锚点比例（0.68）在 `Act1Intro` 的场景锚与吸附锚两处同改。
     环卡与经典卡封面点击打开 `ProjectModal` 简介（有 demo 主按钮跳在线体验、无 demo 跳仓库），
     卡体因此是 `button` 而非 `a`——拖拽误触的点击拦截靠舞台 capture 段 `stopPropagation`，对 button 同样成立。
-12. **背景 = 纯 2D 光轨 + 遮罩；水波只在透镜上**：`TrailsBackdrop` 无 WebGL（早年 ogl 流体
-    合成层因撕裂与逐帧全屏上传已整体移除——别再往背景加 WebGL 层）；光轨速度/尾长与滚动
-    速率耦合（`frame` 内读 scrollY 差值,平滑成 0..1 系数,纯数值路径不碰渲染管线）；「元素晕开」由
-    `Cursor.tsx` 的 SVG backdrop-filter 水滴透镜承担（Chromium 生效，Firefox/Safari 自动
-    退化为纯小点，不可修、别为此引库）。透镜用 Motion transform 模板定位时 x/y 必须写进模板。
+12. **背景 = 双形态纯 2D canvas + 遮罩；水波只在透镜上**：光轨形态（`TrailsBackdrop`：LightTrails
+    + 压暗遮罩）与像素形态（`PixelBackdrop`：侧视城市交通剖面点阵场——天空/高架轨道/双向
+    快速路/信号灯街道/河道/隧道六带，街道信号机可点击切相位、车辆跟车排队刹车灯、列车
+    活塞风、夜色系数 `--px-night` 驱动星月与车灯锥光）都无 WebGL（早年 ogl 流体合成层因撕裂
+    与逐帧全屏上传已整体移除——别再往背景加 WebGL 层）。两层常驻 DOM，`<html data-bgmode>`
+    决定显隐（预水合落值零闪白），被藏起的引擎循环必须停掉（监听 `luzzz-bgmodechange`），
+    别往隐藏层加常开工作。像素引擎纯 2D：typed array 点阵场、静态装饰层 resize 时预烤、
+    尾流能量四邻域扩散、指针拨开的阻尼弹簧位移、定向阵风 gust、色桶计数排序批绘——分辨率
+    自适应格径（9~13px）控制总量。光轨速度/尾长与像素场车速同样与滚动速率耦合（`frame` 内读
+    scrollY 差值，平滑成 0..1 系数，纯数值路径不碰渲染管线）；「元素晕开」由 `Cursor.tsx` 的
+    SVG backdrop-filter 水滴透镜承担（Chromium 生效，Firefox/Safari 自动退化为纯小点，不可修、
+    别为此引库）。透镜用 Motion transform 模板定位时 x/y 必须写进模板。
 
 ## 发布与收录
 

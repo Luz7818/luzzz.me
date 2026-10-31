@@ -6,6 +6,7 @@ import SeamVeil from '@/components/SeamVeil';
 import SmoothScroll from '@/components/SmoothScroll';
 import Nav from '@/components/Nav';
 import TrailsBackdrop from '@/components/TrailsBackdrop';
+import PixelBackdrop from '@/components/PixelBackdrop';
 import EasterEggs from '@/components/EasterEggs';
 import Act1Intro from '@/components/scenes/Act1Intro';
 import Act2Ring from '@/components/scenes/Act2Ring';
@@ -46,8 +47,14 @@ export default function Home() {
       <main className="relative">
         {/* 三幕场景:开场 → 项目环形 → 工牌联系。滚动驱动本地切换,reduced-motion 由 CSS 切走。 */}
         <div className="hidden motion-safe:block">
-          <TrailsBackdrop />
-          <Aurora className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" />
+          {/* 背景双形态:光轨(毛玻璃)/ 像素点阵,显隐由 <html data-bgmode> 驱动 */}
+          <div data-bgmode-layer="glass">
+            <TrailsBackdrop />
+            <Aurora className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" />
+          </div>
+          <div data-bgmode-layer="pixel">
+            <PixelBackdrop />
+          </div>
           <SeamVeil />
           <div className="relative z-10">
             <Act1Intro />
@@ -58,7 +65,12 @@ export default function Home() {
 
         {/* 经典竖排:reduced-motion 兜底,结构与重做前一致 */}
         <div className="block motion-safe:hidden">
-          <Aurora />
+          <div data-bgmode-layer="glass">
+            <Aurora />
+          </div>
+          <div data-bgmode-layer="pixel">
+            <PixelBackdrop layer="base" />
+          </div>
           <Hero />
           <Marquee />
           <About />

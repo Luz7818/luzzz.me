@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { isBgModeActive, BG_MODE_EVENT } from '@/lib/bgmode';
 
 type Car = {
   lane: number;
@@ -101,6 +102,8 @@ export default function LightTrails() {
     let raf = 0;
     let last = performance.now();
     let running = true;
+    // 背景双形态:像素形态在场时光轨整层被 CSS 藏起,循环一并停掉,切回无缝恢复
+    let bgOn = isBgModeActive('glass');
     // 滚动耦合:上一帧的 scrollY 与平滑后的加速系数(0..1)——滚得越快,车速/尾长加成越大
     let lastScrollY = window.scrollY;
     let boost = 0;
@@ -292,7 +295,7 @@ export default function LightTrails() {
     };
 
     const onVisibility = () => {
-      if (document.hidden) {
+      if (document.hidden || !bgOn) {
         running = false;
         cancelAnimationFrame(raf);
       } else if (!reduced) {
@@ -300,6 +303,11 @@ export default function LightTrails() {
         last = performance.now();
         raf = requestAnimationFrame(frame);
       }
+    };
+
+    const onBgMode = () => {
+      bgOn = isBgModeActive('glass');
+      onVisibility();
     };
 
     const onPointer = (e: PointerEvent) => {
@@ -358,8 +366,9 @@ export default function LightTrails() {
     window.addEventListener('pointermove', onPointer);
     window.addEventListener('click', onBgClick);
     window.addEventListener('luzzz-themechange', onThemeChange);
+    window.addEventListener(BG_MODE_EVENT, onBgMode);
     document.addEventListener('visibilitychange', onVisibility);
-    if (!reduced) raf = requestAnimationFrame(frame);
+    if (!reduced && bgOn) raf = requestAnimationFrame(frame);
 
     return () => {
       running = false;
@@ -368,8 +377,9 @@ export default function LightTrails() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointer);
       window.removeEventListener('click', onBgClick);
-      window.removeEventListener('luzzz-themechange', onThemeChange);
-      document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('luzzz-themechange', onThemeChange);
+    window.removeEventListener(BG_MODE_EVENT, onBgMode);
+    document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 

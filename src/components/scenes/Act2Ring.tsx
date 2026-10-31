@@ -438,7 +438,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
     <div ref={wrapRef} className="relative h-[600vh]">
       <div className="sticky top-0 h-dvh overflow-hidden">
         <motion.div style={{ opacity: stageO, transform: stageT }} className="flex h-full flex-col">
-          <header className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pt-20 md:px-10 md:pt-24">
+          <header className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pt-14 md:px-10 md:pt-16">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <h2 className="text-3xl font-bold tracking-[-0.01em] md:text-4xl">项目</h2>
@@ -467,7 +467,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             onKeyDown={onStageKeyDown}
           >
             <motion.div
-              className="ring-3d absolute left-1/2 top-1/2 h-0 w-0 will-change-transform"
+              className="ring-3d absolute left-1/2 top-[calc(50%+26px)] h-0 w-0 will-change-transform"
               style={{ transform: ringT, opacity: enterO }}
             >
               {projects.map((proj, i) => (
@@ -496,7 +496,7 @@ export default function Act2Ring({ projects, previews }: { projects: Project[]; 
             </motion.div>
           </div>
 
-          <footer className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-7 md:px-10">
+          <footer className="relative z-10 mx-auto w-full max-w-[1200px] px-6 pb-4 md:px-10">
             <div className="flex items-end justify-between gap-8">
               <div key={shown} className="min-h-[148px] max-w-[620px] md:min-h-[168px]">
                 <motion.div

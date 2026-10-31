@@ -110,6 +110,12 @@
   inherits: true;
   initial-value: rgba(245, 168, 60, 0.16);
 }
+/* 像素背板的夜色系数:暗色 1、亮色 0,换主题时星星/月亮/车灯锥一起涟漪渐隐 */
+@property --px-night {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
 
 :root {
   /* 全局动效 token:所有过渡只用 transform/opacity,缓动与时长统一从这里取 */
@@ -134,7 +140,8 @@
     --aurora-4 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     --cover-tint-a 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     --cover-tint-b 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --hero-glow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    --hero-glow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    --px-night 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme {
@@ -196,6 +203,22 @@
   /* 浅底上 lighter 叠加会被钳成纯白,光轨必须正常合成、车头用深色墨点 */
   --trail-blend: source-over;
   --trail-head: 34, 48, 66;
+  /* 像素背板:点阵基色、车体、车窗(强调色)、前灯/尾灯、场底与网格线 */
+  --px-dot: 96, 118, 142;
+  --px-body: 52, 68, 88;
+  --px-body-dim: 122, 140, 160;
+  --px-accent: 180, 83, 9;
+  --px-head: 34, 48, 66;
+  --px-tail: 186, 54, 50;
+  --px-go: 15, 153, 110;
+  --px-field: 238, 242, 247;
+  --px-grid: 24, 48, 76;
+  --px-grid-alpha: 0.06;
+  --px-glow-alpha: 0.07;
+  --px-vignette-alpha: 0;
+  --px-alpha: 0.85;
+  --px-blend: source-over;
+  --px-night: 0;
   --cursor-core: #14202c;
   --panel-backdrop: blur(26px) saturate(170%) brightness(1.03);
   --panel-sheen: rgba(255, 255, 255, 0.5);
@@ -235,6 +258,22 @@
   --trail-vignette-alpha: 0.32;
   --trail-blend: lighter;
   --trail-head: 255, 255, 255;
+  /* 像素背板(暗色 = 夜间点阵场,车窗与尾流走琥珀) */
+  --px-dot: 150, 178, 208;
+  --px-body: 208, 224, 240;
+  --px-body-dim: 118, 140, 166;
+  --px-accent: 245, 168, 60;
+  --px-head: 255, 243, 210;
+  --px-tail: 255, 106, 96;
+  --px-go: 84, 220, 148;
+  --px-field: 10, 16, 22;
+  --px-grid: 130, 165, 200;
+  --px-grid-alpha: 0.075;
+  --px-glow-alpha: 0.12;
+  --px-vignette-alpha: 0.42;
+  --px-alpha: 1;
+  --px-blend: lighter;
+  --px-night: 1;
   --cursor-core: #fff8ec;
   --panel-backdrop: blur(26px) saturate(180%) brightness(1.12);
   --panel-sheen: rgba(255, 255, 255, 0.045);
@@ -667,6 +706,42 @@ html {
   opacity: 0;
 }
 :root[data-theme='light'] .theme-icon-sun {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+}
+
+/* ---------- 背景形态:光轨(毛玻璃)/ 像素点阵,由 <html data-bgmode> 显隐 ----------
+   两层背板常驻 DOM(服务端渲染),boot 脚本预水合落 data-bgmode,切换零闪白;
+   两颗画布引擎监听 luzzz-bgmodechange 自行暂停/恢复,藏起来的那层不烧帧。 */
+
+:root[data-bgmode='pixel'] [data-bgmode-layer='glass'] {
+  display: none;
+}
+:root:not([data-bgmode='pixel']) [data-bgmode-layer='pixel'] {
+  display: none;
+}
+
+/* 形态图标:两枚都渲染,CSS 按 data-bgmode 决定显示哪枚(机制同 .theme-icon,缺省 = 光轨) */
+.bg-icon {
+  position: absolute;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s ease;
+}
+
+:root:not([data-bgmode='pixel']) .bg-icon-pixel {
+  transform: rotate(-90deg) scale(0.4);
+  opacity: 0;
+}
+:root:not([data-bgmode='pixel']) .bg-icon-glass {
+  transform: rotate(0deg) scale(1);
+  opacity: 1;
+}
+:root[data-bgmode='pixel'] .bg-icon-glass {
+  transform: rotate(90deg) scale(0.4);
+  opacity: 0;
+}
+:root[data-bgmode='pixel'] .bg-icon-pixel {
   transform: rotate(0deg) scale(1);
   opacity: 1;
 }

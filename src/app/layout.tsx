@@ -22,10 +22,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/** 首屏前定主题:localStorage 优先,首次访问跟随系统,默认暗色。避免亮暗白闪。
+/** 首屏前定主题与背景形态:localStorage 优先,首次访问跟随系统/默认暗色+光轨。避免亮暗白闪。
  * 顺带落一个无 media 的 theme-color meta:带 media 的两枚只服务无 JS 兜底,
  * 无 media 的始终生效且排在最后,手动切主题后手机地址栏颜色才能跟手。 */
-const themeBoot = `(function(){try{var t=localStorage.getItem('luzzz-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]:not([media])');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m)}m.setAttribute('content',t==='light'?'#eef2f7':'#0a1016')}catch(e){document.documentElement.dataset.theme='dark'}})()`;
+const themeBoot = `(function(){try{var t=localStorage.getItem('luzzz-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.dataset.theme=t;var b=localStorage.getItem('luzzz-bgmode');if(b!=='pixel')b='glass';document.documentElement.dataset.bgmode=b;var m=document.querySelector('meta[name="theme-color"]:not([media])');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m)}m.setAttribute('content',t==='light'?'#eef2f7':'#0a1016')}catch(e){document.documentElement.dataset.theme='dark';document.documentElement.dataset.bgmode='glass'}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

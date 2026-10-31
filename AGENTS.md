@@ -18,7 +18,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - 定位：Next.js 16 单页作品集，`output: "export"` 全静态导出。没有服务端、没有接口、没有数据库，
   页面内容全部来自 `src/data/site.ts` 与组件里的硬编码文案，构建结果是 `out/` 下的一堆静态文件。
-- 核心功能：三幕滚动驱动场景（开场 → 项目环形 → 工牌联系）+ 双主题丝滑切换 + 水滴透镜光标；
+- 核心功能：三幕滚动驱动场景（开场 → 项目环形 → 工牌联系）+ 双主题丝滑切换 + 毛玻璃/像素
+  双背景形态（`<html data-bgmode>` 切换，链路与主题同构）+ 水滴透镜光标；
   `prefers-reduced-motion` 用户由 CSS 切到经典竖排布局；收录两个外仓子页面（`/marx-cloud/`、`/corpus/`）。
 - 技术栈：Next.js 16.3.6 + React 19 + Tailwind v4 + Motion + Lenis，pnpm 10.33.0（复核：`node -v && pnpm -v`）。
 - 详情：[README.md](README.md)、[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -103,15 +104,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | 项 | 值 | 复核命令 |
 |---|---|---|
 | 类型检查 | 退出码 0，无任何输出 | `npx tsc --noEmit` |
-| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 28 个文件（`src/` 下 24 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
+| ESLint | 退出码 0，无输出；`npm run lint` 实际检查 40 个文件（`src/` 下 36 个 + 3 个根配置 + `tools/sync-showcases.mjs`），0 error 0 warning | 计数用 `npx eslint --format json .`，数输出的 `filePath` 条数 |
 | 构建 | 退出码 0，两条路由 `/` 与 `/_not-found`，均标为 Static | `pnpm build` |
 | 导出产物 | `out/` 共 215 个文件（`_next` 16 + `marx-cloud` 171 + `_not-found` 5 + `corpus` 4 + `404/` 1 + 根下 8（含自定义 `404.html`）+ `projects/` 8 张图（8 张全为真实首图 webp：2 张站外真截图/实验图 + 4 张本地运行实拍 + 1 张线上站截屏 + 2 张原真截图转档）+ `fonts/` 2 个字体），含被原样拷进去的 `out/README.md`；`marx-cloud` 的文件数随其 `portraits/`+`avatars/` 图像数浮动，别拿总数当判据 | `find out -type f \| wc -l`；`diff -q public/README.md out/README.md` |
 | 导出模式 | `next.config.ts` 里有两行：`output: "export"` 与 `trailingSlash: true`（后者为子页面的相对路径所需，见 `docs/ARCHITECTURE.md` 关键约定 9） | `grep -n "output\|trailingSlash" next.config.ts` |
-| 站内子页面 | `public/marx-cloud/` 9,709,985 字节、171 个文件（2026-10-02 起包含 `avatars/`+`portraits/` 共 163 张图，此前副本缺这两目录，换装与侧栏头像在线上是 404）；`public/corpus/` 394,641 字节、4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
+| 站内子页面 | `public/marx-cloud/` 10,828,396 字节、171 个文件（2026-10-02 起包含 `avatars/`+`portraits/` 共 163 张图，此前副本缺这两目录，换装与侧栏头像在线上是 404）；`public/corpus/` 394,641 字节、4 个文件；构建后原样出现在 `out/` 同名目录 | `find public/marx-cloud -type f -printf '%s\n' \| awk '{s+=$1} END{print s}'`（corpus 同形）；`find out/marx-cloud out/corpus -type f \| wc -l` |
 | 部署 | 项目 `luzzz-me` 已连 `Luz7818/luzzz.me`，推 `main` 即由 Vercel 构建；最新 production 部署 `● Ready`；`*.vercel.app` 带登录墙（`ssoProtection.deploymentType` = `all_except_custom_domains`），自定义域名不受此限制 | `npx vercel ls`、`npx vercel inspect <部署地址>`；接口复核 `curl -s -H "Authorization: Bearer $VERCEL_TOKEN" https://api.vercel.com/v9/projects/luzzz-me` 看 `gitRepository` / `ssoProtection` |
 | 域名 | `www.luzzz.me` **已生效**：HTTPS 200，返回真实站点（不是 Vercel 登录页），`/marx-cloud/` 与 `/corpus/` 两个子页面同样 200 且页内本地引用 0 断链。apex `luzzz.me` **仍未生效**：DoH 查 A 是空答复，直连表现为 `SSL: UNEXPECTED_EOF_WHILE_READING`。两个域名都在项目 Aliases 里但 `domains` 的 `verificationRecord` 为 `null`。**不要把任何具体接入 IP 写进 DNS 说明**：`www` 走任播，实测同一天两次解析结果就不同；apex 要填的值以 `npx vercel domains inspect luzzz.me` 当场打印的为准（本文早先写的 `76.76.21.21` 是 Vercel 旧共用 IP，已作废） | DoH 免登录复核（apex 那行应为 `[]`）：`python -c "import json,urllib.request as u; [print(n,t,[a['data'] for a in json.load(u.urlopen(f'https://dns.google/resolve?name={n}&type={t}',timeout=20)).get('Answer',[])]) for n,t in [('luzzz.me','A'),('www.luzzz.me','A')]]"`；线上确实返回站点而非登录墙：`python -c "import urllib.request as u;b=u.urlopen(u.Request('https://www.luzzz.me/marx-cloud/',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read();print('思想云' in b.decode('utf-8'))"` 应为 `True`（探测页面标题里的「思想云」，不钉死会随部署变掉的资源哈希；被登录墙挡时页面标题是 `Login – Vercel`） |
-| 源文件 | `src/` 下 31 个文件，其中 29 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
-| 组件 | 25 个（`src/components/` 22 + `src/components/scenes/` 3），其中 24 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是服务端组件 | `git ls-files src/components \| wc -l`（得 25）、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l`（得 24） |
+| 源文件 | `src/` 下 38 个文件，其中 36 个 TS/TSX | `git ls-files src \| grep -v README \| wc -l`、`git ls-files src \| grep -c '\.tsx\?$'` |
+| 组件 | 27 个（`src/components/` 24 + `src/components/scenes/` 3），其中 26 个客户端组件以 `'use client'` 开头；`Aurora` 是服务端组件；另有 `src/components/pixel/` 四个非组件引擎模块（纯 TS，无 `'use client'`） | `git ls-files src/components \| wc -l`、`grep -l "^'use client'" src/components/*.tsx src/components/scenes/*.tsx \| wc -l` |
 | 运行时依赖 | 5 个：`next` `react` `react-dom` `motion` `lenis` | `node -e "console.log(Object.keys(require('./package.json').dependencies))"` |
 | Node / pnpm | `v24.19.0` / `10.33.0`（`packageManager` 声明 `pnpm@10.33.0`） | `node -v && pnpm -v` |
 | `next start` | 不可用：先打印 `✓ Ready`，紧接着抛错，退出码 1 | `npx next start` |
@@ -139,6 +140,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **IAB 面板后台化会冻结一切 rAF/CSS 动画**：走查前先把可见性设回 true，否则截图全是冻结帧。
 - **内嵌面板隐藏时视口坍缩为 0**：按元素尺寸工作的画布/量测必须挂 ResizeObserver（LightTrails
   画布、Act3Badge 工牌、SmoothScroll 代理 body 高度），别只依赖 window resize（10-04 实际踩过）。
+- **背景双形态都常驻 DOM**：光轨（TrailsBackdrop+Aurora）与像素（PixelBackdrop）两层由
+  `<html data-bgmode>` 显隐，两颗引擎监听 `luzzz-bgmodechange` 各自暂停/恢复——藏起来的层
+  画布是 2×2 假尺寸，别当成「没挂载」或往隐藏层里加常开工作；改背景先读 `src/components/pixel/`。
 - **持续动画会让浏览器截图超时或拿到过期帧**：先拿 DOM 计算样式核对，别把截图异常当真 bug。
 - **压缩器会吃掉 `.panel` 的标准 `backdrop-filter`**：标准属性必须写在 `-webkit-` 之后，
   否则 Chromium computed 值变 `none`，玻璃模糊静默失效。

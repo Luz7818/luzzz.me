@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react';
 import ThemeToggle from './ThemeToggle';
+import BgToggle from './BgToggle';
 import Chainage from './Chainage';
 import { navSectionAt, smoothTo } from './SmoothScroll';
 import { profile } from '@/data/site';
@@ -82,8 +83,9 @@ export default function Nav() {
           </a>
         </nav>
       </header>
-      {/* 主题切换:独立右上角玻璃圆钮,中心与胶囊光学对齐(top 26+18 = 胶囊 16+28) */}
-      <div className="fixed top-[26px] right-6 z-50">
+      {/* 形态切换 + 主题切换:独立右上角玻璃圆钮,中心与胶囊光学对齐(top 26+18 = 胶囊 16+28) */}
+      <div className="fixed top-[26px] right-6 z-50 flex items-center gap-2.5">
+        <BgToggle />
         <ThemeToggle />
       </div>
     </>

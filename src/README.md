@@ -3,9 +3,9 @@
 > 用途：说明 `src/` 三个子目录各管什么、每个文件干什么、`site.ts` 的哪个字段被谁读。
 > 想改内容先从这里查归属；命令口径与门禁以仓库根的 [AGENTS.md](../AGENTS.md) 为准。
 
-`src/` 是站点的全部实现：31 个文件（复核：`git ls-files src | grep -v README | wc -l`），
-其中 29 个 TS/TSX。`app/` 提供路由与主题，`components/`（含 `scenes/` 三幕）提供 22 个板块与动效组件，
-`data/` 提供唯一的手工数据源。产物 `out/` 完全由这三块加上 `public/` 生成，没有运行时代码从外部取数据。
+`src/` 是站点的全部实现：38 个文件（复核：`git ls-files src | grep -v README | wc -l`），
+其中 36 个 TS/TSX。`app/` 提供路由与主题，`components/`（含 `scenes/` 三幕与 `pixel/` 像素引擎）提供 24 个板块与动效组件，
+`lib/` 提供背景形态状态库，`data/` 提供唯一的手工数据源。产物 `out/` 完全由这几块加上 `public/` 生成，没有运行时代码从外部取数据。
 
 视觉语言是「夜间路网 × 雾蓝玻璃」双主题：由 `<html data-theme>` 驱动，暗色为默认，强调色唯一
 （琥珀家族，两主题各一档对比度），绿色 `--color-live` 只作「线上可访问」的语义状态色。
@@ -14,17 +14,19 @@
 ## 文件清单
 
 `src/` 根下不直接放代码文件，只有本 `README.md` 一份（复核：`find src -maxdepth 1 -type f`，
-输出只有 `src/README.md`）。其余 31 个入库文件全在下一节的三个二级目录里
-（复核：`git ls-files src | grep -v README | wc -l`），其中 29 个是 TS/TSX
-（复核：`git ls-files 'src/*.ts' 'src/*.tsx' | wc -l`）。这张表只做索引，逐文件的说明在下面三节。
+输出只有 `src/README.md`）。其余 38 个入库文件全在下一节的四个二级目录里
+（复核：`git ls-files src | grep -v README | wc -l`），其中 36 个是 TS/TSX
+（复核：`git ls-files 'src/*.ts' 'src/*.tsx' | wc -l`）。这张表只做索引，逐文件的说明在下面各节。
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `README.md` | 本文件，`src/` 的目录说明 | 不是站点资源：只有 `public/` 下的东西会被原样拷进 `out/`，这里不会 |
-| `app/page.tsx` | 唯一路由 `/` 的页面，装配双树：三幕场景（motion-safe）+ 经典竖排（reduced 兜底） | 索引 → 下文「src/app —— App Router 根」；预览图扫描函数 `findPreviews()` 也在这个文件里 |
-| `app/layout.tsx`、`app/globals.css`、`app/favicon.ico` | 根布局与 metadata（含主题预水合脚本）、双主题令牌与工具类、站点图标 | 文件名由 Next 的 App Router 约定固定，不是本仓库自定的命名 |
-| `components/*.tsx` | 22 个组件：板块、顶栏、主题切换、背景画布、流体层、自定义鼠标、逐字入场、氛围层、跑马灯、项目简介弹窗、平滑滚动与动效壳 | 索引 → 下文「src/components —— 22 个组件」。其中 21 个是客户端组件，`Aurora`/`Marquee` 是服务端组件（复核：`grep -l "^'use client'" src/components/*.tsx \| wc -l` 得 21） |
+| `app/page.tsx` | 唯一路由 `/` 的页面，装配双树：三幕场景（motion-safe）+ 经典竖排（reduced 兜底） | 索引 → 下文「src/app —— App Router 根」；预览图扫描函数 `findPreviews()` 也在这个文件里；两棵树各挂光轨/像素两层背板，由 `<html data-bgmode>` 显隐 |
+| `app/layout.tsx`、`app/globals.css`、`app/favicon.ico` | 根布局与 metadata（含主题与背景形态预水合脚本）、双主题令牌与工具类、站点图标 | 文件名由 Next 的 App Router 约定固定，不是本仓库自定的命名 |
+| `components/*.tsx` | 24 个组件：板块、顶栏、主题切换、背景形态切换、两块背景画布、自定义鼠标、逐字入场、氛围层、跑马灯、项目简介弹窗、平滑滚动与动效壳 | 索引 → 下文「src/components —— 24 个组件」。其中 23 个是客户端组件，`Aurora` 是服务端组件（复核：`grep -L "^'use client'" src/components/*.tsx` 只有 Aurora） |
+| `components/pixel/*.ts` | 像素背板引擎四件（纯 TS，非组件）：`sprites.ts` 侧视交通像素图、`traffic.ts` 交通剖面模拟（信号机/跟车/靠站/班次）、`renderer.ts` 点阵场与装饰层/星月/灯光渲染、`engine.ts` 循环接线 | 由 `PixelBackdrop.tsx` 经 `mountPixelEngine()` 挂载；架构借鉴 stackedlol/ascii-sharks，自研重写（该仓无 LICENSE） |
 | `components/scenes/*.tsx` | 三幕组件：`Act1Intro` 开场、`Act2Ring` 项目环形、`Act3Badge` 工牌联系 | 索引 → 下文「src/components/scenes —— 三幕」。全部客户端组件 |
+| `lib/bgmode.ts` | 背景形态状态库：读/写/订阅 `glass`/`pixel` | 与 ThemeToggle 的主题契约同构（dataset + localStorage + CustomEvent） |
 | `data/site.ts` | 全站唯一手工数据源，导出 `profile`、`stats`、`marquee`、`projects` 与类型 `Project` | 索引 → 下文「src/data —— 唯一手工数据源」与其后的「各字段被谁消费」 |
 
 ## 子目录
@@ -32,8 +34,10 @@
 | 子目录 | 负责 |
 |---|---|
 | `app/` | App Router 根：路由 `/`、根布局与 metadata、双主题令牌与工具类、站点图标，4 个文件（复核：`git ls-files src/app \| wc -l`）。逐文件说明见下文「src/app —— App Router 根」 |
-| `components/` | 22 个组件，其中 21 个以 `'use client'` 开头（复核：`git ls-files src/components \| wc -l`、`grep -l "^'use client'" src/components/*.tsx \| wc -l`）。逐文件说明见下文「src/components —— 22 个组件」 |
+| `components/` | 24 个组件，其中 23 个以 `'use client'` 开头（复核：`git ls-files src/components \| wc -l`、`grep -L "^'use client'" src/components/*.tsx`）。逐文件说明见下文「src/components —— 24 个组件」 |
+| `components/pixel/` | 像素引擎四件 `sprites.ts` / `traffic.ts` / `renderer.ts` / `engine.ts`，全部纯 TS 模块，不渲染 JSX |
 | `components/scenes/` | 3 幕组件，全部客户端（复核：`git ls-files src/components/scenes \| wc -l`） |
+| `lib/` | `bgmode.ts` 一个文件：背景形态（`glass`/`pixel`）的读写与订阅 |
 | `data/` | 唯一手工数据源 `site.ts`，1 个文件（复核：`git ls-files src/data`）。哪个字段被哪个组件读，见下文「各字段被谁消费」 |
 
 ## src/app —— App Router 根
@@ -48,15 +52,16 @@
 | `globals.css` | Tailwind 入口 + 双主题令牌 + 工具类 | `@theme` 里暗色 9 个 `--color-*`（默认），`[data-theme='light']` 同名覆盖 9 个，共 18 行（复核：`grep -c "^  --color-" src/app/globals.css`）；两条 `@font-face` 指向 `/fonts/overpass-var.woff2` 与 `/fonts/jetbrains-mono-var.woff2`；`.panel` 面板（14px 圆角规则，backdrop 配方在 `--panel-backdrop` 变量里分主题定义，::after 内顶光）、`.hairline-grid` 底纹、`.aurora`+`.grain` 氛围层、`.marquee-track` 跑马灯、`.shine` 卡片划光、`::view-transition-*` 主题圆形揭幕、`html.theme-fade` 回退过渡；末尾整段响应 `prefers-reduced-motion` |
 | `favicon.ico` | Next 约定的站点图标 | 构建后出现在 `out/favicon.ico`；`out/_next/static/media/` 下另有一份带哈希的副本 |
 
-## src/components —— 22 个组件
+## src/components —— 24 个组件
 
-21 个客户端组件以 `'use client'` 开头；`Aurora`/`Marquee` 是纯静态的服务端组件。
+23 个客户端组件以 `'use client'` 开头；`Aurora` 是纯静态的服务端组件。
 每个板块自己 `import { profile } from '@/data/site'`，没有 context 也没有状态管理层。
 
 | 文件 | 渲染哪一块 | 值得知道的实现点 |
 |---|---|---|
-| `Nav.tsx` | 悬浮玻璃胶囊导航 + 右上角主题钮容器 | 客户端组件。链接是文件内常量 `LINKS`（关于/项目/联系），`smoothTo()` 优先解析三幕场景锚点（`registerSceneAnchors` 注册），reduced 下退回元素锚点；`useScroll` + `useMotionValueEvent` 感知滚动（无 `window scroll listener`）：滚过 24px 后玻璃化（`--nav-glass` + blur），顶部 2px 琥珀进度条用 `useSpring(scrollYProgress)`；胶囊内不含主题切换，另渲染一个 `fixed top-[26px] right-6` 的容器装 `ThemeToggle`（top 26+18 与胶囊 16+28 光学对齐） |
+| `Nav.tsx` | 悬浮玻璃胶囊导航 + 右上角形态/主题钮容器 | 客户端组件。链接是文件内常量 `LINKS`（关于/项目/联系），`smoothTo()` 优先解析三幕场景锚点（`registerSceneAnchors` 注册），reduced 下退回元素锚点；`useScroll` + `useMotionValueEvent` 感知滚动（无 `window scroll listener`）：滚过 24px 后玻璃化（`--nav-glass` + blur），顶部 2px 琥珀进度条用 `useSpring(scrollYProgress)`；胶囊内不含切换钮，另渲染一个 `fixed top-[26px] right-6` 的容器装 `BgToggle` + `ThemeToggle`（top 26+18 与胶囊 16+28 光学对齐） |
 | `ThemeToggle.tsx` | 明暗切换按钮（独立右上角玻璃圆钮） | 客户端组件。自带玻璃底（`--nav-glass` + backdrop-blur + 投影），由 `Nav.tsx` 放置在视口右上角；切换 `<html data-theme>` 并写 `localStorage['luzzz-theme']`，分发 `luzzz-themechange` 事件供画布重读颜色；颜色渐变由 `globals.css` 的 `@property` + `:root` transition 全页涟漪完成；Sun/Moon 两枚图标都渲染，旋转淡入淡出由 CSS 按 `data-theme` 决定，无水合闪烁 |
+| `BgToggle.tsx` | 背景形态切换按钮（毛玻璃/像素，与 ThemeToggle 并排） | 客户端组件。样式复刻 ThemeToggle；调 `lib/bgmode.ts` 的 `setBgMode()` 切 `<html data-bgmode>` + 写 `localStorage['luzzz-bgmode']` + 分发 `luzzz-bgmodechange`；点阵/光轨两枚图标都渲染，交叉淡入淡出由 CSS 按 `data-bgmode` 决定（机制同 ThemeToggle），无水合闪烁 |
 | `Hero.tsx` | `#top` 首屏 | 客户端组件。装配 `LightTrails` + 上下渐隐遮罩 + 文字区椭圆暗场；两行标题走 overflow-hidden 遮罩弹簧揭示（stagger），副文案与 CTA 延迟上浮；`useScroll` 做滚动离场视差（内容下沉淡出、光轨微放大）；鼠标聚光用 `useMotionTemplate` 径向渐变跟随指针；CTA 均为 `MagneticButton`。标题文案写死在 JSX 里 |
 | `LightTrails.tsx` | 长曝光车流画布（经典树 Hero / 三幕树经 TrailsBackdrop） | 客户端组件。2D canvas 长曝光车流：四条车道双向光点，`lighter` 混合拖尾；颜色全部读主题变量（`--trail-primary/-secondary/-fade/-alpha/-sky/-glow/-glow-alpha/-vignette-alpha`；后三者构成「天空渐变 + 地平线暖辉 + 暗角」的背景合成，取代早年平涂黑底），监听 `luzzz-themechange` 重读重绘；车道常量 `LANES` 与 `LANES_NARROW`（`w < 640` 下移避正文）；指针视差在帧循环内插值；DPR 上限 1.5；reduced 下只画一帧静态光轨 |
 | `Aurora.tsx` | 全页氛围层 | 服务端组件。三团 `radial-gradient` 极光（CSS `drift` 动画，transform-only）+ 一层 SVG 颗粒，`fixed -z-10` + `pointer-events-none`，颜色与透明度随主题变量变化 |
@@ -69,10 +74,11 @@
 | `SmoothScroll.tsx` | Lenis 惯性滚动 + 全局滚动吸附 | 客户端组件。动态 import `lenis`，rAF 循环驱动，实例挂 `window.__lenis`；导出 `smoothTo()`（先查场景锚点表，再退回元素锚点）、`registerSceneAnchors()` 与 `registerSnapAnchors()`（三幕注册锚点）。吸附：停滚 300ms 后对齐最近「完整画面」锚点（9 个，阈值 0.92×视口高，0.65s 四次缓动，吸附后 1.2s 冷却防连拽；Lenis 尺寸经 body ResizeObserver 自愈——它自身对 documentElement 的观察在内容长高时不触发）。reduced-motion 下不启用；触屏默认不受影响 |
 | `SplitChars.tsx` | 逐字错峰入场 | 客户端组件。字符拆进 overflow-hidden 遮罩，`whileInView` + `staggerChildren`（默认 35ms）逐个从下方升起，`cubic-bezier(0.23,1,0.32,1)`；切换项目时由调用方改 `key` 重挂载重演；**DOM 结构恒定，reduced 只分支 Motion props**（约定 7 的 hydration 坑）。被 Act1 标题、Act2 信息面板、Act3 邮箱使用 |
 | `Cursor.tsx` | 自定义鼠标 | 客户端组件。4px 车灯光点（`--cursor-core` 主题色 + 一层 accent 光晕）即时跟随；水滴透镜（80px、无可见描边）挂 `backdrop-filter: url(#luzzz-liquid)` 把底下真实页面元素扭成水波，feDisplacementMap 的 scale 由光标速度驱动（上限 64，`useAnimationFrame` 快攻慢放），透镜本体弹簧拖尾；悬停 `a/button/[data-cursor]` 光点放大 1.4×、透镜收至 0.8，带 `data-cursor-label` 的目标换成琥珀气泡标签（环形项目卡是「查看」）；启用时给 `<html>` 挂 `data-cursor='on'` 隐藏原生光标。仅精确指针 + 非 reduced 启用（`useSyncExternalStore` 订阅两个媒体查询）；Firefox/Safari 不支持 SVG backdrop-filter，退化为纯小点 |
-| `TrailsBackdrop.tsx` | 背景幕（仅三幕树） | 客户端组件。`LightTrails` 2D 画布直出 + 两层半透压暗遮罩（顶部/底部 72%、中央 24%——保文字可读又不糊死色彩）。**没有 WebGL**：早年的 ogl 流体合成层因刷新撕裂与滚动负担已移除，「元素晕开」在 `Cursor.tsx` 的透镜上 |
+| `TrailsBackdrop.tsx` | 背景幕·光轨形态（仅三幕树；reduced 树的 Aurora 由 page.tsx 直挂） | 客户端组件。`LightTrails` 2D 画布直出 + 两层半透压暗遮罩（顶部/底部 72%、中央 24%——保文字可读又不糊死色彩）。**没有 WebGL**：早年的 ogl 流体合成层因刷新撕裂与滚动负担已移除，「元素晕开」在 `Cursor.tsx` 的透镜上。由 `<html data-bgmode>` 决定显隐，像素形态下 LightTrails 循环经 `luzzz-bgmodechange` 门控暂停 |
+| `PixelBackdrop.tsx` | 背景幕·像素形态（两棵树都挂） | 客户端组件。`components/pixel/engine.ts` 的 `mountPixelEngine()` 挂到单张 2D canvas：侧视城市交通剖面点阵场（天/高架轨道/双向快速路/信号灯街道/河道/隧道六带），鼠标划过拨开像素点、点击涟漪；信号机可点击切相位，车辆红灯排队刹车灯亮、公交靠站、列车拖活塞风、夜色系数 `--px-night` 驱动星月与车灯锥光（换主题 0.6s 涟漪明灭）；reduced 下只画一帧静态交通。三幕树 `layer="stage"`（z-0，带可读性压暗遮罩），经典树 `layer="base"`（-z-10）；显隐由 `data-bgmode` 驱动 |
 | `CountUp.tsx` | 数字滚动（自 About 抽出） | 客户端组件。`useInView` + `animate` 弹簧计数，无 JS 保持 SSR 终值；被经典树 `About` 与三幕树 `Act1Intro` 共用 |
 | `Reveal.tsx` | 进场包壳 | 客户端组件。`motion.div` 的 `whileInView` 弹簧上浮，只演一次；参数 `y`（默认 22px）与 `delay`；被 About/Projects/Contact 使用，Hero 与 Nav 不用它 |
-| `ProjectModal.tsx` | 项目简介弹窗（两棵树共用） | 客户端组件。`AnimatePresence` 进出场，桌面双栏大卡（`min(94vw,920px)`:左封面栏 | 右详情栏,移动端上下堆叠）;封面栏底部控制簇 ←/〔计数〕/→ 可切换项目（键盘 ←/→ 同效,取模循环）,内容按 slug 换场淡入;**有 demo 主按钮「在线体验」**（站内路径同页跳、外链新标签）,**无 demo 主按钮「查看仓库」**,次要「源码」恒备。打开时 `lenis.stop()` + 根 `overflow: hidden` 锁滚动,Esc/遮罩点击关闭,焦点落关闭钮、关闭后还焦,Tab 焦点圈在弹窗内回绕;`role="dialog"` + `aria-modal`。实例由 `Act2Ring` 与 `Projects` 各持一份（互斥显示,状态 `modalProject` 在各自树内） |
+| `ProjectModal.tsx` | 项目简介弹窗（两棵树共用） | 客户端组件。`AnimatePresence` 进出场，桌面双栏大卡（`min(94vw,920px)`:左封面栏 \| 右详情栏,移动端上下堆叠）;封面栏底部控制簇 ←/〔计数〕/→ 可切换项目（键盘 ←/→ 同效,取模循环）,内容按 slug 换场淡入;**有 demo 主按钮「在线体验」**（站内路径同页跳、外链新标签）,**无 demo 主按钮「查看仓库」**,次要「源码」恒备。打开时 `lenis.stop()` + 根 `overflow: hidden` 锁滚动,Esc/遮罩点击关闭,焦点落关闭钮、关闭后还焦,Tab 焦点圈在弹窗内回绕;`role="dialog"` + `aria-modal`。实例由 `Act2Ring` 与 `Projects` 各持一份（互斥显示,状态 `modalProject` 在各自树内） |
 
 ## src/components/scenes —— 三幕
 
