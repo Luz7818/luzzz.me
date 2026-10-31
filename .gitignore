@@ -42,3 +42,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Qoder IDE 部署元数据(本机生成,不入库)
+.luzzz.me.qoder.site
