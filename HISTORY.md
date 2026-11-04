@@ -341,3 +341,15 @@
   向下且尚未过入场段(sp<0.15)先落项目页对齐位停住,再滚才去联系页;向上且在离场段
   (sp>0.85)同理先落项目页再去关于页;中段侧滚则直达目标幕。sideLanded 记忆落地态,
   弹窗打开仍不抢。
+
+## 2026-11-05 · 主题缓动归仓:AI 默认曲线清零(研究二轮 taste 批)
+
+- **`--ease-in-out` 入 token 层 + 全部 17 处归仓**:`src/app/globals.css` `:root`
+  补 `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`;主题变量交叉淡入
+  (`--color-*`/`--aurora-*`/`--cover-tint-*`/`--hero-glow`/`--px-night` 共 17 项,
+  同一 transition 块)逐项由 AI 默认 Material 曲线(0.4,0,0.2,1)改引
+  `var(--ease-in-out)`——时长 0.6s 不变只换曲线,亮暗切换节奏不受影响
+  (一轮 7.1.2「令牌系统里不应存在外来曲线」收口,研究二轮口径)。
+  组件层零命中(tsc 亦证无内联曲线)。
+- 验证:`pnpm exec tsc --noEmit` 0 错;`pnpm build` 过(静态预渲染正常);
+  `grep -c '0.4, 0, 0.2, 1' src/` 全仓 0 命中。

@@ -120,28 +120,31 @@
 :root {
   /* 全局动效 token:所有过渡只用 transform/opacity,缓动与时长统一从这里取 */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-fast: 180ms;
   --dur-med: 320ms;
   --dur-slow: 600ms; /* 与主题切换 0.6s 涟漪对齐 */
+  /* 主题变量交叉淡入:屏内色变形走 in-out(2026-11-05 归仓,
+     替换 AI 默认 Material 曲线全部 17 处为 var(--ease-in-out),时长 0.6s 不变) */
   transition:
-    --color-bg 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-surface 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-raised 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-ink 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-muted 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-line 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-accent 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-accent-contrast 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --color-live 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --aurora-1 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --aurora-2 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --aurora-3 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --aurora-4 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --cover-tint-a 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --cover-tint-b 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --hero-glow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    --px-night 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    --color-bg 0.6s var(--ease-in-out),
+    --color-surface 0.6s var(--ease-in-out),
+    --color-raised 0.6s var(--ease-in-out),
+    --color-ink 0.6s var(--ease-in-out),
+    --color-muted 0.6s var(--ease-in-out),
+    --color-line 0.6s var(--ease-in-out),
+    --color-accent 0.6s var(--ease-in-out),
+    --color-accent-contrast 0.6s var(--ease-in-out),
+    --color-live 0.6s var(--ease-in-out),
+    --aurora-1 0.6s var(--ease-in-out),
+    --aurora-2 0.6s var(--ease-in-out),
+    --aurora-3 0.6s var(--ease-in-out),
+    --aurora-4 0.6s var(--ease-in-out),
+    --cover-tint-a 0.6s var(--ease-in-out),
+    --cover-tint-b 0.6s var(--ease-in-out),
+    --hero-glow 0.6s var(--ease-in-out),
+    --px-night 0.6s var(--ease-in-out);
 }
 
 @theme {
